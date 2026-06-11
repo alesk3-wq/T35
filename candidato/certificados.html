@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="../assets/img/favi-t35.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificados - T35 Academy</title>
+    <link rel="stylesheet" href="../assets/css/design-system.css">
+    <link rel="stylesheet" href="../assets/css/layout.css">
+    <link rel="stylesheet" href="../assets/css/responsive.css">
+    <style>
+        .content { padding: 2rem; }
+
+        .certs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .cert-card {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .cert-card:hover {
+            border-color: var(--amber);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .cert-banner {
+            height: 80px;
+            background: linear-gradient(135deg, var(--amber), var(--amber-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cert-banner svg { opacity: 0.9; }
+
+        .cert-body { padding: 1.5rem; }
+
+        .cert-titulo {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text);
+            margin: 0 0 0.5rem 0;
+        }
+
+        .cert-instrutor {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin: 0 0 1rem 0;
+        }
+
+        .cert-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .cert-info-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .cert-info-row svg { flex-shrink: 0; }
+
+        .cert-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .btn-download {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--amber);
+            color: var(--bg);
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-download:hover { background: var(--amber-dark); }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+            background: var(--bg2);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            opacity: 0.3;
+            margin-bottom: 1.25rem;
+        }
+
+        .empty-state h3 {
+            color: var(--text);
+            font-size: 18px;
+            margin: 0 0 0.5rem 0;
+        }
+
+        .empty-state p { font-size: 14px; margin: 0; }
+
+        .page-title-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+        }
+
+        .page-title-row h1 { color: var(--text); font-size: 28px; margin: 0; }
+
+        .count-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.4rem 0.9rem;
+            background: rgba(245,158,11,0.15);
+            color: var(--amber);
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        @media (max-width: 600px) {
+            .certs-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img src="../assets/img/t35logo.png" alt="T35 Academy" class="logo">
+            <h2>T35 Academy</h2>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="dashboard.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                <span>Dashboard</span>
+            </a>
+            <a href="catalogo.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
+                <span>Catálogo</span>
+            </a>
+            <a href="meus-cursos.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2zM22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                </svg>
+                <span>Meus Cursos</span>
+            </a>
+            <a href="certificados.html" class="nav-item active">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 9l6-3 6 3v6l-6 3-6-3V9z"></path>
+                    <path d="M12 12v6"></path>
+                </svg>
+                <span>Certificados</span>
+            </a>
+            <a href="perfil.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                <span>Perfil</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="btn-logout" id="btnLogout">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                <span>Logout</span>
+            </button>
+        </div>
+    </aside>
+
+    <div class="topbar">
+        <button class="btn-menu" id="btnMenu">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
+        <h1 class="page-title">Certificados</h1>
+    </div>
+
+    <main class="main">
+        <div class="content">
+            <div class="page-title-row">
+                <h1>Meus Certificados</h1>
+                <span class="count-badge" id="certCount">0 certificado(s)</span>
+            </div>
+
+            <div id="certsContainer">
+                <p style="color: var(--text-secondary); font-size: 14px;">Carregando...</p>
+            </div>
+        </div>
+    </main>
+
+    <script type="module">
+        import { handleLogout, checkAuth } from '../assets/js/auth.js';
+        import { toggleSidebar } from '../assets/js/ui-shell.js';
+        import { db } from '../firebase-config.js';
+        import {
+            collection, getDocs, query, where, doc, getDoc
+        } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js';
+
+        document.getElementById('btnMenu').addEventListener('click', toggleSidebar);
+        document.getElementById('btnLogout').addEventListener('click', handleLogout);
+
+        checkAuth().then(async user => {
+            if (!user) { window.location.href = '../login.html'; return; }
+            loadCertificados(user.uid);
+        });
+
+        async function loadCertificados(uid) {
+            const container = document.getElementById('certsContainer');
+
+            try {
+                const q = query(collection(db, 'certificados'), where('candidatoId', '==', uid));
+                const snap = await getDocs(q);
+
+                document.getElementById('certCount').textContent = `${snap.size} certificado(s)`;
+
+                if (snap.empty) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M6 9l6-3 6 3v6l-6 3-6-3V9z"></path>
+                                <path d="M12 12v6"></path>
+                            </svg>
+                            <h3>Nenhum certificado ainda</h3>
+                            <p>Conclua um curso para receber seu certificado</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const certs = [];
+                for (const certDoc of snap.docs) {
+                    const cert = certDoc.data();
+                    let cursoNome = cert.cursoNome || '—';
+                    let cursoInstrutor = cert.cursoInstrutor || '—';
+                    let cursoDuracao = cert.cursoDuracao || null;
+
+                    if (cert.cursoId && !cert.cursoNome) {
+                        try {
+                            const cursoDoc = await getDoc(doc(db, 'cursos', cert.cursoId));
+                            if (cursoDoc.exists()) {
+                                const c = cursoDoc.data();
+                                cursoNome = c.titulo || '—';
+                                cursoInstrutor = c.instrutor || '—';
+                                cursoDuracao = c.duracao || null;
+                            }
+                        } catch (_) {}
+                    }
+
+                    const emitidoEm = cert.emitidoEm?.toDate
+                        ? cert.emitidoEm.toDate().toLocaleDateString('pt-BR')
+                        : '—';
+
+                    certs.push({ id: certDoc.id, cursoNome, cursoInstrutor, cursoDuracao, emitidoEm });
+                }
+
+                container.innerHTML = `<div class="certs-grid">${certs.map(c => `
+                    <div class="cert-card">
+                        <div class="cert-banner">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <circle cx="12" cy="8" r="6"></circle>
+                                <path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"></path>
+                            </svg>
+                        </div>
+                        <div class="cert-body">
+                            <h3 class="cert-titulo">${c.cursoNome}</h3>
+                            <p class="cert-instrutor">👨‍🏫 ${c.cursoInstrutor}</p>
+                            <div class="cert-info">
+                                <div class="cert-info-row">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                                    </svg>
+                                    Emitido em ${c.emitidoEm}
+                                </div>
+                                ${c.cursoDuracao ? `<div class="cert-info-row">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <polyline points="12 6 12 12 16 14"></polyline>
+                                    </svg>
+                                    Carga horária: ${c.cursoDuracao}
+                                </div>` : ''}
+                            </div>
+                        </div>
+                        <div class="cert-footer">
+                            <button class="btn-download" onclick="baixarCertificado('${c.id}')">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                Baixar PDF
+                            </button>
+                        </div>
+                    </div>
+                `).join('')}</div>`;
+            } catch (err) {
+                console.error('Erro ao carregar certificados:', err);
+                container.innerHTML = '<p style="color:var(--text-secondary)">Erro ao carregar certificados</p>';
+            }
+        }
+
+        window.baixarCertificado = function(certId) {
+            alert('Geração de PDF em desenvolvimento.\nID do certificado: ' + certId);
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="assets/img/favi-t35.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>T35 Academy</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: #0F172A;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        .loader {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.25rem;
+        }
+        .loader img {
+            width: 56px;
+            height: 56px;
+            border-radius: 10px;
+            opacity: 0.9;
+        }
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid #334155;
+            border-top-color: #F59E0B;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="loader">
+        <img src="assets/img/t35logo.png" alt="T35 Academy">
+        <div class="spinner"></div>
+    </div>
+
+    <script type="module">
+        import { auth, db } from './firebase-config.js';
+        import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js';
+        import { collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js';
+
+        const roleRoutes = {
+            'admin':      'admin/dashboard.html',
+            'instrutor':  'instrutor/dashboard.html',
+            'candidato':  'candidato/dashboard.html'
+        };
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                window.location.replace('login.html');
+                return;
+            }
+
+            try {
+                const snap = await getDocs(
+                    query(collection(db, 'users'), where('uid', '==', user.uid))
+                );
+                const role = snap.docs[0]?.data()?.role ?? 'candidato';
+                window.location.replace(roleRoutes[role] ?? 'candidato/dashboard.html');
+            } catch {
+                window.location.replace('login.html');
+            }
+        });
+    </script>
+</body>
+</html>

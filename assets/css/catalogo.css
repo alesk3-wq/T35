@@ -1,0 +1,288 @@
+/* ============================================
+   CATÁLOGO - Estilos específicos
+   ============================================ */
+
+.filters {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.filter-input {
+    flex: 1;
+    min-width: 250px;
+    padding: 0.75rem 1rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 14px;
+}
+
+.filter-input:focus {
+    outline: none;
+    border-color: var(--amber);
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+}
+
+.cursos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.curso-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+}
+
+.curso-card:hover {
+    border-color: var(--amber);
+    box-shadow: 0 10px 30px rgba(245, 158, 11, 0.1);
+    transform: translateY(-4px);
+}
+
+.curso-header {
+    padding: 1.5rem;
+    background: linear-gradient(135deg, var(--bg2) 0%, var(--bg) 100%);
+    border-bottom: 1px solid var(--border);
+}
+
+.curso-title {
+    color: var(--text);
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+}
+
+.curso-instructor {
+    color: var(--text-secondary);
+    font-size: 12px;
+    margin: 0;
+}
+
+.curso-body {
+    padding: 1.5rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.curso-description {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-bottom: 1rem;
+    flex: 1;
+}
+
+.curso-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.meta-item svg {
+    width: 16px;
+    height: 16px;
+    color: var(--amber);
+}
+
+.curso-status {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background: rgba(34, 197, 94, 0.1);
+    color: #22c55e;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.curso-status.em-breve {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--amber);
+}
+
+.curso-status.finalizado {
+    background: rgba(107, 114, 128, 0.1);
+    color: #6b7280;
+}
+
+.btn-inscrever {
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--amber);
+    color: var(--bg);
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-inscrever:hover {
+    background: #f08a00;
+    transform: translateY(-2px);
+}
+
+.btn-inscrever:disabled {
+    background: var(--border);
+    color: var(--text-secondary);
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-inscrever.btn-inscrito {
+    background: rgba(34, 197, 94, 0.12);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    cursor: default;
+    transform: none;
+}
+
+.btn-inscrever.btn-inscrito:hover {
+    background: rgba(34, 197, 94, 0.12);
+    transform: none;
+}
+
+.curso-meta-info {
+    border-top: none;
+    padding-top: 0;
+    margin-top: 0.35rem;
+}
+
+/* ─── TABS ─────────────────────────────────────────────────────────────── */
+
+.tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.tab-btn {
+    padding: 0.5rem 1.25rem;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-full);
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tab-btn:hover {
+    border-color: var(--amber);
+    color: var(--text);
+}
+
+.tab-btn.active {
+    background: var(--amber);
+    border-color: var(--amber);
+    color: var(--bg);
+    font-weight: 600;
+}
+
+/* ─── STATUS BADGE ──────────────────────────────────────────────────────── */
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.65rem;
+    border-radius: var(--radius-full);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    white-space: nowrap;
+}
+
+.status-pendente {
+    background: rgba(245, 158, 11, 0.12);
+    color: var(--amber);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.status-aprovada {
+    background: rgba(34, 197, 94, 0.12);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.status-concluido {
+    background: rgba(59, 130, 246, 0.12);
+    color: #3b82f6;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+/* ─── CARD HEADER COM BADGE ─────────────────────────────────────────────── */
+
+.curso-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-bottom: 0.4rem;
+}
+
+.curso-header-top .curso-title {
+    margin: 0;
+    flex: 1;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--text-secondary);
+}
+
+.empty-state svg {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-state h3 {
+    color: var(--text);
+    font-size: 18px;
+    margin: 0 0 0.5rem 0;
+}
+
+.empty-state p {
+    margin: 0;
+    font-size: 14px;
+}
+
+@media (max-width: 768px) {
+    .filters {
+        flex-direction: column;
+    }
+
+    .filter-input {
+        min-width: auto;
+    }
+
+    .cursos-grid {
+        grid-template-columns: 1fr;
+    }
+}

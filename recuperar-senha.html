@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="assets/img/favi-t35.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recuperar Senha - T35 Academy</title>
+    <link rel="stylesheet" href="assets/css/design-system.css">
+    <link rel="stylesheet" href="assets/css/responsive.css">
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--bg) 0%, var(--bg2) 100%);
+            font-family: var(--font-family);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 420px;
+            padding: 2rem;
+            background: var(--bg2);
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header img {
+            height: 60px;
+            margin-bottom: 1rem;
+        }
+
+        .header h1 {
+            color: var(--text);
+            font-size: 24px;
+            margin: 0 0 0.5rem 0;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .icon-wrap {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: rgba(245, 158, 11, 0.12);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.25rem auto;
+            color: var(--amber);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            color: var(--text);
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 14px;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--amber);
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--amber);
+            color: var(--bg);
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 1rem;
+        }
+
+        .btn-submit:hover {
+            background: #f08a00;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(245, 158, 11, 0.2);
+        }
+
+        .btn-submit:active { transform: translateY(0); }
+        .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+        .alert {
+            padding: 0.85rem 1rem;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 1.25rem;
+            display: none;
+            line-height: 1.5;
+        }
+
+        .alert-error   { background: rgba(239,68,68,0.1);   border: 1px solid rgba(239,68,68,0.3);   color: #ef4444; }
+        .alert-success { background: rgba(34,197,94,0.1);   border: 1px solid rgba(34,197,94,0.3);   color: #22c55e; }
+
+        .success-state { display: none; text-align: center; }
+        .success-state .check-icon {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: rgba(34,197,94,0.12);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.25rem auto;
+            color: #22c55e;
+        }
+        .success-state h2 {
+            color: var(--text);
+            font-size: 20px;
+            margin: 0 0 0.75rem 0;
+        }
+        .success-state p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.6;
+            margin: 0 0 1.5rem 0;
+        }
+
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+            color: var(--amber);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+        .back-link:hover { opacity: 0.8; }
+
+        @media (max-width: 480px) {
+            .container { margin: 1rem; padding: 1.5rem; }
+            .header h1 { font-size: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Formulário -->
+        <div id="formState">
+            <div class="header">
+                <img src="assets/img/t35logo.png" alt="T35 Academy">
+                <div class="icon-wrap">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                </div>
+                <h1>Recuperar Senha</h1>
+                <p>Digite seu email e enviaremos um link para redefinir sua senha.</p>
+            </div>
+
+            <div id="alertError"   class="alert alert-error"></div>
+            <div id="alertSuccess" class="alert alert-success"></div>
+
+            <form id="resetForm">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" placeholder="seu@email.com" required autofocus>
+                </div>
+                <button type="submit" class="btn-submit" id="btnSubmit">Enviar link de recuperação</button>
+            </form>
+
+            <a href="login.html" class="back-link">
+                ← Voltar para o login
+            </a>
+        </div>
+
+        <!-- Estado de sucesso -->
+        <div class="success-state" id="successState">
+            <div class="check-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+            </div>
+            <h2>Email enviado!</h2>
+            <p id="successMsg">Verifique sua caixa de entrada e siga as instruções para redefinir sua senha.</p>
+            <button class="btn-submit" onclick="window.location.href='login.html'">Voltar para o Login</button>
+            <p style="font-size:12px;color:var(--text-secondary);margin-top:1rem">
+                Não recebeu? Verifique a pasta de spam ou
+                <a href="#" id="btnReenviar" style="color:var(--amber);text-decoration:none;font-weight:600">reenvie o email</a>.
+            </p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { auth } from './firebase-config.js';
+        import { sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js';
+
+        const form     = document.getElementById('resetForm');
+        const btnSubmit = document.getElementById('btnSubmit');
+        const alertErr  = document.getElementById('alertError');
+        const alertOk   = document.getElementById('alertSuccess');
+        let emailUsado  = '';
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await enviarEmail();
+        });
+
+        document.getElementById('btnReenviar').addEventListener('click', async (e) => {
+            e.preventDefault();
+            await enviarEmail(true);
+        });
+
+        async function enviarEmail(reenvio = false) {
+            const email = (document.getElementById('email')?.value || emailUsado).trim();
+            if (!email) return;
+
+            btnSubmit.disabled    = true;
+            btnSubmit.textContent = 'Enviando...';
+            alertErr.style.display  = 'none';
+            alertOk.style.display   = 'none';
+
+            try {
+                await sendPasswordResetEmail(auth, email);
+
+                emailUsado = email;
+
+                if (reenvio) {
+                    const msg = document.querySelector('#successState p');
+                    if (msg) {
+                        msg.textContent = 'Email reenviado com sucesso!';
+                        msg.style.color = '#22c55e';
+                    }
+                } else {
+                    document.getElementById('formState').style.display    = 'none';
+                    document.getElementById('successState').style.display = 'block';
+                    document.getElementById('successMsg').textContent =
+                        `Enviamos as instruções para ${email}. Verifique sua caixa de entrada.`;
+                }
+            } catch (err) {
+                console.error(err);
+                alertErr.textContent   = traduzirErro(err.code);
+                alertErr.style.display = 'block';
+            } finally {
+                btnSubmit.disabled    = false;
+                btnSubmit.textContent = 'Enviar link de recuperação';
+            }
+        }
+
+        function traduzirErro(code) {
+            const erros = {
+                'auth/user-not-found':    'Nenhuma conta encontrada com este email.',
+                'auth/invalid-email':     'Email inválido. Verifique e tente novamente.',
+                'auth/too-many-requests': 'Muitas tentativas. Aguarde alguns minutos e tente novamente.',
+                'auth/network-request-failed': 'Sem conexão. Verifique sua internet.'
+            };
+            return erros[code] ?? 'Ocorreu um erro. Tente novamente.';
+        }
+    </script>
+</body>
+</html>

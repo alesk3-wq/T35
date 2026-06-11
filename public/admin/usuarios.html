@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="../assets/img/favi-t35.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Usuários - T35 Academy</title>
+    <link rel="stylesheet" href="../assets/css/design-system.css">
+    <link rel="stylesheet" href="../assets/css/layout.css">
+    <link rel="stylesheet" href="../assets/css/responsive.css">
+    <style>
+        .content { padding: 2rem; }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .page-header h1 { color: var(--text); font-size: 28px; margin: 0; }
+
+        .filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .filters input,
+        .filters select {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            max-width: 300px;
+        }
+
+        .table-container {
+            background: var(--bg2);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .actions { display: flex; gap: 0.75rem; }
+
+        .btn-edit, .btn-delete {
+            padding: 0.4rem 0.9rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-edit { background: rgba(59,130,246,0.15); color: #3b82f6; }
+        .btn-edit:hover { background: rgba(59,130,246,0.3); }
+
+        .btn-delete { background: rgba(239,68,68,0.15); color: #ef4444; }
+        .btn-delete:hover { background: rgba(239,68,68,0.3); }
+
+        .role-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .role-admin { background: rgba(245,158,11,0.15); color: var(--amber); }
+        .role-instrutor { background: rgba(59,130,246,0.15); color: #3b82f6; }
+        .role-candidato { background: rgba(34,197,94,0.15); color: #22c55e; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active { display: flex; }
+
+        .modal-content {
+            background: var(--bg2);
+            border-radius: 12px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-header h2 { color: var(--text); font-size: 20px; margin: 0; }
+
+        .btn-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 24px;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 1.5rem;
+        }
+
+        .btn-cancel, .btn-save {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-cancel { background: var(--border); color: var(--text); }
+        .btn-cancel:hover { background: rgba(255,255,255,0.1); }
+        .btn-save { background: var(--amber); color: var(--bg); }
+        .btn-save:hover { background: var(--amber-dark); }
+
+        .success-message, .error-message {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .success-message {
+            background: rgba(34,197,94,0.1);
+            border: 1px solid rgba(34,197,94,0.3);
+            color: #22c55e;
+        }
+
+        .error-message {
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.3);
+            color: #ef4444;
+        }
+
+        @media (max-width: 768px) {
+            .filters { flex-direction: column; }
+            .filters input, .filters select { max-width: 100%; }
+            .page-header { flex-direction: column; gap: 1rem; align-items: flex-start; }
+            table { font-size: 12px; }
+            th, td { padding: 0.6rem 0.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img src="../assets/img/t35logo.png" alt="T35 Academy" class="logo">
+            <h2>T35 Academy</h2>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="dashboard.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                <span>Dashboard</span>
+            </a>
+            <a href="usuarios.html" class="nav-item active">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                <span>Usuários</span>
+            </a>
+            <a href="cursos.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
+                <span>Cursos</span>
+            </a>
+            <a href="inscricoes.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"></path>
+                    <rect x="9" y="3" width="6" height="4" rx="1"></rect>
+                    <line x1="9" y1="12" x2="15" y2="12"></line>
+                    <line x1="9" y1="16" x2="13" y2="16"></line>
+                </svg>
+                <span>Inscrições</span>
+            </a>
+            <a href="empresas.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                </svg>
+                <span>Empresas</span>
+            </a>
+            <a href="relatorios.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="20" x2="18" y2="10"></line>
+                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                    <line x1="6" y1="20" x2="6" y2="14"></line>
+                </svg>
+                <span>Relatórios</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="btn-logout" id="btnLogout">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                <span>Logout</span>
+            </button>
+        </div>
+    </aside>
+
+    <div class="topbar">
+        <button class="btn-menu" id="btnMenu">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
+        <h1 class="page-title">Usuários</h1>
+    </div>
+
+    <main class="main">
+        <div class="content">
+            <div id="successMessage" class="success-message"></div>
+            <div id="errorMessage" class="error-message"></div>
+
+            <div class="page-header">
+                <h1>Gerenciar Usuários</h1>
+            </div>
+
+            <div class="filters">
+                <input type="text" id="searchInput" placeholder="Buscar por nome ou email...">
+                <select id="roleFilter">
+                    <option value="">Todos os perfis</option>
+                    <option value="candidato">Candidato</option>
+                    <option value="instrutor">Instrutor</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Email</th>
+                            <th>Perfil</th>
+                            <th>CPF</th>
+                            <th>Empresa</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersList">
+                        <tr>
+                            <td colspan="6" style="text-align:center;color:var(--text-secondary)">Carregando...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal de edição -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Editar Usuário</h2>
+                <button class="btn-close" id="btnCloseModal">&times;</button>
+            </div>
+            <form id="editForm">
+                <div class="form-group">
+                    <label>Nome</label>
+                    <input type="text" id="editName" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="editEmail" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Perfil</label>
+                    <select id="editRole" required>
+                        <option value="candidato">Candidato</option>
+                        <option value="instrutor">Instrutor</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>CPF</label>
+                    <input type="text" id="editCpf">
+                </div>
+                <div class="form-group">
+                    <label>Telefone</label>
+                    <input type="tel" id="editPhone">
+                </div>
+                <div class="form-group">
+                    <label>Empresa</label>
+                    <input type="text" id="editEmpresa">
+                </div>
+            </form>
+            <div class="modal-actions">
+                <button class="btn-cancel" id="btnCancelModal">Cancelar</button>
+                <button class="btn-save" id="btnSaveUser">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { handleLogout } from '../assets/js/auth.js';
+        import { toggleSidebar } from '../assets/js/ui-shell.js';
+        import { auth, db } from '../firebase-config.js';
+        import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js';
+        import {
+            collection, getDocs, doc, getDoc, updateDoc,
+            serverTimestamp, query, where, orderBy
+        } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js';
+
+        document.getElementById('btnMenu').addEventListener('click', toggleSidebar);
+        document.getElementById('btnLogout').addEventListener('click', handleLogout);
+        document.getElementById('btnCloseModal').addEventListener('click', closeModal);
+        document.getElementById('btnCancelModal').addEventListener('click', closeModal);
+        document.getElementById('btnSaveUser').addEventListener('click', saveUser);
+        document.getElementById('searchInput').addEventListener('input', filterUsers);
+        document.getElementById('roleFilter').addEventListener('change', filterUsers);
+
+        let allUsers = [];
+        let currentEditId = null;
+
+        // Verificar autenticação e role admin
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                window.location.href = '../login.html';
+                return;
+            }
+
+            const q = query(collection(db, 'users'), where('uid', '==', user.uid));
+            const snap = await getDocs(q);
+            const userData = snap.docs[0]?.data();
+
+            if (userData?.role !== 'admin') {
+                alert('Acesso negado! Apenas administradores.');
+                window.location.href = '../login.html';
+                return;
+            }
+
+            loadUsers();
+        });
+
+        async function loadUsers() {
+            try {
+                const snap = await getDocs(query(collection(db, 'users'), orderBy('fullName', 'asc')));
+                allUsers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                renderUsers(allUsers);
+            } catch (err) {
+                showError('Erro ao carregar usuários: ' + err.message);
+            }
+        }
+
+        function renderUsers(users) {
+            const tbody = document.getElementById('usersList');
+
+            if (users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-secondary)">Nenhum usuário encontrado</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = users.map(u => `
+                <tr>
+                    <td>${u.fullName || '-'}</td>
+                    <td>${u.email || '-'}</td>
+                    <td><span class="role-badge role-${u.role}">${u.role}</span></td>
+                    <td>${u.cpf || '-'}</td>
+                    <td>${u.empresa || '-'}</td>
+                    <td>
+                        <div class="actions">
+                            <button class="btn-edit" data-id="${u.id}">Editar</button>
+                            <button class="btn-delete" data-id="${u.id}">Desativar</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+
+            tbody.querySelectorAll('.btn-edit').forEach(btn => {
+                btn.addEventListener('click', () => openModal(btn.dataset.id));
+            });
+
+            tbody.querySelectorAll('.btn-delete').forEach(btn => {
+                btn.addEventListener('click', () => deactivateUser(btn.dataset.id));
+            });
+        }
+
+        function filterUsers() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const role = document.getElementById('roleFilter').value;
+            const filtered = allUsers.filter(u =>
+                (!search || u.fullName?.toLowerCase().includes(search) || u.email?.toLowerCase().includes(search)) &&
+                (!role || u.role === role)
+            );
+            renderUsers(filtered);
+        }
+
+        function openModal(userId) {
+            const user = allUsers.find(u => u.id === userId);
+            if (!user) return;
+            currentEditId = userId;
+            document.getElementById('editName').value = user.fullName || '';
+            document.getElementById('editEmail').value = user.email || '';
+            document.getElementById('editRole').value = user.role || 'candidato';
+            document.getElementById('editCpf').value = user.cpf || '';
+            document.getElementById('editPhone').value = user.phone || '';
+            document.getElementById('editEmpresa').value = user.empresa || '';
+            document.getElementById('editModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('editModal').classList.remove('active');
+            currentEditId = null;
+        }
+
+        async function saveUser() {
+            if (!currentEditId) return;
+            const user = allUsers.find(u => u.id === currentEditId);
+            const newRole = document.getElementById('editRole').value;
+            const roleChanged = user && user.role !== newRole;
+
+            try {
+                await updateDoc(doc(db, 'users', currentEditId), {
+                    fullName: document.getElementById('editName').value,
+                    role: newRole,
+                    cpf: document.getElementById('editCpf').value,
+                    phone: document.getElementById('editPhone').value,
+                    empresa: document.getElementById('editEmpresa').value,
+                    updatedAt: serverTimestamp()
+                });
+
+                const msg = roleChanged
+                    ? `Perfil alterado para "${newRole}". O usuário precisará fazer login novamente para acessar o novo dashboard.`
+                    : 'Usuário atualizado com sucesso!';
+
+                showSuccess(msg);
+                closeModal();
+                loadUsers();
+            } catch (err) {
+                showError('Erro ao salvar: ' + err.message);
+            }
+        }
+
+        async function deactivateUser(userId) {
+            if (!confirm('Desativar este usuário?')) return;
+            try {
+                await updateDoc(doc(db, 'users', userId), {
+                    status: 'inativo',
+                    updatedAt: serverTimestamp()
+                });
+                showSuccess('Usuário desativado.');
+                loadUsers();
+            } catch (err) {
+                showError('Erro ao desativar: ' + err.message);
+            }
+        }
+
+        function showSuccess(msg) {
+            const el = document.getElementById('successMessage');
+            el.textContent = msg;
+            el.style.display = 'block';
+            setTimeout(() => el.style.display = 'none', 3000);
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('errorMessage');
+            el.textContent = msg;
+            el.style.display = 'block';
+            setTimeout(() => el.style.display = 'none', 5000);
+        }
+
+        document.getElementById('editModal').addEventListener('click', e => {
+            if (e.target === document.getElementById('editModal')) closeModal();
+        });
+    </script>
+</body>
+</html>

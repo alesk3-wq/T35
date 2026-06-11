@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="assets/img/favi-t35.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - T35 Academy</title>
+    <link rel="stylesheet" href="assets/css/design-system.css">
+    <link rel="stylesheet" href="assets/css/responsive.css">
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--bg) 0%, var(--bg2) 100%);
+            font-family: var(--font-family);
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 420px;
+            padding: 2rem;
+            background: var(--bg2);
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .login-header img {
+            height: 60px;
+            margin-bottom: 1rem;
+        }
+
+        .login-header h1 {
+            color: var(--text);
+            font-size: 24px;
+            margin: 0 0 0.5rem 0;
+        }
+
+        .login-header p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            color: var(--text);
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 14px;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--amber);
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--amber);
+            color: var(--bg);
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 1rem;
+        }
+
+        .btn-login:hover {
+            background: #f08a00;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(245, 158, 11, 0.2);
+        }
+
+        .btn-login:active {
+            transform: translateY(0);
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 1.5rem 0;
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .divider span {
+            padding: 0 0.75rem;
+        }
+
+        .btn-google {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+
+        .btn-google:hover {
+            background: var(--bg2);
+            border-color: var(--amber);
+        }
+
+        .error-message {
+            padding: 0.75rem 1rem;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            color: #ef4444;
+            font-size: 14px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                margin: 1rem;
+                padding: 1.5rem;
+            }
+
+            .login-header h1 {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <img src="assets/img/t35logo.png" alt="T35 Academy">
+            <h1>T35 Academy</h1>
+            <p>Sistema de Gerenciamento de Cursos</p>
+        </div>
+
+        <div id="errorMessage" class="error-message"></div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" placeholder="seu@email.com" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Senha</label>
+                <input type="password" id="password" placeholder="••••••••" required>
+            </div>
+
+            <div style="text-align:right;margin-top:-0.75rem;margin-bottom:1rem">
+                <a href="recuperar-senha.html" style="color:var(--text-secondary);font-size:13px;text-decoration:none;transition:color 0.2s" onmouseover="this.style.color='var(--amber)'" onmouseout="this.style.color='var(--text-secondary)'">Esqueceu a senha?</a>
+            </div>
+
+            <button type="submit" class="btn-login" id="btnLogin">Entrar</button>
+        </form>
+
+        <div class="divider">
+            <span>OU</span>
+        </div>
+
+        <button type="button" class="btn-google" id="btnGoogle">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+            </svg>
+            Entrar com Google
+        </button>
+
+        <div style="text-align: center; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
+            <p style="color: var(--text-secondary); font-size: 14px; margin: 0 0 0.75rem 0;">
+                Não tem uma conta?
+            </p>
+            <a href="register.html" style="color: var(--amber); text-decoration: none; font-weight: 600; transition: all 0.3s ease; display: inline-block;">
+                Criar nova conta
+            </a>
+        </div>
+        
+    </div>
+
+    <script type="module">
+        import { handleLogin, handleGoogleLogin } from './assets/js/auth.js';
+
+        const loginForm = document.getElementById('loginForm');
+        const btnGoogle = document.getElementById('btnGoogle');
+        const errorMessage = document.getElementById('errorMessage');
+        const btnLogin = document.getElementById('btnLogin');
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            btnLogin.classList.add('loading');
+            btnLogin.textContent = 'Entrando...';
+            errorMessage.style.display = 'none';
+
+            try {
+                await handleLogin(email, password);
+            } catch (error) {
+                console.error('Erro no login:', error);
+                errorMessage.textContent = 'Email ou senha inválidos';
+                errorMessage.style.display = 'block';
+                btnLogin.classList.remove('loading');
+                btnLogin.textContent = 'Entrar';
+            }
+        });
+
+        btnGoogle.addEventListener('click', async () => {
+            btnGoogle.classList.add('loading');
+            btnGoogle.textContent = 'Conectando...';
+            errorMessage.style.display = 'none';
+
+            try {
+                await handleGoogleLogin();
+            } catch (error) {
+                console.error('Erro no Google Login:', error);
+                errorMessage.textContent = 'Erro ao conectar com Google';
+                errorMessage.style.display = 'block';
+                btnGoogle.classList.remove('loading');
+                btnGoogle.textContent = 'Entrar com Google';
+            }
+        });
+    </script>
+</body>
+</html>

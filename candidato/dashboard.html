@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="../assets/img/favi-t35.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - T35 Academy</title>
+    <link rel="stylesheet" href="../assets/css/design-system.css">
+    <link rel="stylesheet" href="../assets/css/layout.css">
+    <link rel="stylesheet" href="../assets/css/dashboard.css">
+    <link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body>
+    <!-- ✅ SIDEBAR (padrão) -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img src="../assets/img/t35logo.png" alt="T35 Academy" class="logo">
+            <h2>T35 Academy</h2>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="dashboard.html" class="nav-item active">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="catalogo.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
+                <span>Catálogo</span>
+            </a>
+
+            <a href="meus-cursos.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2zM22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                </svg>
+                <span>Meus Cursos</span>
+            </a>
+
+            <a href="certificados.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 9l6-3 6 3v6l-6 3-6-3V9z"></path>
+                    <path d="M12 12v6"></path>
+                </svg>
+                <span>Certificados</span>
+            </a>
+
+            <a href="perfil.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                <span>Perfil</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="btn-logout" id="btnLogout">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                <span>Logout</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- ✅ TOPBAR (padrão) -->
+    <div class="topbar">
+        <button class="btn-menu" id="btnMenu">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
+        <h1 class="page-title">Dashboard</h1>
+    </div>
+
+    <!-- ✅ MAIN CONTENT -->
+    <main class="main">
+        <div class="content">
+            <!-- ✅ Cards de estatísticas -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📚</div>
+                    <div class="stat-content">
+                        <h3>Cursos Inscritos</h3>
+                        <p class="stat-value" id="cursosInscritos">0</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-content">
+                        <h3>Cursos Concluídos</h3>
+                        <p class="stat-value" id="cursosConcluidos">0</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">📜</div>
+                    <div class="stat-content">
+                        <h3>Certificados</h3>
+                        <p class="stat-value" id="certificados">0</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">⏳</div>
+                    <div class="stat-content">
+                        <h3>Pendentes</h3>
+                        <p class="stat-value" id="pendentes">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ✅ Cursos próximos -->
+            <div class="section">
+                <h2>Próximos Cursos</h2>
+                <div class="cursos-grid" id="proximosCursos">
+                    <!-- Preenchido por JS -->
+                </div>
+            </div>
+
+            <!-- ✅ Notificações recentes -->
+            <div class="section">
+                <h2>Notificações Recentes</h2>
+                <div class="notifications" id="notificacoes">
+                    <!-- Preenchido por JS -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ✅ Scripts -->
+    <script type="module">
+        import { handleLogout, checkAuth } from '../assets/js/auth.js';
+        import { toggleSidebar } from '../assets/js/ui-shell.js';
+        import { db } from '../firebase-config.js';
+        import { auth } from '../firebase-config.js';
+        import { 
+            collection, 
+            query, 
+            where, 
+            getDocs,
+            orderBy,
+            limit
+        } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js';
+
+        const btnMenu = document.getElementById('btnMenu');
+        const btnLogout = document.getElementById('btnLogout');
+
+        // ✅ Eventos
+        btnMenu.addEventListener('click', toggleSidebar);
+        btnLogout.addEventListener('click', handleLogout);
+
+        // ✅ Verifica autenticação
+        checkAuth().then(user => {
+            if (!user) {
+                window.location.href = '../login.html';
+            } else {
+                loadDashboard(user.uid);
+            }
+        });
+
+        /**
+         * Carrega dados do dashboard
+         */
+        async function loadDashboard(uid) {
+            try {
+                const q = query(
+                    collection(db, 'inscricoes'),
+                    where('candidatoId', '==', uid)
+                );
+                const querySnapshot = await getDocs(q);
+
+                let cursosInscritos = 0;
+                let cursosConcluidos = 0;
+                let pendentes = 0;
+
+                querySnapshot.forEach((doc) => {
+                    const inscricao = doc.data();
+                    cursosInscritos++;
+
+                    if (inscricao.status === 'aprovada') {
+                        cursosConcluidos++;
+                    } else if (inscricao.status === 'pendente') {
+                        pendentes++;
+                    }
+                });
+
+                // ✅ Atualiza cards
+                document.getElementById('cursosInscritos').textContent = cursosInscritos;
+                document.getElementById('cursosConcluidos').textContent = cursosConcluidos;
+                document.getElementById('pendentes').textContent = pendentes;
+
+                // TODO: Buscar certificados do usuário
+                document.getElementById('certificados').textContent = '0';
+
+                // ✅ Carrega próximos cursos
+                await loadProximosCursos();
+
+            } catch (error) {
+                console.error('Erro ao carregar dashboard:', error);
+            }
+        }
+
+        /**
+         * Carrega próximos cursos
+         */
+        async function loadProximosCursos() {
+            try {
+                const q = query(
+                    collection(db, 'cursos'),
+                    where('status', '==', 'ativo'),
+                    orderBy('dataInicio', 'asc'),
+                    limit(3)
+                );
+                const querySnapshot = await getDocs(q);
+
+                const container = document.getElementById('proximosCursos');
+                container.innerHTML = '';
+
+                if (querySnapshot.empty) {
+                    container.innerHTML = '<p class="empty-message">Nenhum curso disponível</p>';
+                    return;
+                }
+
+                querySnapshot.forEach((doc) => {
+                    const curso = doc.data();
+                    const dataInicio = curso.dataInicio?.toDate
+                        ? curso.dataInicio.toDate()
+                        : new Date(curso.dataInicio);
+                    const card = document.createElement('div');
+                    card.className = 'curso-card';
+                    card.innerHTML = `
+                        <div class="curso-header">
+                            <h3>${curso.titulo}</h3>
+                            <span class="badge">${curso.formato}</span>
+                        </div>
+                        <p class="curso-descricao">${curso.descricao}</p>
+                        <div class="curso-info">
+                            <span>📅 ${dataInicio.toLocaleDateString('pt-BR')}</span>
+                            <span>⏱️ ${curso.duracao}</span>
+                        </div>
+                        <a href="catalogo.html" class="btn-small">Ver Detalhes</a>
+                    `;
+                    container.appendChild(card);
+                });
+            } catch (error) {
+                console.error('Erro ao carregar próximos cursos:', error);
+            }
+        }
+    </script>
+</body>
+</html>
