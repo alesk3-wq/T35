@@ -70,6 +70,7 @@
         .s-aprovada  { color: #22c55e !important; }
         .s-concluido { color: #3b82f6 !important; }
         .s-rejeitada { color: #ef4444 !important; }
+        .s-falta     { color: #a855f7 !important; }
 
         .table-container {
             background: var(--bg2);
@@ -114,6 +115,7 @@
         .status-aprovada  { background: rgba(34,197,94,0.12);  color: #22c55e;       border: 1px solid rgba(34,197,94,0.3); }
         .status-concluido { background: rgba(59,130,246,0.12); color: #3b82f6;       border: 1px solid rgba(59,130,246,0.3); }
         .status-rejeitada { background: rgba(239,68,68,0.12);  color: #ef4444;       border: 1px solid rgba(239,68,68,0.3); }
+        .status-falta     { background: rgba(168,85,247,0.12); color: #a855f7;       border: 1px solid rgba(168,85,247,0.3); }
 
         .actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
         .btn-action {
@@ -251,6 +253,10 @@
                     <div class="s-value s-rejeitada" id="cntRejeitada">—</div>
                     <div class="s-label">Rejeitadas</div>
                 </div>
+                <div class="summary-card">
+                    <div class="s-value s-falta" id="cntFalta">—</div>
+                    <div class="s-label">Faltas</div>
+                </div>
             </div>
 
             <div class="filters">
@@ -261,6 +267,7 @@
                     <option value="aprovada">Aprovadas</option>
                     <option value="concluido">Concluídas</option>
                     <option value="rejeitada">Rejeitadas</option>
+                    <option value="falta">Faltas</option>
                 </select>
                 <select id="cursoFilter">
                     <option value="">Todos os meus cursos</option>
@@ -292,7 +299,7 @@
         import { toggleSidebar } from '../assets/js/ui-shell.js';
         import { db } from '../firebase-config.js';
         import {
-            collection, getDocs, doc, updateDoc,
+            collection, getDocs, getDoc, doc, updateDoc,
             query, where, orderBy, serverTimestamp
         } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js';
 
@@ -381,13 +388,14 @@
         }
 
         function atualizarResumo() {
-            const cnt = { pendente: 0, aprovada: 0, concluido: 0, rejeitada: 0 };
+            const cnt = { pendente: 0, aprovada: 0, concluido: 0, rejeitada: 0, falta: 0 };
             todasInscricoes.forEach(i => { if (cnt[i.status] !== undefined) cnt[i.status]++; });
             document.getElementById('cntTotal').textContent     = todasInscricoes.length;
             document.getElementById('cntPendente').textContent  = cnt.pendente;
             document.getElementById('cntAprovada').textContent  = cnt.aprovada;
             document.getElementById('cntConcluido').textContent = cnt.concluido;
             document.getElementById('cntRejeitada').textContent = cnt.rejeitada;
+            document.getElementById('cntFalta').textContent     = cnt.falta;
         }
 
         function renderTabela() {
@@ -443,22 +451,41 @@
                 <button class="btn-action btn-rejeitar" data-id="${i.id}" data-acao="rejeitada">Cancelar</button>`;
             if (i.status === 'rejeitada') return `
                 <button class="btn-action btn-reativar" data-id="${i.id}" data-acao="pendente">Reativar</button>`;
+            if (i.status === 'falta') return `
+                <button class="btn-action btn-reativar" data-id="${i.id}" data-acao="aprovada">Reativar</button>`;
             return '<span style="color:var(--text-secondary);font-size:12px">—</span>';
         }
 
         function labelStatus(s) {
-            return { pendente: 'Pendente', aprovada: 'Aprovada', concluido: 'Concluída', rejeitada: 'Rejeitada' }[s] ?? s;
+            return { pendente: 'Pendente', aprovada: 'Aprovada', concluido: 'Concluída', rejeitada: 'Rejeitada', falta: 'Falta' }[s] ?? s;
         }
 
         async function alterarStatus(inscricaoId, novoStatus) {
+            let statusFinal = novoStatus;
+
+            // Ao concluir, verifica se o instrutor já gerou um código para o curso
+            if (novoStatus === 'concluido') {
+                const insc = todasInscricoes.find(i => i.id === inscricaoId);
+                if (!insc?._curso?.codigoPresenca) {
+                    showAlert('Gere um código de presença na tela de Presença antes de concluir.', 'error');
+                    return;
+                }
+
+                // Busca dados frescos do Firestore para checar se candidato confirmou
+                const inscDoc = await getDoc(doc(db, 'inscricoes', inscricaoId));
+                const presencas = inscDoc.data()?.presencas;
+                const temPresenca = Array.isArray(presencas) && presencas.length > 0;
+                statusFinal = temPresenca ? 'concluido' : 'falta';
+            }
+
             try {
                 await updateDoc(doc(db, 'inscricoes', inscricaoId), {
-                    status: novoStatus,
+                    status: statusFinal,
                     updatedAt: serverTimestamp()
                 });
 
                 const insc = todasInscricoes.find(i => i.id === inscricaoId);
-                if (insc) insc.status = novoStatus;
+                if (insc) insc.status = statusFinal;
 
                 atualizarResumo();
                 renderTabela();
@@ -466,10 +493,11 @@
                 const msgs = {
                     aprovada:  '✓ Inscrição aprovada!',
                     rejeitada: 'Inscrição rejeitada.',
-                    concluido: 'Inscrição marcada como concluída.',
+                    concluido: '✓ Inscrição concluída com presença confirmada.',
+                    falta:     'Falta registrada — candidato não confirmou presença.',
                     pendente:  'Inscrição reativada.'
                 };
-                showAlert(msgs[novoStatus] ?? 'Status atualizado.', 'success');
+                showAlert(msgs[statusFinal] ?? 'Status atualizado.', statusFinal === 'falta' ? 'error' : 'success');
             } catch (err) {
                 showAlert('Erro ao atualizar: ' + err.message, 'error');
                 console.error(err);

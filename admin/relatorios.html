@@ -83,9 +83,11 @@
             font-weight: 600;
         }
 
-        .status-aprovada { background: rgba(34,197,94,0.15); color: #22c55e; }
-        .status-pendente { background: rgba(245,158,11,0.15); color: var(--amber); }
-        .status-rejeitada { background: rgba(239,68,68,0.15); color: #ef4444; }
+        .status-aprovada  { background: rgba(34,197,94,0.15);  color: #22c55e; }
+        .status-pendente  { background: rgba(245,158,11,0.15); color: var(--amber); }
+        .status-rejeitada { background: rgba(239,68,68,0.15);  color: #ef4444; }
+        .status-concluido { background: rgba(59,130,246,0.15); color: #3b82f6; }
+        .status-falta     { background: rgba(168,85,247,0.15); color: #a855f7; }
 
         .summary-grid {
             display: grid;
@@ -122,6 +124,40 @@
             text-align: center;
             padding: 3rem 2rem;
             color: var(--text-secondary);
+        }
+
+        .insc-filters {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .insc-filters input {
+            flex: 1;
+            min-width: 200px;
+            padding: 0.65rem 1rem;
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 13px;
+        }
+
+        .insc-filters select {
+            padding: 0.65rem 1rem;
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 13px;
+            min-width: 160px;
+        }
+
+        .insc-filters input:focus,
+        .insc-filters select:focus {
+            outline: none;
+            border-color: var(--amber);
         }
 
         @media (max-width: 600px) {
@@ -234,6 +270,14 @@
                         <div class="summary-label">Aprovadas</div>
                     </div>
                     <div class="summary-card">
+                        <div class="summary-num" id="inscConcluidas" style="color: #3b82f6;">—</div>
+                        <div class="summary-label">Concluídas</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-num" id="inscFaltas" style="color: #a855f7;">—</div>
+                        <div class="summary-label">Faltas</div>
+                    </div>
+                    <div class="summary-card">
                         <div class="summary-num" id="inscPendentes">—</div>
                         <div class="summary-label">Pendentes</div>
                     </div>
@@ -241,6 +285,18 @@
                         <div class="summary-num" id="inscRejeitadas" style="color: #ef4444;">—</div>
                         <div class="summary-label">Rejeitadas</div>
                     </div>
+                </div>
+
+                <div class="insc-filters">
+                    <input type="text" id="inscBusca" placeholder="Buscar por candidato ou curso...">
+                    <select id="inscStatusFiltro">
+                        <option value="">Todos os status</option>
+                        <option value="aprovada">Aprovada</option>
+                        <option value="concluido">Concluída</option>
+                        <option value="falta">Falta</option>
+                        <option value="pendente">Pendente</option>
+                        <option value="rejeitada">Rejeitada</option>
+                    </select>
                 </div>
 
                 <div class="table-container">
@@ -262,6 +318,15 @@
 
             <!-- Relatório: Cursos -->
             <div class="report-panel" id="panel-cursos">
+                <div class="insc-filters">
+                    <input type="text" id="cursosBusca" placeholder="Buscar por curso ou instrutor...">
+                    <select id="cursosStatusFiltro">
+                        <option value="">Todos os status</option>
+                        <option value="ativo">Ativo</option>
+                        <option value="inativo">Inativo</option>
+                    </select>
+                </div>
+
                 <div class="table-container">
                     <table>
                         <thead>
@@ -270,12 +335,14 @@
                                 <th>Instrutor</th>
                                 <th>Vagas</th>
                                 <th>Inscritos</th>
+                                <th>Concluídos</th>
+                                <th>Faltas</th>
                                 <th>Ocupação</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
                         <tbody id="cursosList">
-                            <tr><td colspan="6" style="text-align:center;color:var(--text-secondary)">Carregando...</td></tr>
+                            <tr><td colspan="8" style="text-align:center;color:var(--text-secondary)">Carregando...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -364,6 +431,35 @@
             ]);
         }
 
+        const labelStatus = {
+            pendente: 'Pendente', aprovada: 'Aprovada',
+            concluido: 'Concluída', falta: 'Falta', rejeitada: 'Rejeitada'
+        };
+
+        let todasInscricoes = [];
+
+        function renderInscricoes() {
+            const busca  = document.getElementById('inscBusca').value.toLowerCase();
+            const status = document.getElementById('inscStatusFiltro').value;
+
+            const filtradas = todasInscricoes.filter(i => {
+                const nomeOk   = !busca  || i._nome.includes(busca) || i._curso.includes(busca);
+                const statusOk = !status || i.status === status;
+                return nomeOk && statusOk;
+            });
+
+            const tbody = document.getElementById('inscricoesList');
+            tbody.innerHTML = filtradas.length > 0
+                ? filtradas.map(i => `
+                    <tr>
+                        <td>${i._nomeExib}</td>
+                        <td>${i._cursoExib}</td>
+                        <td><span class="status-badge status-${i.status}">${labelStatus[i.status] ?? i.status}</span></td>
+                        <td>${i._data}</td>
+                    </tr>`).join('')
+                : '<tr><td colspan="4" style="text-align:center;color:var(--text-secondary);padding:2rem">Nenhuma inscrição encontrada</td></tr>';
+        }
+
         async function loadInscricoes() {
             try {
                 const [inscSnap, usersSnap, cursosSnap] = await Promise.all([
@@ -378,42 +474,76 @@
                 const cursosMap = {};
                 cursosSnap.forEach(d => { cursosMap[d.id] = d.data(); });
 
-                let total = 0, aprovadas = 0, pendentes = 0, rejeitadas = 0;
-                const rows = [];
+                let total = 0, aprovadas = 0, concluidas = 0, faltas = 0, pendentes = 0, rejeitadas = 0;
 
+                todasInscricoes = [];
                 inscSnap.forEach(d => {
                     const insc = d.data();
                     total++;
-                    if (insc.status === 'aprovada') aprovadas++;
-                    else if (insc.status === 'pendente') pendentes++;
+                    if (insc.status === 'aprovada')       aprovadas++;
+                    else if (insc.status === 'concluido') concluidas++;
+                    else if (insc.status === 'falta')     faltas++;
+                    else if (insc.status === 'pendente')  pendentes++;
                     else if (insc.status === 'rejeitada') rejeitadas++;
 
-                    const usuario = usersMap[insc.candidatoId] || {};
-                    const curso = cursosMap[insc.cursoId] || {};
-                    const data = insc.createdAt?.toDate ? insc.createdAt.toDate().toLocaleDateString('pt-BR') : '—';
-
-                    rows.push(`
-                        <tr>
-                            <td>${usuario.fullName || '—'}</td>
-                            <td>${curso.titulo || '—'}</td>
-                            <td><span class="status-badge status-${insc.status}">${insc.status}</span></td>
-                            <td>${data}</td>
-                        </tr>
-                    `);
+                    todasInscricoes.push({
+                        ...insc,
+                        _nome:  (usersMap[insc.candidatoId]?.fullName || '').toLowerCase(),
+                        _curso: (cursosMap[insc.cursoId]?.titulo || '').toLowerCase(),
+                        _data:  insc.createdAt?.toDate ? insc.createdAt.toDate().toLocaleDateString('pt-BR') : '—',
+                        // versões com capitalização original para exibir
+                        _nomeExib:  usersMap[insc.candidatoId]?.fullName || '—',
+                        _cursoExib: cursosMap[insc.cursoId]?.titulo || '—',
+                    });
                 });
 
-                document.getElementById('inscTotal').textContent = total;
-                document.getElementById('inscAprovadas').textContent = aprovadas;
-                document.getElementById('inscPendentes').textContent = pendentes;
+                document.getElementById('inscTotal').textContent      = total;
+                document.getElementById('inscAprovadas').textContent  = aprovadas;
+                document.getElementById('inscConcluidas').textContent = concluidas;
+                document.getElementById('inscFaltas').textContent     = faltas;
+                document.getElementById('inscPendentes').textContent  = pendentes;
                 document.getElementById('inscRejeitadas').textContent = rejeitadas;
 
-                const tbody = document.getElementById('inscricoesList');
-                tbody.innerHTML = rows.length > 0
-                    ? rows.join('')
-                    : '<tr><td colspan="4" style="text-align:center;color:var(--text-secondary)">Nenhuma inscrição encontrada</td></tr>';
+                // Registra os filtros e renderiza
+                document.getElementById('inscBusca').addEventListener('input', renderInscricoes);
+                document.getElementById('inscStatusFiltro').addEventListener('change', renderInscricoes);
+                renderInscricoes();
             } catch (err) {
                 console.error('Erro inscrições:', err);
             }
+        }
+
+        let todosCursosReport = [];
+
+        function renderCursosReport() {
+            const busca  = document.getElementById('cursosBusca').value.toLowerCase();
+            const status = document.getElementById('cursosStatusFiltro').value;
+
+            const filtrados = todosCursosReport.filter(c => {
+                const textoOk  = !busca  || c._titulo.includes(busca) || c._instrutor.includes(busca);
+                const statusOk = !status || c.status === status;
+                return textoOk && statusOk;
+            });
+
+            const tbody = document.getElementById('cursosList');
+            tbody.innerHTML = filtrados.length > 0
+                ? filtrados.map(c => `
+                    <tr>
+                        <td><strong>${c.titulo}</strong></td>
+                        <td>${c.instrutor}</td>
+                        <td>${c.vagas ?? '—'}</td>
+                        <td>${c._dados.total}</td>
+                        <td><span class="status-badge status-concluido">${c._dados.concluidos}</span></td>
+                        <td><span class="status-badge status-falta">${c._dados.faltas}</span></td>
+                        <td style="min-width:120px;">
+                            <div class="progress-bar-wrap">
+                                <div class="progress-bar" style="width:${c._pct}%"></div>
+                            </div>
+                            <span style="font-size:11px;color:var(--text-secondary)">${c._pct}%</span>
+                        </td>
+                        <td><span class="status-badge status-${c.status}">${c.status}</span></td>
+                    </tr>`).join('')
+                : '<tr><td colspan="8" style="text-align:center;color:var(--text-secondary);padding:2rem">Nenhum curso encontrado</td></tr>';
         }
 
         async function loadCursosReport() {
@@ -425,37 +555,28 @@
 
                 const inscPorCurso = {};
                 inscSnap.forEach(d => {
-                    const cursoId = d.data().cursoId;
-                    inscPorCurso[cursoId] = (inscPorCurso[cursoId] || 0) + 1;
+                    const { cursoId, status } = d.data();
+                    if (!inscPorCurso[cursoId]) inscPorCurso[cursoId] = { total: 0, concluidos: 0, faltas: 0 };
+                    if (status !== 'rejeitada') inscPorCurso[cursoId].total++;
+                    if (status === 'concluido') inscPorCurso[cursoId].concluidos++;
+                    if (status === 'falta')     inscPorCurso[cursoId].faltas++;
                 });
 
-                const tbody = document.getElementById('cursosList');
+                todosCursosReport = cursosSnap.docs.map(d => {
+                    const c    = d.data();
+                    const dados = inscPorCurso[d.id] || { total: 0, concluidos: 0, faltas: 0 };
+                    return {
+                        ...c,
+                        _titulo:    (c.titulo    || '').toLowerCase(),
+                        _instrutor: (c.instrutor || '').toLowerCase(),
+                        _dados: dados,
+                        _pct: c.vagas ? Math.min(100, Math.round((dados.concluidos / c.vagas) * 100)) : 0
+                    };
+                });
 
-                if (cursosSnap.empty) {
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-secondary)">Nenhum curso cadastrado</td></tr>';
-                    return;
-                }
-
-                tbody.innerHTML = cursosSnap.docs.map(d => {
-                    const c = d.data();
-                    const inscritos = inscPorCurso[d.id] || 0;
-                    const pct = c.vagas ? Math.min(100, Math.round((inscritos / c.vagas) * 100)) : 0;
-                    return `
-                        <tr>
-                            <td><strong>${c.titulo}</strong></td>
-                            <td>${c.instrutor}</td>
-                            <td>${c.vagas ?? '—'}</td>
-                            <td>${inscritos}</td>
-                            <td style="min-width: 120px;">
-                                <div class="progress-bar-wrap">
-                                    <div class="progress-bar" style="width: ${pct}%"></div>
-                                </div>
-                                <span style="font-size:11px;color:var(--text-secondary)">${pct}%</span>
-                            </td>
-                            <td><span class="status-badge status-${c.status}">${c.status}</span></td>
-                        </tr>
-                    `;
-                }).join('');
+                document.getElementById('cursosBusca').addEventListener('input', renderCursosReport);
+                document.getElementById('cursosStatusFiltro').addEventListener('change', renderCursosReport);
+                renderCursosReport();
             } catch (err) {
                 console.error('Erro cursos report:', err);
             }

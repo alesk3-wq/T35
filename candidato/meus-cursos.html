@@ -91,6 +91,7 @@
                 <button class="tab-btn" data-tab="pendente">Pendentes</button>
                 <button class="tab-btn" data-tab="aprovada">Aprovados</button>
                 <button class="tab-btn" data-tab="concluido">Concluídos</button>
+                <button class="tab-btn" data-tab="falta">Faltas</button>
             </div>
 
             <div class="cursos-grid" id="cursosGrid">
@@ -219,9 +220,10 @@
             emptyState.style.display = 'none';
 
             const statusLabel = {
-                'pendente': 'Pendente',
-                'aprovada': 'Aprovado',
-                'concluido': 'Concluído'
+                'pendente':  'Pendente',
+                'aprovada':  'Aprovado',
+                'concluido': 'Concluído',
+                'falta':     'Falta'
             };
 
             const hoje = new Date().toISOString().split('T')[0];

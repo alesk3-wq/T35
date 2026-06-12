@@ -30,12 +30,34 @@ onAuthStateChanged(auth, async (user) => {
         _userData  = snap.docs[0].data();
 
         _injectBell();
+        _injectSidebarUser();
         _checkEmailVerification(user);
         await _loadNotifications();
     } catch (err) {
         console.error('[notifications] init error:', err);
     }
 });
+
+// ─────────────────────────────────────────────
+// USUÁRIO NA SIDEBAR
+// ─────────────────────────────────────────────
+
+function _injectSidebarUser() {
+    const footer = document.querySelector('.sidebar-footer');
+    if (!footer || footer.querySelector('.sidebar-user')) return;
+
+    const inicial = (_userData.fullName || _userData.email || '?')[0].toUpperCase();
+    const userEl = document.createElement('div');
+    userEl.className = 'sidebar-user';
+    userEl.innerHTML = `
+        <div class="sidebar-user-avatar">${inicial}</div>
+        <div class="sidebar-user-info">
+            <span class="sidebar-user-name">${_userData.fullName || 'Usuário'}</span>
+            <span class="sidebar-user-email">${_userData.email || ''}</span>
+        </div>
+    `;
+    footer.insertBefore(userEl, footer.firstChild);
+}
 
 // ─────────────────────────────────────────────
 // SINO
