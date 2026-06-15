@@ -145,4 +145,27 @@ export function convertDateToISO(dateString) {
     return `${year}-${month}-${day}`;
 }
 
+/**
+ * Aplica uma máscara num input preservando a posição do cursor.
+ * Resolve o problema de o cursor saltar para o final ao apagar pontos/traços.
+ * @param {HTMLInputElement} input
+ * @param {Function} formatFn - função de formatação (formatCPF, formatPhone…)
+ */
+export function applyMask(input, formatFn) {
+    const pos = input.selectionStart;
+    // Conta quantos dígitos há antes do cursor na string atual
+    const digitsBeforeCursor = input.value.slice(0, pos).replace(/\D/g, '').length;
+
+    input.value = formatFn(input.value);
+
+    // Encontra a nova posição: avança até ter visto o mesmo número de dígitos
+    let digitsSeen = 0;
+    let newPos = input.value.length;
+    for (let i = 0; i < input.value.length; i++) {
+        if (digitsSeen === digitsBeforeCursor) { newPos = i; break; }
+        if (/\d/.test(input.value[i])) digitsSeen++;
+    }
+    input.setSelectionRange(newPos, newPos);
+}
+
 console.log('✅ Utils carregado com sucesso!');

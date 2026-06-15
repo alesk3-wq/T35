@@ -47,7 +47,7 @@
         }
 
         .register-header img {
-            height: 50px;
+            height: 100px;
             margin-bottom: 0.75rem;
         }
 
@@ -293,7 +293,7 @@
     <!-- ✅ Script com módulos -->
     <script type="module">
         import { handleRegister } from './assets/js/auth.js';
-        import { formatCPF, formatPhone, validateCPF, removePhoneFormat, removeCPFFormat } from './assets/js/utils.js';
+        import { formatCPF, formatPhone, validateCPF, removePhoneFormat, removeCPFFormat, applyMask } from './assets/js/utils.js';
         import { db } from './firebase-config.js';
         import { collection, getDocs, query, orderBy } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js';
 
@@ -310,12 +310,12 @@
 
         // ✅ Máscara automática para CPF
         cpfInput.addEventListener('input', (e) => {
-            e.target.value = formatCPF(e.target.value);
+            applyMask(e.target, formatCPF);
         });
 
         // ✅ Máscara automática para Telefone
         phoneInput.addEventListener('input', (e) => {
-            e.target.value = formatPhone(e.target.value);
+            applyMask(e.target, formatPhone);
         });
 
         // ✅ Carrega lista de empresas do Firestore

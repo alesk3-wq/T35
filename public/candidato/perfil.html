@@ -299,7 +299,7 @@
     <script type="module">
         import { handleLogout, checkAuth } from '../assets/js/auth.js';
         import { toggleSidebar } from '../assets/js/ui-shell.js';
-        import { formatCPF, formatPhone, validateCPF, removeCPFFormat, removePhoneFormat } from '../assets/js/utils.js';
+        import { formatCPF, formatPhone, validateCPF, removeCPFFormat, removePhoneFormat, applyMask } from '../assets/js/utils.js';
         import { db } from '../firebase-config.js';
         import {
             collection, getDocs, query, where, orderBy, doc, updateDoc
@@ -310,7 +310,7 @@
 
         // Máscara de telefone — sempre ativa (campo sempre editável)
         document.getElementById('phone').addEventListener('input', (e) => {
-            e.target.value = formatPhone(e.target.value);
+            applyMask(e.target, formatPhone);
         });
 
         let userDocId = null;
@@ -379,7 +379,7 @@
                     cpfInput.removeAttribute('disabled');
                     document.getElementById('hintCpf').textContent = 'Preencha seu CPF para completar o cadastro';
                     cpfInput.addEventListener('input', (e) => {
-                        e.target.value = formatCPF(e.target.value);
+                        applyMask(e.target, formatCPF);
                     });
                 }
                 if (!u.matricula) {

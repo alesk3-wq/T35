@@ -287,13 +287,14 @@
                             <th>Candidato</th>
                             <th>Empresa</th>
                             <th>Curso</th>
+                            <th>Instrutor</th>
                             <th>Data Inscrição</th>
                             <th>Status</th>
                             <th>Ações</th>
                         </tr>
                     </thead>
                     <tbody id="inscricoesList">
-                        <tr><td colspan="6" style="text-align:center;color:var(--text-secondary)">Carregando...</td></tr>
+                        <tr><td colspan="7" style="text-align:center;color:var(--text-secondary)">Carregando...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -398,7 +399,7 @@
             const tbody = document.getElementById('inscricoesList');
 
             if (filtradas.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-secondary);padding:2rem">Nenhuma inscrição encontrada</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-secondary);padding:2rem">Nenhuma inscrição encontrada</td></tr>';
                 return;
             }
 
@@ -417,6 +418,7 @@
                         </td>
                         <td>${i._candidato?.empresa ?? '—'}</td>
                         <td>${i._curso?.titulo ?? '—'}</td>
+                        <td>${i._curso?.instrutor ?? '—'}</td>
                         <td style="white-space:nowrap">${data}</td>
                         <td><span class="status-badge status-${i.status}">${labelStatus(i.status)}</span></td>
                         <td><div class="actions">${acoes}</div></td>

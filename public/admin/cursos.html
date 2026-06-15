@@ -46,7 +46,9 @@
         .table-container {
             background: var(--bg2);
             border-radius: 12px;
-            overflow: hidden;
+            overflow-x: auto;
+            overflow-y: auto;
+            max-height: calc(100vh - 260px);
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
 
@@ -197,6 +199,13 @@
         textarea {
             min-height: 80px;
             resize: vertical;
+        }
+
+        .table-container thead th {
+            position: sticky;
+            top: 0;
+            background: var(--bg2);
+            z-index: 1;
         }
 
         @media (max-width: 768px) {
