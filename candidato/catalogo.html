@@ -9,6 +9,30 @@
     <link rel="stylesheet" href="../assets/css/layout.css">
     <link rel="stylesheet" href="../assets/css/catalogo.css">
     <link rel="stylesheet" href="../assets/css/responsive.css">
+    <style>
+        .badge-encerrado {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.2rem 0.6rem;
+            background: rgba(100,116,139,0.2);
+            color: #94a3b8;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .btn-encerrado {
+            background: var(--bg) !important;
+            border: 1px solid var(--border) !important;
+            color: var(--text-secondary) !important;
+            cursor: not-allowed !important;
+        }
+
+        .curso-card.encerrado { opacity: 0.7; }
+    </style>
 </head>
 <body>
     <!-- ✅ SIDEBAR -->
@@ -160,6 +184,13 @@
             }
         }
 
+        function cursoEncerrado(curso) {
+            if (!curso.dataFim) return false;
+            const fim = curso.dataFim.toDate ? curso.dataFim.toDate() : new Date(curso.dataFim);
+            fim.setHours(23, 59, 59, 999);
+            return fim < new Date();
+        }
+
         function renderizarCursos(cursos) {
             cursosContainer.innerHTML = '';
 
@@ -171,12 +202,18 @@
             emptyState.style.display = 'none';
 
             cursos.forEach((curso) => {
-                const inscrito = inscricoesSet.has(curso.id);
+                const inscrito    = inscricoesSet.has(curso.id);
+                const encerrado   = cursoEncerrado(curso);
+                const bloqueado   = inscrito || encerrado;
+
                 const card = document.createElement('div');
-                card.className = 'curso-card';
+                card.className = `curso-card${encerrado ? ' encerrado' : ''}`;
                 card.innerHTML = `
                     <div class="curso-header">
-                        <h3 class="curso-title">${curso.titulo}</h3>
+                        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:0.5rem;margin-bottom:0.25rem;">
+                            <h3 class="curso-title" style="margin:0">${curso.titulo}</h3>
+                            ${encerrado ? '<span class="badge-encerrado">Encerrado</span>' : ''}
+                        </div>
                         <p class="curso-instructor">👨‍🏫 ${curso.instrutor}</p>
                     </div>
 
@@ -192,6 +229,7 @@
                                     <line x1="3" y1="10" x2="21" y2="10"></line>
                                 </svg>
                                 ${formatarData(curso.dataInicio)} – ${formatarData(curso.dataFim)}
+                                ${curso.horaInicio ? `&nbsp;·&nbsp;${curso.horaInicio}` : ''}
                             </div>
                         </div>
 
@@ -213,11 +251,11 @@
                         </div>
 
                         <button
-                            class="btn-inscrever ${inscrito ? 'btn-inscrito' : ''}"
+                            class="btn-inscrever ${encerrado ? 'btn-encerrado' : (inscrito ? 'btn-inscrito' : '')}"
                             data-curso-id="${curso.id}"
-                            ${inscrito ? 'disabled' : `onclick="inscreverCurso('${curso.id}')"`}
+                            ${bloqueado ? 'disabled' : `onclick="inscreverCurso('${curso.id}')"`}
                         >
-                            ${inscrito ? '✓ Inscrito' : 'Inscrever-se'}
+                            ${encerrado ? 'Encerrado' : (inscrito ? '✓ Inscrito' : 'Inscrever-se')}
                         </button>
                     </div>
                 `;
@@ -241,6 +279,12 @@
             const user = auth.currentUser;
             if (!user) {
                 alert('Você precisa estar logado para se inscrever');
+                return;
+            }
+
+            const curso = todosOsCursos.find(c => c.id === cursoId);
+            if (curso && cursoEncerrado(curso)) {
+                alert('As inscrições para este curso estão encerradas.');
                 return;
             }
 

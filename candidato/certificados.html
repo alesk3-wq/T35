@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="../assets/css/design-system.css">
     <link rel="stylesheet" href="../assets/css/layout.css">
     <link rel="stylesheet" href="../assets/css/responsive.css">
+    <!-- jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         .content { padding: 2rem; }
 
@@ -33,7 +35,7 @@
 
         .cert-banner {
             height: 80px;
-            background: linear-gradient(135deg, var(--amber), var(--amber-dark));
+            background: linear-gradient(135deg, var(--amber), #d97706);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -73,6 +75,13 @@
 
         .cert-info-row svg { flex-shrink: 0; }
 
+        .cert-num {
+            font-size: 11px;
+            font-family: monospace;
+            color: var(--text-secondary);
+            letter-spacing: 0.04em;
+        }
+
         .cert-footer {
             padding: 1rem 1.5rem;
             border-top: 1px solid var(--border);
@@ -84,18 +93,19 @@
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            padding: 0.5rem 1rem;
+            padding: 0.6rem 1.1rem;
             background: var(--amber);
             color: var(--bg);
             border: none;
             border-radius: 8px;
             font-size: 13px;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: background 0.2s;
         }
 
-        .btn-download:hover { background: var(--amber-dark); }
+        .btn-download:hover { background: #d97706; }
+        .btn-download:disabled { opacity: 0.55; cursor: not-allowed; }
 
         .empty-state {
             text-align: center;
@@ -107,19 +117,13 @@
         }
 
         .empty-state svg {
-            width: 64px;
-            height: 64px;
+            width: 64px; height: 64px;
             opacity: 0.3;
             margin-bottom: 1.25rem;
         }
 
-        .empty-state h3 {
-            color: var(--text);
-            font-size: 18px;
-            margin: 0 0 0.5rem 0;
-        }
-
-        .empty-state p { font-size: 14px; margin: 0; }
+        .empty-state h3 { color: var(--text); font-size: 18px; margin: 0 0 0.5rem 0; }
+        .empty-state p  { font-size: 14px; margin: 0; }
 
         .page-title-row {
             display: flex;
@@ -152,7 +156,6 @@
             <img src="../assets/img/t35logo.png" alt="T35 Academy" class="logo">
             <h2>T35 Academy</h2>
         </div>
-
         <nav class="sidebar-nav">
             <a href="dashboard.html" class="nav-item">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -189,7 +192,6 @@
                 <span>Perfil</span>
             </a>
         </nav>
-
         <div class="sidebar-footer">
             <button class="btn-logout" id="btnLogout">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -217,11 +219,10 @@
         <div class="content">
             <div class="page-title-row">
                 <h1>Meus Certificados</h1>
-                <span class="count-badge" id="certCount">0 certificado(s)</span>
+                <span class="count-badge" id="certCount" style="display:none"></span>
             </div>
-
             <div id="certsContainer">
-                <p style="color: var(--text-secondary); font-size: 14px;">Carregando...</p>
+                <p style="color:var(--text-secondary);font-size:14px;">Carregando...</p>
             </div>
         </div>
     </main>
@@ -237,21 +238,36 @@
         document.getElementById('btnMenu').addEventListener('click', toggleSidebar);
         document.getElementById('btnLogout').addEventListener('click', handleLogout);
 
+        let _userName = '';
+
         checkAuth().then(async user => {
             if (!user) { window.location.href = '../login.html'; return; }
+
+            const userSnap = await getDocs(query(collection(db, 'users'), where('uid', '==', user.uid)));
+            if (!userSnap.empty) _userName = userSnap.docs[0].data().fullName || user.displayName || 'Participante';
+
             loadCertificados(user.uid);
         });
 
         async function loadCertificados(uid) {
             const container = document.getElementById('certsContainer');
-
             try {
-                const q = query(collection(db, 'certificados'), where('candidatoId', '==', uid));
+                const q = query(
+                    collection(db, 'inscricoes'),
+                    where('candidatoId', '==', uid),
+                    where('status', '==', 'concluido')
+                );
                 const snap = await getDocs(q);
 
-                document.getElementById('certCount').textContent = `${snap.size} certificado(s)`;
+                const promises = snap.docs.map(async d => {
+                    const insc = d.data();
+                    const cursoDoc = await getDoc(doc(db, 'cursos', insc.cursoId));
+                    return { id: d.id, ...insc, curso: cursoDoc.exists() ? cursoDoc.data() : null };
+                });
 
-                if (snap.empty) {
+                const concluidos = (await Promise.all(promises)).filter(i => i.curso);
+
+                if (concluidos.length === 0) {
                     container.innerHTML = `
                         <div class="empty-state">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -260,39 +276,25 @@
                             </svg>
                             <h3>Nenhum certificado ainda</h3>
                             <p>Conclua um curso para receber seu certificado</p>
-                        </div>
-                    `;
+                        </div>`;
                     return;
                 }
 
-                const certs = [];
-                for (const certDoc of snap.docs) {
-                    const cert = certDoc.data();
-                    let cursoNome = cert.cursoNome || '—';
-                    let cursoInstrutor = cert.cursoInstrutor || '—';
-                    let cursoDuracao = cert.cursoDuracao || null;
+                const badge = document.getElementById('certCount');
+                badge.textContent = `${concluidos.length} certificado${concluidos.length > 1 ? 's' : ''}`;
+                badge.style.display = 'inline-flex';
 
-                    if (cert.cursoId && !cert.cursoNome) {
-                        try {
-                            const cursoDoc = await getDoc(doc(db, 'cursos', cert.cursoId));
-                            if (cursoDoc.exists()) {
-                                const c = cursoDoc.data();
-                                cursoNome = c.titulo || '—';
-                                cursoInstrutor = c.instrutor || '—';
-                                cursoDuracao = c.duracao || null;
-                            }
-                        } catch (_) {}
-                    }
+                container.innerHTML = `<div class="certs-grid" id="certsGrid"></div>`;
+                const grid = document.getElementById('certsGrid');
 
-                    const emitidoEm = cert.emitidoEm?.toDate
-                        ? cert.emitidoEm.toDate().toLocaleDateString('pt-BR')
-                        : '—';
+                concluidos.forEach(insc => {
+                    const curso = insc.curso;
+                    const numCert = numeroCertificado(insc.id);
+                    const dataConcl = dataConclucao(insc);
 
-                    certs.push({ id: certDoc.id, cursoNome, cursoInstrutor, cursoDuracao, emitidoEm });
-                }
-
-                container.innerHTML = `<div class="certs-grid">${certs.map(c => `
-                    <div class="cert-card">
+                    const card = document.createElement('div');
+                    card.className = 'cert-card';
+                    card.innerHTML = `
                         <div class="cert-banner">
                             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
                                 <circle cx="12" cy="8" r="6"></circle>
@@ -300,48 +302,200 @@
                             </svg>
                         </div>
                         <div class="cert-body">
-                            <h3 class="cert-titulo">${c.cursoNome}</h3>
-                            <p class="cert-instrutor">👨‍🏫 ${c.cursoInstrutor}</p>
+                            <h3 class="cert-titulo">${curso.titulo}</h3>
+                            <p class="cert-instrutor">👨‍🏫 ${curso.instrutor}</p>
                             <div class="cert-info">
                                 <div class="cert-info-row">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                                        <line x1="16" y1="2" x2="16" y2="6"></line>
-                                        <line x1="8" y1="2" x2="8" y2="6"></line>
-                                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                                        <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
                                     </svg>
-                                    Emitido em ${c.emitidoEm}
+                                    Concluído em ${dataConcl}
                                 </div>
-                                ${c.cursoDuracao ? `<div class="cert-info-row">
+                                ${curso.duracao ? `<div class="cert-info-row">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <circle cx="12" cy="12" r="10"></circle>
-                                        <polyline points="12 6 12 12 16 14"></polyline>
+                                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
                                     </svg>
-                                    Carga horária: ${c.cursoDuracao}
+                                    Carga horária: ${curso.duracao}
                                 </div>` : ''}
                             </div>
+                            <span class="cert-num">Nº ${numCert}</span>
                         </div>
                         <div class="cert-footer">
-                            <button class="btn-download" onclick="baixarCertificado('${c.id}')">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                    <polyline points="7 10 12 15 17 10"></polyline>
-                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                            <button class="btn-download">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="7 10 12 15 17 10"/>
+                                    <line x1="12" y1="15" x2="12" y2="3"/>
                                 </svg>
                                 Baixar PDF
                             </button>
                         </div>
-                    </div>
-                `).join('')}</div>`;
+                    `;
+
+                    card.querySelector('.btn-download').addEventListener('click', (e) => {
+                        gerarCertificado(insc, e.currentTarget);
+                    });
+
+                    grid.appendChild(card);
+                });
+
             } catch (err) {
-                console.error('Erro ao carregar certificados:', err);
-                container.innerHTML = '<p style="color:var(--text-secondary)">Erro ao carregar certificados</p>';
+                console.error(err);
+                container.innerHTML = '<p style="color:var(--text-secondary)">Erro ao carregar certificados.</p>';
             }
         }
 
-        window.baixarCertificado = function(certId) {
-            alert('Geração de PDF em desenvolvimento.\nID do certificado: ' + certId);
-        };
+        // ── Geração do PDF ────────────────────────────────────────────────
+
+        async function gerarCertificado(insc, btn) {
+            btn.disabled = true;
+            btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Gerando...`;
+
+            try {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+                const W = 297, H = 210;
+                const curso = insc.curso;
+                const numCert = numeroCertificado(insc.id);
+                const dataConcl = dataConclucao(insc);
+
+                // Fundo levemente creme
+                pdf.setFillColor(255, 255, 252);
+                pdf.rect(0, 0, W, H, 'F');
+
+                // Borda externa âmbar
+                pdf.setDrawColor(245, 158, 11);
+                pdf.setLineWidth(1.5);
+                pdf.rect(8, 8, W - 16, H - 16);
+
+                // Borda interna fina
+                pdf.setDrawColor(200, 140, 40);
+                pdf.setLineWidth(0.3);
+                pdf.rect(12, 12, W - 24, H - 24);
+
+                // Logo
+                try {
+                    const logoB64 = await imgToBase64('../assets/img/t35logo.png');
+                    pdf.addImage(logoB64, 'PNG', W / 2 - 14, 16, 28, 28);
+                } catch (_) {}
+
+                // Cabeçalho
+                pdf.setFont('helvetica', 'bold');
+                pdf.setFontSize(10);
+                pdf.setTextColor(130, 90, 10);
+                pdf.text('TEAM 35 ACADEMY', W / 2, 52, { align: 'center' });
+
+                // Linha decorativa
+                pdf.setDrawColor(245, 158, 11);
+                pdf.setLineWidth(0.5);
+                pdf.line(W / 2 - 45, 55.5, W / 2 + 45, 55.5);
+
+                // Título
+                pdf.setFont('helvetica', 'bold');
+                pdf.setFontSize(24);
+                pdf.setTextColor(15, 23, 42);
+                pdf.text('CERTIFICADO DE CONCLUSÃO', W / 2, 69, { align: 'center' });
+
+                // Subtexto
+                pdf.setFont('helvetica', 'normal');
+                pdf.setFontSize(12);
+                pdf.setTextColor(80, 80, 80);
+                pdf.text('Certificamos que', W / 2, 82, { align: 'center' });
+
+                // Nome do candidato
+                pdf.setFont('helvetica', 'bolditalic');
+                pdf.setFontSize(22);
+                pdf.setTextColor(15, 23, 42);
+                pdf.text(_userName, W / 2, 95, { align: 'center' });
+
+                // Linha sob o nome
+                const nw = pdf.getTextWidth(_userName);
+                pdf.setDrawColor(15, 23, 42);
+                pdf.setLineWidth(0.35);
+                pdf.line(W / 2 - nw / 2, 97.5, W / 2 + nw / 2, 97.5);
+
+                // Texto do curso
+                pdf.setFont('helvetica', 'normal');
+                pdf.setFontSize(12);
+                pdf.setTextColor(80, 80, 80);
+                pdf.text('concluiu com êxito o curso', W / 2, 108, { align: 'center' });
+
+                // Nome do curso
+                pdf.setFont('helvetica', 'bold');
+                pdf.setFontSize(16);
+                pdf.setTextColor(15, 23, 42);
+                const tituloLines = pdf.splitTextToSize(curso.titulo.toUpperCase(), 200);
+                pdf.text(tituloLines, W / 2, 118, { align: 'center' });
+
+                const yAfterCurso = 118 + (tituloLines.length - 1) * 7;
+
+                // Instrutor e carga horária
+                pdf.setFont('helvetica', 'normal');
+                pdf.setFontSize(11);
+                pdf.setTextColor(90, 90, 90);
+                const detalhes = `ministrado por  ${curso.instrutor}${curso.duracao ? '  ·  carga horária: ' + curso.duracao : ''}`;
+                pdf.text(detalhes, W / 2, yAfterCurso + 12, { align: 'center' });
+
+                // Linha separadora final
+                pdf.setDrawColor(245, 158, 11);
+                pdf.setLineWidth(0.4);
+                pdf.line(W / 2 - 70, yAfterCurso + 18, W / 2 + 70, yAfterCurso + 18);
+
+                // Rodapé
+                pdf.setFont('helvetica', 'normal');
+                pdf.setFontSize(9);
+                pdf.setTextColor(150, 150, 150);
+                pdf.text(`Certificado Nº ${numCert}`, 20, H - 14);
+                pdf.text(`Concluído em ${dataConcl}`, W / 2, H - 14, { align: 'center' });
+                pdf.text('T35 Academy © 2025', W - 20, H - 14, { align: 'right' });
+
+                const nomeArquivo = `certificado-${curso.titulo.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '').toLowerCase()}-${numCert}.pdf`;
+                pdf.save(nomeArquivo);
+
+            } catch (err) {
+                console.error('Erro ao gerar certificado:', err);
+                alert('Não foi possível gerar o certificado. Tente novamente.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Baixar PDF`;
+            }
+        }
+
+        // ── Helpers ───────────────────────────────────────────────────────
+
+        function numeroCertificado(id) {
+            const c = id.replace(/[^A-Z0-9]/gi, '').toUpperCase().padEnd(8, '0').slice(0, 8);
+            return `${c.slice(0, 4)}-${c.slice(4, 8)}`;
+        }
+
+        function dataConclucao(insc) {
+            const presencas = insc.presencas;
+            if (Array.isArray(presencas) && presencas.length > 0) {
+                const last = [...presencas].sort().pop();
+                const [y, m, d] = last.split('-');
+                return `${d}/${m}/${y}`;
+            }
+            const ts = insc.updatedAt || insc.createdAt;
+            if (!ts) return '—';
+            const dt = ts.toDate ? ts.toDate() : new Date(ts);
+            return dt.toLocaleDateString('pt-BR');
+        }
+
+        function imgToBase64(url) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    const c = document.createElement('canvas');
+                    c.width = img.width; c.height = img.height;
+                    c.getContext('2d').drawImage(img, 0, 0);
+                    resolve(c.toDataURL('image/png'));
+                };
+                img.onerror = reject;
+                img.src = url;
+            });
+        }
     </script>
 </body>
 </html>
