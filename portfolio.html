@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>T35 Academy — Apresentação do Projeto</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:      #0F172A;
+            --bg2:     #1E293B;
+            --border:  #334155;
+            --text:    #F1F5F9;
+            --muted:   #94A3B8;
+            --amber:   #F59E0B;
+            --amber2:  #D97706;
+            --green:   #22C55E;
+            --blue:    #3B82F6;
+            --purple:  #A855F7;
+            --red:     #EF4444;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            background: rgba(15,23,42,0.9);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            height: 56px;
+            z-index: 100;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-weight: 700;
+            font-size: 15px;
+            color: var(--text);
+        }
+
+        .nav-brand img { width: 28px; height: 28px; border-radius: 6px; }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover { color: var(--amber); }
+
+        /* ── SECTIONS ── */
+        section { padding: 5rem 2rem; max-width: 1100px; margin: 0 auto; }
+
+        .section-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.3rem 0.9rem;
+            background: rgba(245,158,11,0.1);
+            border: 1px solid rgba(245,158,11,0.25);
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+            color: var(--amber);
+            margin-bottom: 1rem;
+        }
+
+        h2.section-title {
+            font-size: clamp(26px, 4vw, 38px);
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 0.75rem;
+            line-height: 1.2;
+        }
+
+        .section-sub {
+            font-size: 16px;
+            color: var(--muted);
+            max-width: 580px;
+            margin-bottom: 3rem;
+        }
+
+        /* ── HERO ── */
+        #hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding-top: 56px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-glow {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(245,158,11,0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero-logo {
+            width: 90px;
+            height: 90px;
+            border-radius: 20px;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 0 40px rgba(245,158,11,0.3);
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 1rem;
+            background: rgba(245,158,11,0.1);
+            border: 1px solid rgba(245,158,11,0.3);
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--amber);
+            margin-bottom: 1.5rem;
+        }
+
+        .hero-title {
+            font-size: clamp(36px, 6vw, 64px);
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 1rem;
+            letter-spacing: -0.5px;
+        }
+
+        .hero-title span {
+            background: linear-gradient(135deg, var(--amber), #FCD34D);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-desc {
+            font-size: 18px;
+            color: var(--muted);
+            max-width: 560px;
+            margin: 0 auto 2.5rem;
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: 2.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .hero-stat { text-align: center; }
+
+        .hero-stat-value {
+            font-size: 36px;
+            font-weight: 900;
+            color: var(--amber);
+            line-height: 1;
+        }
+
+        .hero-stat-label {
+            font-size: 12px;
+            color: var(--muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 0.3rem;
+        }
+
+        /* ── GRID DE CARDS ── */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.25rem;
+        }
+
+        .card {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1.5rem;
+            transition: border-color 0.2s, transform 0.2s;
+        }
+
+        .card:hover {
+            border-color: rgba(245,158,11,0.4);
+            transform: translateY(-3px);
+        }
+
+        .card-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            flex-shrink: 0;
+        }
+
+        .card h3 {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 0.4rem;
+        }
+
+        .card p {
+            font-size: 13px;
+            color: var(--muted);
+            line-height: 1.55;
+        }
+
+        /* ── PERFIS ── */
+        .perfis-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.25rem;
+        }
+
+        .perfil-card {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1.75rem 1.5rem;
+            text-align: center;
+        }
+
+        .perfil-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 24px;
+        }
+
+        .perfil-card h3 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+        }
+
+        .perfil-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .perfil-list li {
+            font-size: 12px;
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            justify-content: center;
+        }
+
+        .perfil-list li::before {
+            content: '✓';
+            font-weight: 700;
+            font-size: 11px;
+        }
+
+        /* ── FLUXO ── */
+        .flow {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            flex-wrap: wrap;
+            justify-content: center;
+            row-gap: 1rem;
+        }
+
+        .flow-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            text-align: center;
+            min-width: 110px;
+        }
+
+        .flow-bubble {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            border: 2px solid var(--border);
+        }
+
+        .flow-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--muted);
+        }
+
+        .flow-arrow {
+            color: var(--border);
+            font-size: 20px;
+            padding: 0 0.25rem;
+            margin-top: -1.5rem;
+        }
+
+        /* ── STACK ── */
+        .stack-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .stack-item {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .stack-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .stack-item span {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .stack-item small {
+            display: block;
+            font-size: 11px;
+            color: var(--muted);
+            font-weight: 400;
+        }
+
+        /* ── DIVIDER ── */
+        .divider {
+            border: none;
+            border-top: 1px solid var(--border);
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        /* ── FOOTER ── */
+        footer {
+            text-align: center;
+            padding: 2.5rem 2rem;
+            color: var(--muted);
+            font-size: 13px;
+            border-top: 1px solid var(--border);
+        }
+
+        footer strong { color: var(--amber); }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .perfis-grid { grid-template-columns: 1fr; }
+            .flow-arrow { display: none; }
+            section { padding: 3.5rem 1.25rem; }
+        }
+
+        @media (max-width: 480px) {
+            .cards-grid { grid-template-columns: 1fr; }
+            .hero-stats { gap: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+    <div class="nav-brand">
+        <img src="assets/img/t35logo.png" alt="T35">
+        T35 Academy
+    </div>
+    <ul class="nav-links">
+        <li><a href="#sobre">Sobre</a></li>
+        <li><a href="#funcionalidades">Funcionalidades</a></li>
+        <li><a href="#perfis">Perfis</a></li>
+        <li><a href="#fluxo">Fluxo</a></li>
+        <li><a href="#stack">Tecnologias</a></li>
+    </ul>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+    <div class="hero-glow"></div>
+    <img src="assets/img/t35logo.png" class="hero-logo" alt="T35 Academy">
+    <div class="hero-badge">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        Plataforma de Treinamentos
+    </div>
+    <h1 class="hero-title">T35 <span>Academy</span></h1>
+    <p class="hero-desc">Plataforma completa de gestão de cursos e treinamentos para equipes — do cadastro ao certificado digital.</p>
+
+    <div class="hero-stats">
+        <div class="hero-stat">
+            <div class="hero-stat-value">3</div>
+            <div class="hero-stat-label">Perfis de acesso</div>
+        </div>
+        <div class="hero-stat">
+            <div class="hero-stat-value">15+</div>
+            <div class="hero-stat-label">Telas funcionais</div>
+        </div>
+        <div class="hero-stat">
+            <div class="hero-stat-value">100%</div>
+            <div class="hero-stat-label">Na nuvem</div>
+        </div>
+        <div class="hero-stat">
+            <div class="hero-stat-value">PWA</div>
+            <div class="hero-stat-label">Instalável no celular</div>
+        </div>
+    </div>
+</section>
+
+<hr class="divider">
+
+<!-- SOBRE -->
+<section id="sobre">
+    <div class="section-label">O projeto</div>
+    <h2 class="section-title">O que é a T35 Academy?</h2>
+    <p class="section-sub">Um sistema web completo para gerenciar cursos e treinamentos internos, com controle de inscrições, presenças e emissão automática de certificados — tudo acessível pelo navegador ou instalado como aplicativo no celular.</p>
+
+    <div class="cards-grid">
+        <div class="card">
+            <div class="card-icon" style="background:rgba(245,158,11,0.12);color:var(--amber)">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            </div>
+            <h3>Gestão de cursos</h3>
+            <p>Admin cria e gerencia cursos com título, descrição, instrutor, datas, horário de início, vagas e local. Cursos encerrados bloqueiam novas inscrições automaticamente.</p>
+        </div>
+        <div class="card">
+            <div class="card-icon" style="background:rgba(34,197,94,0.12);color:var(--green)">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><polyline points="9 12 11 14 15 10"/></svg>
+            </div>
+            <h3>Fluxo de inscrições</h3>
+            <p>Candidato se inscreve → instrutor ou admin aprova → candidato registra presença com código → status vira Concluído ou Falta.</p>
+        </div>
+        <div class="card">
+            <div class="card-icon" style="background:rgba(59,130,246,0.12);color:var(--blue)">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6-3 6 3v6l-6 3-6-3V9z"/><path d="M12 12v6"/></svg>
+            </div>
+            <h3>Certificados digitais</h3>
+            <p>Ao concluir um curso, o candidato acessa a área de Certificados e baixa o PDF gerado automaticamente no navegador — sem servidor, sem custo extra.</p>
+        </div>
+        <div class="card">
+            <div class="card-icon" style="background:rgba(168,85,247,0.12);color:var(--purple)">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            </div>
+            <h3>Notificações</h3>
+            <p>Admin envia avisos para todos os usuários diretamente pela plataforma. Sino com badge exibe as mensagens não lidas em tempo real.</p>
+        </div>
+        <div class="card">
+            <div class="card-icon" style="background:rgba(245,158,11,0.12);color:var(--amber)">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            </div>
+            <h3>Relatórios</h3>
+            <p>Painel admin com dados de inscrições e cursos: totais de concluídos, faltas, ocupação por vagas — com filtros de busca e status.</p>
+        </div>
+        <div class="card">
+            <div class="card-icon" style="background:rgba(34,197,94,0.12);color:var(--green)">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+            </div>
+            <h3>App instalável (PWA)</h3>
+            <p>Funciona como aplicativo nativo no Android (instalação automática) e iOS (via Safari). Página de instalação com guia passo a passo por plataforma.</p>
+        </div>
+    </div>
+</section>
+
+<hr class="divider">
+
+<!-- PERFIS -->
+<section id="perfis">
+    <div class="section-label">Acesso</div>
+    <h2 class="section-title">3 perfis de usuário</h2>
+    <p class="section-sub">Cada perfil enxerga apenas o que é relevante para sua função, com rotas e telas separadas.</p>
+
+    <div class="perfis-grid">
+        <div class="perfil-card">
+            <div class="perfil-icon" style="background:rgba(239,68,68,0.12)">👑</div>
+            <h3 style="color:#F87171">Administrador</h3>
+            <ul class="perfil-list" style="--check: #F87171">
+                <li>Criar e gerenciar cursos</li>
+                <li>Gerenciar usuários</li>
+                <li>Aprovar/rejeitar inscrições</li>
+                <li>Cadastrar empresas</li>
+                <li>Enviar notificações</li>
+                <li>Visualizar relatórios</li>
+            </ul>
+        </div>
+        <div class="perfil-card">
+            <div class="perfil-icon" style="background:rgba(59,130,246,0.12)">👨‍🏫</div>
+            <h3 style="color:#60A5FA">Instrutor</h3>
+            <ul class="perfil-list">
+                <li>Ver suas turmas</li>
+                <li>Aprovar inscrições</li>
+                <li>Gerar código de presença</li>
+                <li>Marcar concluído / falta</li>
+                <li>Acompanhar lista de alunos</li>
+            </ul>
+        </div>
+        <div class="perfil-card">
+            <div class="perfil-icon" style="background:rgba(34,197,94,0.12)">🎓</div>
+            <h3 style="color:#4ADE80">Candidato</h3>
+            <ul class="perfil-list">
+                <li>Navegar no catálogo</li>
+                <li>Inscrever-se em cursos</li>
+                <li>Confirmar presença</li>
+                <li>Acompanhar status</li>
+                <li>Baixar certificados em PDF</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<hr class="divider">
+
+<!-- FLUXO -->
+<section id="fluxo">
+    <div class="section-label">Jornada</div>
+    <h2 class="section-title">Fluxo completo do treinamento</h2>
+    <p class="section-sub">Da criação do curso ao certificado, tudo dentro da plataforma.</p>
+
+    <div class="flow">
+        <div class="flow-step">
+            <div class="flow-bubble" style="background:rgba(245,158,11,0.1);border-color:rgba(245,158,11,0.4)">📋</div>
+            <div class="flow-label">Admin cria<br>o curso</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+            <div class="flow-bubble" style="background:rgba(59,130,246,0.1);border-color:rgba(59,130,246,0.4)">✍️</div>
+            <div class="flow-label">Candidato<br>se inscreve</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+            <div class="flow-bubble" style="background:rgba(34,197,94,0.1);border-color:rgba(34,197,94,0.4)">✅</div>
+            <div class="flow-label">Instrutor<br>aprova</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+            <div class="flow-bubble" style="background:rgba(168,85,247,0.1);border-color:rgba(168,85,247,0.4)">🔑</div>
+            <div class="flow-label">Código de<br>presença</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+            <div class="flow-bubble" style="background:rgba(245,158,11,0.1);border-color:rgba(245,158,11,0.4)">📱</div>
+            <div class="flow-label">Candidato<br>confirma</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+            <div class="flow-bubble" style="background:rgba(34,197,94,0.1);border-color:rgba(34,197,94,0.4)">🏅</div>
+            <div class="flow-label">Certificado<br>em PDF</div>
+        </div>
+    </div>
+</section>
+
+<hr class="divider">
+
+<!-- STACK -->
+<section id="stack">
+    <div class="section-label">Tecnologias</div>
+    <h2 class="section-title">Stack utilizado</h2>
+    <p class="section-sub">Solução totalmente na nuvem, sem servidor próprio, com custo operacional próximo de zero.</p>
+
+    <div class="stack-grid">
+        <div class="stack-item">
+            <div class="stack-dot" style="background:#F59E0B"></div>
+            <div>
+                <span>Firebase Auth</span>
+                <small>Login e Google OAuth</small>
+            </div>
+        </div>
+        <div class="stack-item">
+            <div class="stack-dot" style="background:#F59E0B"></div>
+            <div>
+                <span>Cloud Firestore</span>
+                <small>Banco de dados em tempo real</small>
+            </div>
+        </div>
+        <div class="stack-item">
+            <div class="stack-dot" style="background:#F59E0B"></div>
+            <div>
+                <span>Firebase Hosting</span>
+                <small>Deploy com CDN global</small>
+            </div>
+        </div>
+        <div class="stack-item">
+            <div class="stack-dot" style="background:#3B82F6"></div>
+            <div>
+                <span>JavaScript (ES Modules)</span>
+                <small>Sem framework, zero dependências</small>
+            </div>
+        </div>
+        <div class="stack-item">
+            <div class="stack-dot" style="background:#22C55E"></div>
+            <div>
+                <span>PWA</span>
+                <small>Instalável no Android e iOS</small>
+            </div>
+        </div>
+        <div class="stack-item">
+            <div class="stack-dot" style="background:#A855F7"></div>
+            <div>
+                <span>jsPDF</span>
+                <small>Certificados gerados no navegador</small>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer>
+    Desenvolvido para <strong>Team 35 Academy</strong> · 2025
+</footer>
+
+</body>
+</html>
