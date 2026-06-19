@@ -253,6 +253,28 @@
                            </button>`;
                 }
 
+                // Botão de material (disponível por 7 dias após dataFim)
+                let materialHTML = '';
+                if (curso.material?.url) {
+                    const fim = curso.dataFim?.toDate ? curso.dataFim.toDate() : (curso.dataFim ? new Date(curso.dataFim) : null);
+                    const expiry = fim ? new Date(fim.getTime() + 7 * 24 * 60 * 60 * 1000) : null;
+                    const disponivel = !expiry || new Date() <= expiry;
+                    if (disponivel) {
+                        materialHTML = `
+                            <a href="${curso.material.url}" target="_blank" rel="noopener"
+                               style="display:flex;align-items:center;gap:0.45rem;margin-top:0.5rem;padding:0.55rem 0.9rem;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.25);border-radius:8px;color:#3B82F6;font-size:13px;font-weight:600;text-decoration:none;width:fit-content;transition:background 0.2s;"
+                               onmouseover="this.style.background='rgba(59,130,246,0.2)'" onmouseout="this.style.background='rgba(59,130,246,0.1)'">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                    <polyline points="14 2 14 8 20 8"/>
+                                    <line x1="12" y1="18" x2="12" y2="12"/>
+                                    <line x1="9" y1="15" x2="15" y2="15"/>
+                                </svg>
+                                Baixar Material
+                            </a>`;
+                    }
+                }
+
                 const card = document.createElement('div');
                 card.className = 'curso-card';
                 card.innerHTML = `
@@ -300,6 +322,7 @@
                         </div>
 
                         ${presencaHTML}
+                        ${materialHTML}
                     </div>
                 `;
                 cursosGrid.appendChild(card);

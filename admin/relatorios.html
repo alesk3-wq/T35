@@ -160,6 +160,29 @@
             border-color: var(--amber);
         }
 
+        .export-bar {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 1rem;
+        }
+
+        .btn-export-pdf {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 1rem;
+            background: rgba(59,130,246,0.1);
+            border: 1px solid rgba(59,130,246,0.25);
+            border-radius: 8px;
+            color: #3B82F6;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-export-pdf:hover { background: rgba(59,130,246,0.2); }
+        .btn-export-pdf:disabled { opacity: 0.6; cursor: not-allowed; }
+
         @media (max-width: 600px) {
             .page-header h1 { font-size: 22px; }
             .report-tabs { overflow-x: auto; }
@@ -298,6 +321,12 @@
                         <option value="rejeitada">Rejeitada</option>
                     </select>
                 </div>
+                <div class="export-bar">
+                    <button class="btn-export-pdf" id="btnExportInscricoes">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                        Exportar PDF
+                    </button>
+                </div>
 
                 <div class="table-container">
                     <table>
@@ -326,6 +355,12 @@
                         <option value="inativo">Inativo</option>
                     </select>
                 </div>
+                <div class="export-bar">
+                    <button class="btn-export-pdf" id="btnExportCursos">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                        Exportar PDF
+                    </button>
+                </div>
 
                 <div class="table-container">
                     <table>
@@ -350,6 +385,12 @@
 
             <!-- Relatório: Usuários -->
             <div class="report-panel" id="panel-usuarios">
+                <div class="export-bar">
+                    <button class="btn-export-pdf" id="btnExportUsuarios">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                        Exportar PDF
+                    </button>
+                </div>
                 <div class="summary-grid">
                     <div class="summary-card">
                         <div class="summary-num" id="userCandidatos">—</div>
@@ -384,6 +425,9 @@
             </div>
         </div>
     </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
     <script type="module">
         import { handleLogout } from '../assets/js/auth.js';
@@ -582,6 +626,129 @@
             }
         }
 
+        // ── Helpers PDF ───────────────────────────────────────────────────
+
+        function pdfHeader(pdf, titulo, subtitulo) {
+            pdf.setFillColor(15, 23, 42);
+            pdf.rect(0, 0, 297, 28, 'F');
+            pdf.setTextColor(245, 158, 11);
+            pdf.setFontSize(15);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text(`T35 Academy — ${titulo}`, 14, 12);
+            pdf.setFontSize(9);
+            pdf.setTextColor(148, 163, 184);
+            pdf.setFont('helvetica', 'normal');
+            pdf.text(`${subtitulo}   ·   Gerado em ${new Date().toLocaleDateString('pt-BR')}`, 14, 21);
+        }
+
+        function pdfFooter(pdf) {
+            const pages = pdf.internal.getNumberOfPages();
+            for (let p = 1; p <= pages; p++) {
+                pdf.setPage(p);
+                pdf.setFontSize(7);
+                pdf.setTextColor(148, 163, 184);
+                pdf.text(`T35 Academy  ·  Página ${p} de ${pages}`, 148, 205, { align: 'center' });
+            }
+        }
+
+        function pdfTable(pdf, head, body) {
+            pdf.autoTable({
+                startY: 35,
+                head: [head],
+                body,
+                styles: { fontSize: 8, cellPadding: 3, textColor: [30, 41, 59] },
+                headStyles: { fillColor: [15, 23, 42], textColor: [245, 158, 11], fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: [248, 250, 252] },
+                margin: { left: 14, right: 14 }
+            });
+        }
+
+        function btnLoading(btn, loading) {
+            btn.disabled = loading;
+            btn.querySelector('svg').style.display = loading ? 'none' : '';
+            btn.childNodes[btn.childNodes.length - 1].textContent = loading ? ' Gerando...' : ' Exportar PDF';
+        }
+
+        // ── Export: Inscrições ────────────────────────────────────────────
+
+        document.getElementById('btnExportInscricoes').addEventListener('click', () => {
+            const btn = document.getElementById('btnExportInscricoes');
+            btnLoading(btn, true);
+            try {
+                const busca  = document.getElementById('inscBusca').value.toLowerCase();
+                const status = document.getElementById('inscStatusFiltro').value;
+                const filtradas = todasInscricoes.filter(i => {
+                    return (!busca  || i._nome.includes(busca) || i._curso.includes(busca))
+                        && (!status || i.status === status);
+                });
+
+                const statusLabel2 = { pendente:'Pendente', aprovada:'Aprovada', concluido:'Concluída', falta:'Falta', rejeitada:'Rejeitada' };
+                const sub = status ? `Filtro: ${statusLabel2[status]}` : 'Todos os status';
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+                pdfHeader(pdf, 'Relatório de Inscrições', sub);
+                pdfTable(pdf,
+                    ['#', 'Candidato', 'Curso', 'Status', 'Data'],
+                    filtradas.map((i, idx) => [idx + 1, i._nomeExib, i._cursoExib, statusLabel2[i.status] ?? i.status, i._data])
+                );
+                pdfFooter(pdf);
+                pdf.save(`inscricoes_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.pdf`);
+            } catch (e) { console.error(e); }
+            finally { btnLoading(btn, false); }
+        });
+
+        // ── Export: Cursos ────────────────────────────────────────────────
+
+        document.getElementById('btnExportCursos').addEventListener('click', () => {
+            const btn = document.getElementById('btnExportCursos');
+            btnLoading(btn, true);
+            try {
+                const busca  = document.getElementById('cursosBusca').value.toLowerCase();
+                const status = document.getElementById('cursosStatusFiltro').value;
+                const filtrados = todosCursosReport.filter(c =>
+                    (!busca  || c._titulo.includes(busca) || c._instrutor.includes(busca))
+                    && (!status || c.status === status)
+                );
+
+                const sub = status ? `Status: ${status}` : 'Todos os status';
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+                pdfHeader(pdf, 'Relatório de Cursos', sub);
+                pdfTable(pdf,
+                    ['#', 'Curso', 'Instrutor', 'Vagas', 'Inscritos', 'Concluídos', 'Faltas', 'Ocup. %', 'Status'],
+                    filtrados.map((c, idx) => [
+                        idx + 1, c.titulo, c.instrutor,
+                        c.vagas ?? '—', c._dados.total, c._dados.concluidos, c._dados.faltas,
+                        c._pct + '%', c.status
+                    ])
+                );
+                pdfFooter(pdf);
+                pdf.save(`cursos_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.pdf`);
+            } catch (e) { console.error(e); }
+            finally { btnLoading(btn, false); }
+        });
+
+        // ── Export: Usuários ──────────────────────────────────────────────
+
+        let todosUsuariosReport = [];
+
+        document.getElementById('btnExportUsuarios').addEventListener('click', () => {
+            const btn = document.getElementById('btnExportUsuarios');
+            btnLoading(btn, true);
+            try {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+                pdfHeader(pdf, 'Relatório de Usuários', 'Todos os perfis');
+                pdfTable(pdf,
+                    ['#', 'Nome', 'Email', 'Empresa', 'Perfil', 'Cadastro'],
+                    todosUsuariosReport.map((u, idx) => [idx + 1, u.fullName || '—', u.email, u.empresa || '—', u.role || '—', u._data])
+                );
+                pdfFooter(pdf);
+                pdf.save(`usuarios_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.pdf`);
+            } catch (e) { console.error(e); }
+            finally { btnLoading(btn, false); }
+        });
+
         async function loadUsuariosReport() {
             try {
                 const snap = await getDocs(query(collection(db, 'users'), orderBy('fullName', 'asc')));
@@ -596,6 +763,7 @@
                     else if (u.role === 'admin') admins++;
 
                     const data = u.createdAt?.toDate ? u.createdAt.toDate().toLocaleDateString('pt-BR') : '—';
+                    todosUsuariosReport.push({ ...u, _data: data });
                     rows.push(`
                         <tr>
                             <td>${u.fullName || '—'}</td>

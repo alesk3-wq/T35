@@ -182,42 +182,87 @@
          * Carrega dados do dashboard
          */
         async function loadDashboard(uid) {
+            // Stats + próximos cursos
             try {
-                const q = query(
-                    collection(db, 'inscricoes'),
-                    where('candidatoId', '==', uid)
+                const inscricoesSnap = await getDocs(
+                    query(collection(db, 'inscricoes'), where('candidatoId', '==', uid))
                 );
-                const querySnapshot = await getDocs(q);
 
                 let cursosInscritos = 0;
                 let cursosConcluidos = 0;
                 let pendentes = 0;
 
-                querySnapshot.forEach((doc) => {
-                    const inscricao = doc.data();
+                inscricoesSnap.forEach((doc) => {
+                    const insc = doc.data();
                     cursosInscritos++;
-
-                    if (inscricao.status === 'aprovada') {
-                        cursosConcluidos++;
-                    } else if (inscricao.status === 'pendente') {
-                        pendentes++;
-                    }
+                    if (insc.status === 'concluido') cursosConcluidos++;
+                    else if (insc.status === 'pendente') pendentes++;
                 });
 
-                // ✅ Atualiza cards
                 document.getElementById('cursosInscritos').textContent = cursosInscritos;
                 document.getElementById('cursosConcluidos').textContent = cursosConcluidos;
+                document.getElementById('certificados').textContent = cursosConcluidos;
                 document.getElementById('pendentes').textContent = pendentes;
 
-                // TODO: Buscar certificados do usuário
-                document.getElementById('certificados').textContent = '0';
-
-                // ✅ Carrega próximos cursos
                 await loadProximosCursos();
-
             } catch (error) {
-                console.error('Erro ao carregar dashboard:', error);
+                console.error('Erro ao carregar stats:', error);
             }
+
+            // Notificações separadas para não bloquear os stats
+            try {
+                const notifsSnap = await getDocs(
+                    query(collection(db, 'notificacoes'), where('candidatoId', '==', uid))
+                );
+                renderNotificacoes(notifsSnap);
+            } catch (error) {
+                console.warn('Notificações indisponíveis:', error);
+                document.getElementById('notificacoes').innerHTML =
+                    '<p class="empty-message">Nenhuma notificação ainda</p>';
+            }
+        }
+
+        function renderNotificacoes(snap) {
+            const container = document.getElementById('notificacoes');
+            container.innerHTML = '';
+
+            if (snap.empty) {
+                container.innerHTML = '<p class="empty-message">Nenhuma notificação ainda</p>';
+                return;
+            }
+
+            const notifs = snap.docs
+                .map(d => d.data())
+                .sort((a, b) => {
+                    const da = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt ?? 0);
+                    const db_ = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt ?? 0);
+                    return db_ - da;
+                })
+                .slice(0, 5);
+
+            notifs.forEach((n) => {
+                const data = n.createdAt?.toDate ? n.createdAt.toDate() : new Date(n.createdAt);
+                const dataStr = data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+                const tipos = {
+                    aprovada:  { icon: '✅', cor: '#22C55E' },
+                    rejeitada: { icon: '❌', cor: '#EF4444' },
+                    concluido: { icon: '🎓', cor: '#3B82F6' },
+                    info:      { icon: 'ℹ️', cor: '#94a3b8' }
+                };
+                const tipo = tipos[n.tipo] ?? tipos.info;
+
+                const el = document.createElement('div');
+                el.className = 'notification-item';
+                el.innerHTML = `
+                    <div class="notif-icon" style="color:${tipo.cor}">${tipo.icon}</div>
+                    <div class="notif-body">
+                        <p class="notif-msg">${n.mensagem ?? n.titulo ?? '—'}</p>
+                        <span class="notif-date">${dataStr}</span>
+                    </div>
+                `;
+                container.appendChild(el);
+            });
         }
 
         /**
@@ -225,40 +270,73 @@
          */
         async function loadProximosCursos() {
             try {
-                const q = query(
-                    collection(db, 'cursos'),
-                    where('status', '==', 'ativo'),
-                    orderBy('dataInicio', 'asc'),
-                    limit(3)
+                const querySnapshot = await getDocs(
+                    query(collection(db, 'cursos'), where('status', '==', 'ativo'))
                 );
-                const querySnapshot = await getDocs(q);
 
                 const container = document.getElementById('proximosCursos');
                 container.innerHTML = '';
 
-                if (querySnapshot.empty) {
-                    container.innerHTML = '<p class="empty-message">Nenhum curso disponível</p>';
+                const hoje = new Date();
+                hoje.setHours(0, 0, 0, 0);
+
+                const cursos = querySnapshot.docs
+                    .map(d => d.data())
+                    .filter(c => {
+                        const fim = c.dataFim?.toDate ? c.dataFim.toDate() : (c.dataFim ? new Date(c.dataFim) : null);
+                        const ini = c.dataInicio?.toDate ? c.dataInicio.toDate() : new Date(c.dataInicio);
+                        return fim ? fim >= hoje : ini >= hoje;
+                    })
+                    .sort((a, b) => {
+                        const da = a.dataInicio?.toDate ? a.dataInicio.toDate() : new Date(a.dataInicio);
+                        const db_ = b.dataInicio?.toDate ? b.dataInicio.toDate() : new Date(b.dataInicio);
+                        return da - db_;
+                    })
+                    .slice(0, 3);
+
+                if (cursos.length === 0) {
+                    container.innerHTML = '<p class="empty-message">Nenhum curso disponível no momento</p>';
                     return;
                 }
 
-                querySnapshot.forEach((doc) => {
-                    const curso = doc.data();
-                    const dataInicio = curso.dataInicio?.toDate
-                        ? curso.dataInicio.toDate()
-                        : new Date(curso.dataInicio);
+                cursos.forEach((curso) => {
+                    const ini = curso.dataInicio?.toDate ? curso.dataInicio.toDate() : new Date(curso.dataInicio);
+                    const fim = curso.dataFim?.toDate ? curso.dataFim.toDate() : (curso.dataFim ? new Date(curso.dataFim) : null);
+                    const fmtDate = (d) => d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+                    const periodoStr = fim ? `${fmtDate(ini)} – ${fmtDate(fim)}` : fmtDate(ini);
+
+                    const emAndamento = ini <= new Date();
+                    const labelStatus = emAndamento
+                        ? '<span class="pc-badge pc-badge-green">Em andamento</span>'
+                        : '<span class="pc-badge pc-badge-amber">Em breve</span>';
+
                     const card = document.createElement('div');
-                    card.className = 'curso-card';
+                    card.className = 'pc-card';
                     card.innerHTML = `
-                        <div class="curso-header">
-                            <h3>${curso.titulo}</h3>
-                            <span class="badge">${curso.formato}</span>
+                        <div class="pc-card-top">
+                            <div class="pc-card-title-row">
+                                <h3 class="pc-card-title">${curso.titulo}</h3>
+                                ${labelStatus}
+                            </div>
+                            <p class="pc-card-instrutor">👨‍🏫 ${curso.instrutor}</p>
                         </div>
-                        <p class="curso-descricao">${curso.descricao}</p>
-                        <div class="curso-info">
-                            <span>📅 ${dataInicio.toLocaleDateString('pt-BR')}</span>
-                            <span>⏱️ ${curso.duracao}</span>
+                        <div class="pc-card-body">
+                            <div class="pc-meta">
+                                <span class="pc-meta-item">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                    ${periodoStr}${curso.horaInicio ? ' · ' + curso.horaInicio : ''}
+                                </span>
+                                <span class="pc-meta-item">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                    ${curso.duracao}
+                                </span>
+                                <span class="pc-meta-item">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                    ${curso.local}
+                                </span>
+                            </div>
+                            <a href="catalogo.html" class="pc-btn">Ver no Catálogo</a>
                         </div>
-                        <a href="catalogo.html" class="btn-small">Ver Detalhes</a>
                     `;
                     container.appendChild(card);
                 });

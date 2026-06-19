@@ -202,6 +202,128 @@
         .toast-warning { background: rgba(245,158,11,0.9); color: var(--bg); }
         .toast-info    { background: rgba(59,130,246,0.9); color: white; }
 
+        .relatorio-row {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+        .filtro-relatorio {
+            flex: 1;
+            padding: 0.38rem 0.6rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .btn-relatorio {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.4rem 0.75rem;
+            background: rgba(59,130,246,0.1);
+            border: 1px solid rgba(59,130,246,0.25);
+            border-radius: 6px;
+            color: #3B82F6;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 0.75rem;
+            transition: background 0.2s;
+        }
+        .btn-relatorio:hover { background: rgba(59,130,246,0.2); }
+
+        /* Material */
+        .material-section {
+            border-top: 1px solid var(--border);
+            padding-top: 1.25rem;
+            margin-top: 1.25rem;
+        }
+        .material-file-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--bg);
+            border: 1.5px dashed var(--border);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-sizing: border-box;
+            margin-bottom: 0.6rem;
+        }
+        .material-file-label:hover,
+        .material-file-label.has-file { border-color: var(--amber); color: var(--amber); border-style: solid; }
+        .btn-enviar-material {
+            width: 100%;
+            padding: 0.7rem;
+            background: var(--amber);
+            color: var(--bg);
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            display: none;
+        }
+        .btn-enviar-material:hover { background: var(--amber-dark); }
+        .progress-wrap {
+            background: var(--bg);
+            border-radius: 6px;
+            height: 6px;
+            margin: 0.5rem 0;
+            overflow: hidden;
+            display: none;
+        }
+        .progress-bar-inner {
+            height: 100%;
+            background: var(--amber);
+            border-radius: 6px;
+            width: 0%;
+            transition: width 0.15s;
+        }
+        .material-atual {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(245,158,11,0.08);
+            border: 1px solid rgba(245,158,11,0.25);
+            border-radius: 8px;
+            padding: 0.65rem 0.9rem;
+            margin-bottom: 0.6rem;
+            font-size: 13px;
+            gap: 0.5rem;
+        }
+        .material-atual-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text);
+            font-weight: 600;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+        .btn-remover-material {
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            flex-shrink: 0;
+            transition: background 0.2s;
+        }
+        .btn-remover-material:hover { background: rgba(239,68,68,0.1); }
+
         @media (max-width: 768px) {
             .presenca-container { grid-template-columns: 1fr; }
         }
@@ -303,9 +425,49 @@
                             <h3>Presença confirmada hoje</h3>
                             <span class="alunos-count" id="alunosCount">0</span>
                         </div>
+                        <div class="relatorio-row">
+                            <select id="filtroRelatorio" class="filtro-relatorio">
+                                <option value="">Todos</option>
+                                <option value="aprovada">Aprovados</option>
+                                <option value="concluido">Concluídos</option>
+                                <option value="pendente">Pendentes</option>
+                                <option value="falta">Falta</option>
+                                <option value="rejeitada">Rejeitados</option>
+                            </select>
+                            <button class="btn-relatorio" id="btnRelatorio">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                    <polyline points="14 2 14 8 20 8"/>
+                                    <line x1="16" y1="13" x2="8" y2="13"/>
+                                    <line x1="16" y1="17" x2="8" y2="17"/>
+                                    <polyline points="10 9 9 9 8 9"/>
+                                </svg>
+                                Exportar PDF
+                            </button>
+                        </div>
                         <div id="alunosList">
                             <p class="alunos-empty">Selecione um curso para ver as confirmações.</p>
                         </div>
+                    </div>
+
+                    <!-- Material PDF -->
+                    <div class="material-section">
+                        <div class="alunos-header" style="margin-bottom:0.75rem">
+                            <h3>Material do Curso (PDF)</h3>
+                        </div>
+                        <div id="materialAtual" style="display:none"></div>
+                        <label class="material-file-label" id="materialLabel" for="materialInput">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                            </svg>
+                            <span id="materialLabelText">Selecionar PDF</span>
+                        </label>
+                        <input type="file" id="materialInput" accept=".pdf" style="display:none">
+                        <div class="progress-wrap" id="progressWrap">
+                            <div class="progress-bar-inner" id="progressBar"></div>
+                        </div>
+                        <button class="btn-enviar-material" id="btnEnviarMaterial">Enviar Material</button>
                     </div>
                 </div>
 
@@ -315,13 +477,19 @@
 
     <div class="toast" id="toast"></div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
     <script type="module">
         import { handleLogout, checkAuth } from '../assets/js/auth.js';
         import { toggleSidebar } from '../assets/js/ui-shell.js';
-        import { db } from '../firebase-config.js';
+        import { db, storage } from '../firebase-config.js';
         import {
             collection, getDocs, query, where, doc, updateDoc
         } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js';
+        import {
+            ref, uploadBytesResumable, getDownloadURL, deleteObject
+        } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-storage.js';
 
         document.getElementById('btnMenu').addEventListener('click', toggleSidebar);
         document.getElementById('btnLogout').addEventListener('click', handleLogout);
@@ -390,6 +558,7 @@
             document.getElementById('codigoPanel').classList.add('visible');
 
             atualizarExibicaoCodigo();
+            atualizarMaterial();
             await carregarAlunosPresentes();
         }
 
@@ -481,6 +650,239 @@
             } catch (err) {
                 listEl.innerHTML = '<p class="alunos-empty">Erro ao carregar confirmações.</p>';
                 console.error(err);
+            }
+        }
+
+        // ── Relatório de Presença ─────────────────────────────────────────
+
+        document.getElementById('btnRelatorio').addEventListener('click', gerarRelatorio);
+
+        async function gerarRelatorio() {
+            if (!cursoSelecionado) return;
+            const btn = document.getElementById('btnRelatorio');
+            const filtro = document.getElementById('filtroRelatorio').value;
+            btn.textContent = 'Gerando...';
+            btn.disabled = true;
+
+            try {
+                // Busca inscrições do curso (filtradas por status se selecionado)
+                const constraints = [where('cursoId', '==', cursoSelecionado.id)];
+                if (filtro) constraints.push(where('status', '==', filtro));
+                const inscSnap = await getDocs(query(collection(db, 'inscricoes'), ...constraints));
+
+                // Busca nomes dos alunos em paralelo
+                const alunos = await Promise.all(inscSnap.docs.map(async d => {
+                    const insc = d.data();
+                    const uSnap = await getDocs(query(collection(db, 'users'), where('uid', '==', insc.candidatoId)));
+                    const u = uSnap.docs[0]?.data();
+                    const presencas = (insc.presencas || []).sort();
+                    return {
+                        nome:      u?.fullName || 'Desconhecido',
+                        email:     u?.email || '—',
+                        status:    insc.status,
+                        total:     presencas.length,
+                        datas:     presencas.map(d => {
+                            const [y,m,day] = d.split('-');
+                            return `${day}/${m}/${y}`;
+                        }).join(', ') || '—'
+                    };
+                }));
+
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+                const ini = cursoSelecionado.dataInicio?.toDate
+                    ? cursoSelecionado.dataInicio.toDate()
+                    : new Date(cursoSelecionado.dataInicio);
+                const fim = cursoSelecionado.dataFim?.toDate
+                    ? cursoSelecionado.dataFim.toDate()
+                    : new Date(cursoSelecionado.dataFim);
+                const fmt = d => d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' });
+
+                // Header
+                pdf.setFillColor(15, 23, 42);
+                pdf.rect(0, 0, 297, 28, 'F');
+                const filtroLabel = { '': 'Todos os Alunos', aprovada: 'Aprovados', concluido: 'Concluídos', pendente: 'Pendentes', falta: 'Falta', rejeitada: 'Rejeitados' };
+                pdf.setTextColor(245, 158, 11);
+                pdf.setFontSize(16);
+                pdf.setFont('helvetica', 'bold');
+                pdf.text(`T35 Academy — Relatório de Presença · ${filtroLabel[filtro] ?? 'Todos'}`, 14, 12);
+                pdf.setFontSize(9);
+                pdf.setTextColor(148, 163, 184);
+                pdf.setFont('helvetica', 'normal');
+                pdf.text(`Gerado em ${new Date().toLocaleDateString('pt-BR')}`, 14, 20);
+
+                // Info do curso
+                pdf.setTextColor(30, 41, 59);
+                pdf.setFontSize(11);
+                pdf.setFont('helvetica', 'bold');
+                pdf.text(cursoSelecionado.titulo, 14, 38);
+                pdf.setFontSize(9);
+                pdf.setFont('helvetica', 'normal');
+                pdf.setTextColor(100, 116, 139);
+                pdf.text(`Instrutor: ${cursoSelecionado.instrutor}   |   Período: ${fmt(ini)} – ${fmt(fim)}   |   Formato: ${cursoSelecionado.formato || '—'}   |   Duração: ${cursoSelecionado.duracao || '—'}`, 14, 45);
+
+                // Linha separadora
+                pdf.setDrawColor(226, 232, 240);
+                pdf.line(14, 49, 283, 49);
+
+                // Tabela
+                const statusLabel = { pendente: 'Pendente', aprovada: 'Aprovado', concluido: 'Concluído', falta: 'Falta', rejeitada: 'Rejeitado' };
+
+                pdf.autoTable({
+                    startY: 53,
+                    head: [['#', 'Aluno', 'E-mail', 'Status', 'Presenças', 'Datas']],
+                    body: alunos.map((a, i) => [
+                        i + 1,
+                        a.nome,
+                        a.email,
+                        statusLabel[a.status] ?? a.status,
+                        a.total,
+                        a.datas
+                    ]),
+                    styles: { fontSize: 8, cellPadding: 3, textColor: [30, 41, 59] },
+                    headStyles: { fillColor: [15, 23, 42], textColor: [245, 158, 11], fontStyle: 'bold' },
+                    alternateRowStyles: { fillColor: [248, 250, 252] },
+                    columnStyles: {
+                        0: { cellWidth: 8,  halign: 'center' },
+                        1: { cellWidth: 55 },
+                        2: { cellWidth: 65 },
+                        3: { cellWidth: 22, halign: 'center' },
+                        4: { cellWidth: 18, halign: 'center' },
+                        5: { cellWidth: 'auto' }
+                    },
+                    margin: { left: 14, right: 14 }
+                });
+
+                // Rodapé
+                const pages = pdf.internal.getNumberOfPages();
+                for (let p = 1; p <= pages; p++) {
+                    pdf.setPage(p);
+                    pdf.setFontSize(7);
+                    pdf.setTextColor(148, 163, 184);
+                    pdf.text(`T35 Academy  ·  Página ${p} de ${pages}`, 148, 205, { align: 'center' });
+                }
+
+                const nomeArq = `presenca_${cursoSelecionado.titulo.replace(/\s+/g,'_')}_${fmt(ini).replace(/\//g,'-')}.pdf`;
+                pdf.save(nomeArq);
+
+            } catch (err) {
+                console.error(err);
+                showToast('Erro ao gerar relatório', 'error');
+            } finally {
+                btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> Exportar Relatório PDF`;
+                btn.disabled = false;
+            }
+        }
+
+        // ── Material PDF ───────────────────────────────────────────────────
+
+        let arquivoSelecionado = null;
+
+        function atualizarMaterial() {
+            const materialDiv = document.getElementById('materialAtual');
+            const labelText   = document.getElementById('materialLabelText');
+            const label       = document.getElementById('materialLabel');
+            const btnEnviar   = document.getElementById('btnEnviarMaterial');
+
+            arquivoSelecionado = null;
+            document.getElementById('materialInput').value = '';
+            label.classList.remove('has-file');
+            labelText.textContent = 'Selecionar PDF';
+            btnEnviar.style.display = 'none';
+
+            const m = cursoSelecionado?.material;
+            if (m?.url) {
+                materialDiv.style.display = 'flex';
+                materialDiv.className = 'material-atual';
+                materialDiv.innerHTML = `
+                    <div class="material-atual-info">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                        </svg>
+                        <a href="${m.url}" target="_blank" style="color:var(--amber);text-decoration:none;overflow:hidden;text-overflow:ellipsis;">${m.nome}</a>
+                    </div>
+                    <button class="btn-remover-material" id="btnRemoverMaterial">Remover</button>
+                `;
+                document.getElementById('btnRemoverMaterial').addEventListener('click', removerMaterial);
+            } else {
+                materialDiv.style.display = 'none';
+            }
+        }
+
+        document.getElementById('materialInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            arquivoSelecionado = file;
+            const label = document.getElementById('materialLabel');
+            label.classList.add('has-file');
+            document.getElementById('materialLabelText').textContent = file.name;
+            document.getElementById('btnEnviarMaterial').style.display = 'block';
+        });
+
+        document.getElementById('btnEnviarMaterial').addEventListener('click', async () => {
+            if (!cursoSelecionado || !arquivoSelecionado) return;
+
+            const btn         = document.getElementById('btnEnviarMaterial');
+            const progressWrap = document.getElementById('progressWrap');
+            const progressBar  = document.getElementById('progressBar');
+
+            btn.disabled    = true;
+            btn.textContent = 'Enviando...';
+            progressWrap.style.display = 'block';
+
+            try {
+                const storageRef = ref(storage, `materiais/${cursoSelecionado.id}/${arquivoSelecionado.name}`);
+                const task = uploadBytesResumable(storageRef, arquivoSelecionado);
+
+                task.on('state_changed',
+                    (snap) => {
+                        const pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
+                        progressBar.style.width = pct + '%';
+                    },
+                    (err) => {
+                        console.error(err);
+                        showToast('Erro ao enviar o arquivo', 'error');
+                        btn.disabled    = false;
+                        btn.textContent = 'Enviar Material';
+                        progressWrap.style.display = 'none';
+                    },
+                    async () => {
+                        const url = await getDownloadURL(task.snapshot.ref);
+                        const material = { url, nome: arquivoSelecionado.name, uploadedAt: new Date().toISOString() };
+                        await updateDoc(doc(db, 'cursos', cursoSelecionado.id), { material });
+                        cursoSelecionado.material = material;
+                        progressWrap.style.display = 'none';
+                        btn.style.display = 'none';
+                        btn.disabled    = false;
+                        btn.textContent = 'Enviar Material';
+                        atualizarMaterial();
+                        showToast('Material enviado com sucesso!', 'success');
+                    }
+                );
+            } catch (err) {
+                console.error(err);
+                showToast('Erro ao enviar material', 'error');
+                btn.disabled    = false;
+                btn.textContent = 'Enviar Material';
+                progressWrap.style.display = 'none';
+            }
+        });
+
+        async function removerMaterial() {
+            if (!cursoSelecionado?.material?.url) return;
+            if (!confirm('Remover o material deste curso?')) return;
+            try {
+                const storageRef = ref(storage, `materiais/${cursoSelecionado.id}/${cursoSelecionado.material.nome}`);
+                await deleteObject(storageRef).catch(() => {}); // ignora se já não existe
+                await updateDoc(doc(db, 'cursos', cursoSelecionado.id), { material: null });
+                cursoSelecionado.material = null;
+                atualizarMaterial();
+                showToast('Material removido.', 'info');
+            } catch (err) {
+                console.error(err);
+                showToast('Erro ao remover material', 'error');
             }
         }
 
