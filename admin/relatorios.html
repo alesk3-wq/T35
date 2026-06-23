@@ -283,6 +283,7 @@
                 <button class="tab-btn active" data-tab="inscricoes">Inscrições</button>
                 <button class="tab-btn" data-tab="cursos">Cursos</button>
                 <button class="tab-btn" data-tab="usuarios">Usuários</button>
+                <button class="tab-btn" data-tab="video">Vídeos</button>
             </div>
 
             <!-- Relatório: Inscrições -->
@@ -427,6 +428,46 @@
                     </table>
                 </div>
             </div>
+            <!-- Relatório: Engajamento de Vídeo -->
+            <div class="report-panel" id="panel-video">
+                <div class="export-bar">
+                    <button class="btn-export-pdf" id="btnExportVideo">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                        Exportar PDF
+                    </button>
+                </div>
+                <div class="summary-grid">
+                    <div class="summary-card">
+                        <div class="summary-num" id="vidTotal">—</div>
+                        <div class="summary-label">Com vídeo</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-num" id="vidConcluidos">—</div>
+                        <div class="summary-label">Concluídos</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-num" id="vidSuspeitos" style="color:#ef4444">—</div>
+                        <div class="summary-label">Suspeitos</div>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Candidato</th>
+                                <th>Curso</th>
+                                <th>% Vídeo</th>
+                                <th>Tempo na Tela</th>
+                                <th>Duração</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="videoList">
+                            <tr><td colspan="6" style="text-align:center;color:var(--text-secondary)">Carregando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </main>
 
@@ -475,7 +516,8 @@
             await Promise.all([
                 loadInscricoes(),
                 loadCursosReport(),
-                loadUsuariosReport()
+                loadUsuariosReport(),
+                loadVideoReport()
             ]);
         }
 
@@ -751,6 +793,92 @@
                 pdf.save(`usuarios_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.pdf`);
             } catch (e) { console.error(e); }
             finally { btnLoading(btn, false); }
+        });
+
+        function fmtTempo(seg) {
+            if (!seg) return '—';
+            const m = Math.floor(seg / 60);
+            const s = seg % 60;
+            return `${m}m ${String(s).padStart(2,'0')}s`;
+        }
+
+        let todosVideoReport = [];
+
+        async function loadVideoReport() {
+            try {
+                const snap = await getDocs(collection(db, 'inscricoes'));
+                const comVideo = snap.docs
+                    .map(d => ({ id: d.id, ...d.data() }))
+                    .filter(i => i.videoProgresso);
+
+                let concluidos = 0, suspeitos = 0;
+                const rows = [];
+
+                await Promise.all(comVideo.map(async insc => {
+                    const [userSnap, cursoSnap] = await Promise.all([
+                        getDocs(query(collection(db, 'users'), where('uid', '==', insc.candidatoId))),
+                        getDocs(query(collection(db, 'cursos'), where('__name__', '==', insc.cursoId)))
+                    ]);
+                    const nome  = userSnap.docs[0]?.data()?.fullName || '—';
+                    const curso = cursoSnap.docs[0]?.data()?.titulo  || '—';
+                    const p = insc.videoProgresso;
+                    if (p.concluido) concluidos++;
+                    if (p.suspeito)  suspeitos++;
+                    const statusHtml = p.suspeito
+                        ? `<span class="status-badge" style="background:rgba(239,68,68,0.15);color:#ef4444">⚠ Suspeito</span>`
+                        : p.concluido
+                            ? `<span class="status-badge" style="background:rgba(34,197,94,0.15);color:#22c55e">✓ OK</span>`
+                            : `<span class="status-badge" style="background:rgba(148,163,184,0.15);color:var(--text-secondary)">Em andamento</span>`;
+                    rows.push({
+                        nome, curso,
+                        pct:   p.percentualVideo || 0,
+                        tela:  p.tempoTela || 0,
+                        dur:   p.videoDuracao || 0,
+                        suspeito: p.suspeito,
+                        concluido: p.concluido,
+                        statusHtml
+                    });
+                }));
+
+                rows.sort((a, b) => b.suspeito - a.suspeito || b.pct - a.pct);
+                todosVideoReport = rows;
+
+                document.getElementById('vidTotal').textContent     = comVideo.length;
+                document.getElementById('vidConcluidos').textContent = concluidos;
+                document.getElementById('vidSuspeitos').textContent  = suspeitos;
+
+                const tbody = document.getElementById('videoList');
+                tbody.innerHTML = rows.length > 0
+                    ? rows.map(r => `
+                        <tr style="${r.suspeito ? 'background:rgba(239,68,68,0.04)' : ''}">
+                            <td>${r.nome}</td>
+                            <td>${r.curso}</td>
+                            <td><strong>${r.pct}%</strong></td>
+                            <td>${fmtTempo(r.tela)}</td>
+                            <td>${fmtTempo(r.dur)}</td>
+                            <td>${r.statusHtml}</td>
+                        </tr>`).join('')
+                    : '<tr><td colspan="6" style="text-align:center;color:var(--text-secondary)">Nenhum vídeo assistido ainda</td></tr>';
+            } catch (err) {
+                console.error('Erro video report:', err);
+            }
+        }
+
+        document.getElementById('btnExportVideo').addEventListener('click', () => {
+            const btn = document.getElementById('btnExportVideo');
+            btnLoading(btn, true);
+            try {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+                pdfHeader(pdf, 'Relatório de Engajamento de Vídeo', `Total: ${todosVideoReport.length} | Concluídos: ${todosVideoReport.filter(r=>r.concluido).length} | Suspeitos: ${todosVideoReport.filter(r=>r.suspeito).length}`);
+                pdfTable(pdf, ['Candidato','Curso','% Vídeo','Tempo na Tela','Duração','Status'],
+                    todosVideoReport.map(r => [r.nome, r.curso, r.pct+'%', fmtTempo(r.tela), fmtTempo(r.dur), r.suspeito ? '⚠ Suspeito' : r.concluido ? '✓ OK' : 'Em andamento'])
+                );
+                pdfFooter(pdf);
+                pdf.save('relatorio-videos.pdf');
+            } finally {
+                btnLoading(btn, false);
+            }
         });
 
         async function loadUsuariosReport() {

@@ -32,6 +32,22 @@
         }
 
         .curso-card.encerrado { opacity: 0.7; }
+
+        .badge-video {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.2rem 0.6rem;
+            background: rgba(239,68,68,0.12);
+            color: #ef4444;
+            border: 1px solid rgba(239,68,68,0.25);
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
     </style>
 </head>
 <body>
@@ -74,6 +90,14 @@
                 <span>Certificados</span>
             </a>
 
+            <a href="condecorados.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>
+                <span>Condecorados</span>
+            </a>
+            <a href="sobre.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <span>Sobre</span>
+            </a>
             <a href="perfil.html" class="nav-item">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -221,7 +245,10 @@
                     <div class="curso-header">
                         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:0.5rem;margin-bottom:0.25rem;">
                             <h3 class="curso-title" style="margin:0">${curso.titulo}</h3>
-                            ${encerrado ? '<span class="badge-encerrado">Encerrado</span>' : ''}
+                            <div style="display:flex;gap:0.35rem;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;">
+                                ${curso.videoUrl ? `<span class="badge-video"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>Vídeo Aula</span>` : ''}
+                                ${encerrado ? '<span class="badge-encerrado">Encerrado</span>' : ''}
+                            </div>
                         </div>
                         <p class="curso-instructor">👨‍🏫 ${curso.instrutor}</p>
                     </div>

@@ -400,6 +400,11 @@
                     <input type="text" id="cursoLocal" placeholder="Endereço ou link de acesso">
                 </div>
 
+                <div class="form-group">
+                    <label>URL do Vídeo (YouTube)</label>
+                    <input type="url" id="cursoVideoUrl" placeholder="https://www.youtube.com/watch?v=...">
+                </div>
+
                 <div class="form-row">
                     <div class="form-group">
                         <label>Data de Início *</label>
@@ -579,6 +584,7 @@
                 document.getElementById('cursoVagas').value = curso.vagas || '';
                 document.getElementById('cursoStatus').value = curso.status || 'ativo';
                 document.getElementById('cursoHoraInicio').value = curso.horaInicio || '';
+                document.getElementById('cursoVideoUrl').value   = curso.videoUrl || '';
 
                 // Converte Timestamp para string de data para o input
                 if (curso.dataInicio) {
@@ -628,6 +634,8 @@
                 return;
             }
 
+            const videoUrl = document.getElementById('cursoVideoUrl').value.trim() || null;
+
             const payload = {
                 titulo,
                 descricao,
@@ -640,6 +648,7 @@
                 duracao,
                 vagas,
                 status,
+                videoUrl,
                 updatedAt: serverTimestamp()
             };
 

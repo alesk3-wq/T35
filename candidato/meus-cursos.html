@@ -283,6 +283,22 @@
                     }
                 }
 
+                // Botão de vídeo aula
+                let videoHTML = '';
+                if (curso.videoUrl && (inscricao.status === 'aprovada' || inscricao.status === 'concluido')) {
+                    const prog = inscricao.videoProgresso;
+                    const pct  = prog?.percentualVideo || 0;
+                    const vConcluido = prog?.concluido || false;
+                    const label = vConcluido ? '✓ Aula Assistida' : pct > 0 ? `Continuar Aula (${pct}%)` : 'Assistir Aula';
+                    const cor   = vConcluido ? '34,197,94' : '239,68,68';
+                    videoHTML = `
+                        <a href="video.html?inscricaoId=${inscricao.id}&cursoId=${inscricao.cursoId}"
+                           style="display:flex;align-items:center;gap:0.45rem;margin-top:0.5rem;padding:0.55rem 0.9rem;background:rgba(${cor},0.1);border:1px solid rgba(${cor},0.25);border-radius:8px;color:rgb(${cor});font-size:13px;font-weight:600;text-decoration:none;width:fit-content;transition:background 0.2s;">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                            ${label}
+                        </a>`;
+                }
+
                 const card = document.createElement('div');
                 card.className = 'curso-card';
                 card.innerHTML = `
@@ -329,6 +345,7 @@
                             </div>
                         </div>
 
+                        ${videoHTML}
                         ${presencaHTML}
                         ${materialHTML}
                     </div>
