@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="../assets/img/favi-t35.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatórios - T35 Academy</title>
+    <link rel="stylesheet" href="../assets/css/design-system.css">
+    <link rel="stylesheet" href="../assets/css/layout.css">
+    <link rel="stylesheet" href="../assets/css/responsive.css">
+    <style>
+        .content { padding: 2rem; max-width: 1100px; }
+
+        /* Tabs */
+        .report-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .tab-btn {
+            padding: 0.7rem 1.2rem;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: -1px;
+            transition: color 0.2s;
+        }
+        .tab-btn:hover { color: var(--amber); }
+        .tab-btn.active { color: var(--amber); border-bottom-color: var(--amber); }
+        .report-panel { display: none; }
+        .report-panel.active { display: block; }
+
+        /* Cards resumo */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .summary-card {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.25rem;
+            text-align: center;
+        }
+        .summary-num {
+            font-size: 30px;
+            font-weight: 700;
+            color: var(--amber);
+            line-height: 1;
+            margin-bottom: 0.3rem;
+        }
+        .summary-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Filtros */
+        .filter-row {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .filter-row select {
+            padding: 0.6rem 1rem;
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 13px;
+            min-width: 220px;
+            max-width: 100%;
+        }
+        .filter-row select:focus { outline: none; border-color: var(--amber); }
+
+        /* Export */
+        .export-bar { display: flex; justify-content: flex-end; margin-bottom: 1rem; }
+        .btn-export-pdf {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 1rem;
+            background: rgba(59,130,246,0.1);
+            border: 1px solid rgba(59,130,246,0.25);
+            border-radius: 8px;
+            color: #3B82F6;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-export-pdf:hover { background: rgba(59,130,246,0.2); }
+        .btn-export-pdf:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* Tabela com scroll vertical mobile */
+        .table-container {
+            background: var(--bg2);
+            border-radius: 12px;
+            overflow-x: auto;
+            overflow-y: auto;
+            max-height: calc(100vh - 300px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .table-container thead th {
+            position: sticky;
+            top: 0;
+            background: var(--bg2);
+            z-index: 1;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.2rem 0.65rem;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .badge-ok       { background: rgba(34,197,94,0.15);   color: #22c55e; }
+        .badge-suspeito { background: rgba(239,68,68,0.15);   color: #ef4444; }
+        .badge-andamento{ background: rgba(148,163,184,0.15); color: var(--text-secondary); }
+        .badge-aprovado { background: rgba(34,197,94,0.15);   color: #22c55e; }
+        .badge-concluido{ background: rgba(59,130,246,0.15);  color: #3b82f6; }
+        .badge-falta    { background: rgba(168,85,247,0.15);  color: #a855f7; }
+        .badge-pendente { background: rgba(245,158,11,0.15);  color: var(--amber); }
+
+        .empty-msg {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .datas-presenca {
+            font-size: 11px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        @media (max-width: 600px) {
+            .report-tabs { overflow-x: auto; }
+            .table-container { max-height: calc(100vh - 260px); }
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img src="../assets/img/t35logo.png" alt="T35 Academy" class="logo">
+            <h2>T35 Academy</h2>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="dashboard.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                <span>Dashboard</span>
+            </a>
+            <a href="presenca.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                <span>Presença</span>
+            </a>
+            <a href="inscricoes.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
+                <span>Inscrições</span>
+            </a>
+            <a href="relatorios.html" class="nav-item active">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                <span>Relatórios</span>
+            </a>
+            <a href="perfil.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <span>Perfil</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <button class="btn-logout" id="btnLogout">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                <span>Logout</span>
+            </button>
+        </div>
+    </aside>
+
+    <div class="topbar">
+        <button class="btn-menu" id="btnMenu">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <h1 class="page-title">Relatórios</h1>
+    </div>
+
+    <main class="main">
+        <div class="content">
+
+            <div class="report-tabs">
+                <button class="tab-btn active" data-tab="presenca">Presença</button>
+                <button class="tab-btn" data-tab="video">Vídeos</button>
+            </div>
+
+            <!-- ── ABA PRESENÇA ─────────────────────────────────────── -->
+            <div class="report-panel active" id="panel-presenca">
+                <div class="summary-grid">
+                    <div class="summary-card">
+                        <div class="summary-num" id="pStatAlunos">—</div>
+                        <div class="summary-label">Alunos</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-num" id="pStatPresencas">—</div>
+                        <div class="summary-label">Total presenças</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-num" id="pStatZero" style="color:#ef4444">—</div>
+                        <div class="summary-label">Sem presença</div>
+                    </div>
+                </div>
+
+                <div class="filter-row">
+                    <select id="pFiltroCurso">
+                        <option value="">Todos os cursos</option>
+                    </select>
+                    <select id="pFiltroStatus">
+                        <option value="">Todos os status</option>
+                        <option value="aprovada">Aprovados</option>
+                        <option value="concluido">Concluídos</option>
+                        <option value="falta">Falta</option>
+                        <option value="pendente">Pendentes</option>
+                    </select>
+                </div>
+
+                <div class="export-bar">
+                    <button class="btn-export-pdf" id="btnExportPresenca">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                        Exportar PDF
+                    </button>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Candidato</th>
+                                <th>Curso</th>
+                                <th>Nº Presenças</th>
+                                <th>Datas</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyPresenca">
+                            <tr><td colspan="5" class="empty-msg">Carregando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ── ABA VÍDEOS ──────────────────────────────────────── -->
+            <div class="report-panel" id="panel-video">
+                <div class="summary-grid">
+                    <div class="summary-card">
+                        <div class="summary-num" id="vStatTotal">—</div>
+                        <div class="summary-label">Acessos</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-num" id="vStatConcluidos">—</div>
+                        <div class="summary-label">Concluídos</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-num" id="vStatSuspeitos" style="color:#ef4444">—</div>
+                        <div class="summary-label">Suspeitos</div>
+                    </div>
+                </div>
+
+                <div class="filter-row">
+                    <select id="vFiltroCurso">
+                        <option value="">Todos os cursos</option>
+                    </select>
+                    <select id="vFiltroStatus">
+                        <option value="">Todos os status</option>
+                        <option value="suspeito">⚠ Suspeitos</option>
+                        <option value="concluido">✓ Concluídos</option>
+                        <option value="andamento">Em andamento</option>
+                    </select>
+                </div>
+
+                <div class="export-bar">
+                    <button class="btn-export-pdf" id="btnExportVideo">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                        Exportar PDF
+                    </button>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Candidato</th>
+                                <th>Curso</th>
+                                <th>% Vídeo</th>
+                                <th>Tempo na Tela</th>
+                                <th>Duração</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyVideo">
+                            <tr><td colspan="6" class="empty-msg">Carregando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+    <script type="module">
+        import { handleLogout } from '../assets/js/auth.js';
+        import { toggleSidebar } from '../assets/js/ui-shell.js';
+        import { auth, db } from '../firebase-config.js';
+        import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js';
+        import { collection, getDocs, query, where } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js';
+
+        document.getElementById('btnMenu').addEventListener('click', toggleSidebar);
+        document.getElementById('btnLogout').addEventListener('click', handleLogout);
+
+        // Tabs
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.report-panel').forEach(p => p.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+            });
+        });
+
+        // Filtros
+        document.getElementById('pFiltroCurso').addEventListener('change', renderPresenca);
+        document.getElementById('pFiltroStatus').addEventListener('change', renderPresenca);
+        document.getElementById('vFiltroCurso').addEventListener('change', renderVideo);
+        document.getElementById('vFiltroStatus').addEventListener('change', renderVideo);
+
+        let registrosPresenca = [];
+        let registrosVideo    = [];
+
+        function fmtTempo(seg) {
+            if (!seg) return '—';
+            return `${Math.floor(seg/60)}m ${String(seg%60).padStart(2,'0')}s`;
+        }
+
+        function fmtData(str) {
+            if (!str) return '';
+            const [y,m,d] = str.split('-');
+            return `${d}/${m}`;
+        }
+
+        function pdfCabecalho(pdf, titulo, sub) {
+            pdf.setFillColor(15,15,20);
+            pdf.rect(0,0,297,35,'F');
+            pdf.setFontSize(16); pdf.setFont('helvetica','bold'); pdf.setTextColor(245,158,11);
+            pdf.text(`T35 Academy — ${titulo}`, 14, 15);
+            pdf.setFontSize(10); pdf.setFont('helvetica','normal'); pdf.setTextColor(148,163,184);
+            pdf.text(sub, 14, 25);
+        }
+
+        // ── AUTH ──────────────────────────────────────────────────────────
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) { window.location.href = '../login.html'; return; }
+
+            const userSnap = await getDocs(query(collection(db, 'users'), where('uid', '==', user.uid)));
+            const userData = userSnap.docs[0]?.data();
+            if (!userData || userData.role !== 'instrutor') { window.location.href = '../login.html'; return; }
+
+            await carregarDados(userData.fullName || '', userData.email || user.email);
+        });
+
+        // ── CARREGAR DADOS ────────────────────────────────────────────────
+        async function carregarDados(nome, email) {
+            try {
+                const [cursosSnap, inscSnap, usersSnap] = await Promise.all([
+                    getDocs(collection(db, 'cursos')),
+                    getDocs(collection(db, 'inscricoes')),
+                    getDocs(collection(db, 'users'))
+                ]);
+
+                const meusCursos = cursosSnap.docs
+                    .map(d => ({ id: d.id, ...d.data() }))
+                    .filter(c => c.instrutor === nome || c.instrutorEmail === email);
+
+                const usersMap = {};
+                usersSnap.forEach(d => { usersMap[d.data().uid] = d.data().fullName || d.data().email; });
+
+                const cursosIds = meusCursos.map(c => c.id);
+                const minhasInscricoes = inscSnap.docs
+                    .map(d => ({ id: d.id, ...d.data() }))
+                    .filter(i => cursosIds.includes(i.cursoId));
+
+                // ── Presença ──────────────────────────────────────────────
+                registrosPresenca = minhasInscricoes.map(insc => {
+                    const curso = meusCursos.find(c => c.id === insc.cursoId);
+                    const presencas = insc.presencas || [];
+                    return {
+                        candidato:   usersMap[insc.candidatoId] || '—',
+                        cursoId:     insc.cursoId,
+                        cursoTitulo: curso?.titulo || '—',
+                        presencas,
+                        qtd:         presencas.length,
+                        status:      insc.status || 'pendente'
+                    };
+                }).sort((a,b) => a.candidato.localeCompare(b.candidato));
+
+                // Popula filtro presença
+                const selP = document.getElementById('pFiltroCurso');
+                meusCursos.forEach(c => {
+                    const o = document.createElement('option');
+                    o.value = c.id; o.textContent = c.titulo;
+                    selP.appendChild(o);
+                });
+
+                renderPresenca();
+
+                // ── Vídeo ─────────────────────────────────────────────────
+                const cursosComVideo = meusCursos.filter(c => c.videoUrl);
+                const cursosVideoIds = cursosComVideo.map(c => c.id);
+
+                registrosVideo = minhasInscricoes
+                    .filter(i => cursosVideoIds.includes(i.cursoId) && i.videoProgresso)
+                    .map(insc => {
+                        const curso = meusCursos.find(c => c.id === insc.cursoId);
+                        const p = insc.videoProgresso;
+                        return {
+                            candidato:   usersMap[insc.candidatoId] || '—',
+                            cursoId:     insc.cursoId,
+                            cursoTitulo: curso?.titulo || '—',
+                            pct:         p.percentualVideo || 0,
+                            tela:        p.tempoTela || 0,
+                            dur:         p.videoDuracao || 0,
+                            concluido:   p.concluido || false,
+                            suspeito:    p.suspeito  || false
+                        };
+                    })
+                    .sort((a,b) => b.suspeito - a.suspeito || b.pct - a.pct);
+
+                // Popula filtro vídeo
+                const selV = document.getElementById('vFiltroCurso');
+                cursosComVideo.forEach(c => {
+                    const o = document.createElement('option');
+                    o.value = c.id; o.textContent = c.titulo;
+                    selV.appendChild(o);
+                });
+
+                renderVideo();
+
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // ── RENDER PRESENÇA ───────────────────────────────────────────────
+        function renderPresenca() {
+            const cursoF  = document.getElementById('pFiltroCurso').value;
+            const statusF = document.getElementById('pFiltroStatus').value;
+
+            const filtrados = registrosPresenca.filter(r =>
+                (!cursoF  || r.cursoId === cursoF) &&
+                (!statusF || r.status  === statusF)
+            );
+
+            const totalPresencas = filtrados.reduce((s,r) => s + r.qtd, 0);
+            const semPresenca    = filtrados.filter(r => r.qtd === 0).length;
+            document.getElementById('pStatAlunos').textContent   = filtrados.length;
+            document.getElementById('pStatPresencas').textContent = totalPresencas;
+            document.getElementById('pStatZero').textContent      = semPresenca;
+
+            const tbody = document.getElementById('tbodyPresenca');
+            if (filtrados.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="empty-msg">Nenhum registro encontrado.</td></tr>';
+                return;
+            }
+
+            const statusBadge = {
+                aprovada:  '<span class="badge badge-aprovado">Aprovado</span>',
+                concluido: '<span class="badge badge-concluido">Concluído</span>',
+                falta:     '<span class="badge badge-falta">Falta</span>',
+                pendente:  '<span class="badge badge-pendente">Pendente</span>'
+            };
+
+            tbody.innerHTML = filtrados.map(r => `
+                <tr style="${r.qtd === 0 && r.status === 'aprovada' ? 'background:rgba(239,68,68,0.04)' : ''}">
+                    <td><strong>${r.candidato}</strong></td>
+                    <td>${r.cursoTitulo}</td>
+                    <td style="text-align:center;font-weight:700;font-size:16px;color:var(--amber)">${r.qtd}</td>
+                    <td><div class="datas-presenca">${r.presencas.map(fmtData).join('  ·  ') || '—'}</div></td>
+                    <td>${statusBadge[r.status] || r.status}</td>
+                </tr>`).join('');
+        }
+
+        // ── RENDER VÍDEO ──────────────────────────────────────────────────
+        function renderVideo() {
+            const cursoF  = document.getElementById('vFiltroCurso').value;
+            const statusF = document.getElementById('vFiltroStatus').value;
+
+            const filtrados = registrosVideo.filter(r => {
+                if (cursoF && r.cursoId !== cursoF) return false;
+                if (statusF === 'suspeito'  && !r.suspeito)                 return false;
+                if (statusF === 'concluido' && !r.concluido)                return false;
+                if (statusF === 'andamento' && (r.concluido || r.suspeito)) return false;
+                return true;
+            });
+
+            document.getElementById('vStatTotal').textContent     = filtrados.length;
+            document.getElementById('vStatConcluidos').textContent = filtrados.filter(r=>r.concluido).length;
+            document.getElementById('vStatSuspeitos').textContent  = filtrados.filter(r=>r.suspeito).length;
+
+            const tbody = document.getElementById('tbodyVideo');
+            if (filtrados.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-msg">Nenhum registro encontrado.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filtrados.map(r => {
+                const badge = r.suspeito
+                    ? '<span class="badge badge-suspeito">⚠ Suspeito</span>'
+                    : r.concluido
+                        ? '<span class="badge badge-ok">✓ OK</span>'
+                        : '<span class="badge badge-andamento">Em andamento</span>';
+                return `
+                    <tr style="${r.suspeito ? 'background:rgba(239,68,68,0.04)' : ''}">
+                        <td><strong>${r.candidato}</strong></td>
+                        <td>${r.cursoTitulo}</td>
+                        <td><strong>${r.pct}%</strong></td>
+                        <td>${fmtTempo(r.tela)}</td>
+                        <td>${fmtTempo(r.dur)}</td>
+                        <td>${badge}</td>
+                    </tr>`;
+            }).join('');
+        }
+
+        // ── EXPORT PRESENÇA ───────────────────────────────────────────────
+        document.getElementById('btnExportPresenca').addEventListener('click', () => {
+            const btn = document.getElementById('btnExportPresenca');
+            btn.disabled = true;
+            try {
+                const cursoF  = document.getElementById('pFiltroCurso').value;
+                const statusF = document.getElementById('pFiltroStatus').value;
+                const filtrados = registrosPresenca.filter(r =>
+                    (!cursoF  || r.cursoId === cursoF) &&
+                    (!statusF || r.status  === statusF)
+                );
+
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+                pdfCabecalho(pdf, 'Relatório de Presença',
+                    `Gerado em ${new Date().toLocaleDateString('pt-BR')} · Alunos: ${filtrados.length} · Total presenças: ${filtrados.reduce((s,r)=>s+r.qtd,0)}`);
+                pdf.autoTable({
+                    startY: 42,
+                    head: [['Candidato','Curso','Nº Presenças','Datas','Status']],
+                    body: filtrados.map(r => [
+                        r.candidato,
+                        r.cursoTitulo,
+                        r.qtd,
+                        r.presencas.map(fmtData).join(' · ') || '—',
+                        r.status
+                    ]),
+                    styles: { fontSize: 9, cellPadding: 4 },
+                    headStyles: { fillColor: [245,158,11], textColor: [15,15,20], fontStyle: 'bold' },
+                    alternateRowStyles: { fillColor: [22,22,30] },
+                    didDrawPage() {
+                        pdf.setFontSize(8); pdf.setTextColor(148,163,184);
+                        pdf.text(`Página ${pdf.internal.getNumberOfPages()}`, 280, 205);
+                    }
+                });
+                pdf.save('relatorio-presenca-instrutor.pdf');
+            } finally { btn.disabled = false; }
+        });
+
+        // ── EXPORT VÍDEO ──────────────────────────────────────────────────
+        document.getElementById('btnExportVideo').addEventListener('click', () => {
+            const btn = document.getElementById('btnExportVideo');
+            btn.disabled = true;
+            try {
+                const cursoF  = document.getElementById('vFiltroCurso').value;
+                const statusF = document.getElementById('vFiltroStatus').value;
+                const filtrados = registrosVideo.filter(r => {
+                    if (cursoF && r.cursoId !== cursoF) return false;
+                    if (statusF === 'suspeito'  && !r.suspeito)                 return false;
+                    if (statusF === 'concluido' && !r.concluido)                return false;
+                    if (statusF === 'andamento' && (r.concluido || r.suspeito)) return false;
+                    return true;
+                });
+
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+                pdfCabecalho(pdf, 'Relatório de Engajamento de Vídeo',
+                    `Gerado em ${new Date().toLocaleDateString('pt-BR')} · Total: ${filtrados.length} · Suspeitos: ${filtrados.filter(r=>r.suspeito).length}`);
+                pdf.autoTable({
+                    startY: 42,
+                    head: [['Candidato','Curso','% Vídeo','Tempo na Tela','Duração','Status']],
+                    body: filtrados.map(r => [
+                        r.candidato, r.cursoTitulo, r.pct+'%',
+                        fmtTempo(r.tela), fmtTempo(r.dur),
+                        r.suspeito ? '⚠ Suspeito' : r.concluido ? '✓ OK' : 'Em andamento'
+                    ]),
+                    styles: { fontSize: 9, cellPadding: 4 },
+                    headStyles: { fillColor: [245,158,11], textColor: [15,15,20], fontStyle: 'bold' },
+                    alternateRowStyles: { fillColor: [22,22,30] },
+                    didParseCell(data) {
+                        if (data.section === 'body' && data.column.index === 5) {
+                            if (data.cell.raw.includes('Suspeito')) data.cell.styles.textColor = [239,68,68];
+                            else if (data.cell.raw.includes('OK'))  data.cell.styles.textColor = [34,197,94];
+                        }
+                    },
+                    didDrawPage() {
+                        pdf.setFontSize(8); pdf.setTextColor(148,163,184);
+                        pdf.text(`Página ${pdf.internal.getNumberOfPages()}`, 280, 205);
+                    }
+                });
+                pdf.save('relatorio-videos-instrutor.pdf');
+            } finally { btn.disabled = false; }
+        });
+    </script>
+</body>
+</html>
