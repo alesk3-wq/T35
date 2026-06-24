@@ -23,7 +23,7 @@
 .filter-input:focus {
     outline: none;
     border-color: var(--amber);
-    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+    box-shadow: 0 0 0 3px rgba(255, 34, 51, 0.15);
 }
 
 .cursos-grid {
@@ -34,19 +34,53 @@
 
 .curso-card {
     background: var(--bg);
-    border: 1px solid var(--border);
+    border: 1px solid #3d3d3d;
     border-radius: 12px;
     overflow: hidden;
     transition: all 0.3s ease;
     cursor: pointer;
     display: flex;
     flex-direction: column;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 2px 10px rgba(0,0,0,0.4);
 }
 
 .curso-card:hover {
     border-color: var(--amber);
-    box-shadow: 0 10px 30px rgba(245, 158, 11, 0.1);
+    box-shadow: 0 0 0 1px rgba(255,34,51,0.2), 0 10px 30px rgba(255, 34, 51, 0.15);
     transform: translateY(-4px);
+}
+
+/* ─── STATUS DOS CARDS (meus-cursos) ──────────────────────────────── */
+
+.status-card-aprovada {
+    border-color: rgba(34, 197, 94, 0.45) !important;
+    box-shadow: 0 0 0 1px rgba(34,197,94,0.1), 0 4px 16px rgba(0,0,0,0.4) !important;
+}
+.status-card-aprovada:hover {
+    border-color: rgba(34, 197, 94, 0.75) !important;
+    box-shadow: 0 0 0 1px rgba(34,197,94,0.2), 0 10px 28px rgba(34,197,94,0.12) !important;
+}
+
+.status-card-concluido {
+    border-color: rgba(59, 130, 246, 0.45) !important;
+    box-shadow: 0 0 0 1px rgba(59,130,246,0.1), 0 4px 16px rgba(0,0,0,0.4) !important;
+}
+.status-card-concluido:hover {
+    border-color: rgba(59, 130, 246, 0.75) !important;
+    box-shadow: 0 0 0 1px rgba(59,130,246,0.2), 0 10px 28px rgba(59,130,246,0.12) !important;
+}
+
+.status-card-falta {
+    border-color: rgba(239, 68, 68, 0.35) !important;
+    box-shadow: 0 0 0 1px rgba(239,68,68,0.08), 0 4px 16px rgba(0,0,0,0.4) !important;
+}
+
+.status-card-pendente {
+    border-color: #303030 !important;
+    opacity: 0.75;
+}
+.status-card-pendente:hover {
+    opacity: 1;
 }
 
 .curso-header {
@@ -117,7 +151,7 @@
 }
 
 .curso-status.em-breve {
-    background: rgba(245, 158, 11, 0.1);
+    background: rgba(255, 34, 51, 0.1);
     color: var(--amber);
 }
 
@@ -139,7 +173,7 @@
 }
 
 .btn-inscrever:hover {
-    background: #f08a00;
+    background: var(--amber-dark);
     transform: translateY(-2px);
 }
 
@@ -217,9 +251,9 @@
 }
 
 .status-pendente {
-    background: rgba(245, 158, 11, 0.12);
+    background: rgba(255, 34, 51, 0.12);
     color: var(--amber);
-    border: 1px solid rgba(245, 158, 11, 0.3);
+    border: 1px solid rgba(255, 34, 51, 0.3);
 }
 
 .status-aprovada {

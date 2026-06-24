@@ -12,28 +12,35 @@
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            background: #0F172A;
+            background: #0d0d0d;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
         .loader {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 1.25rem;
         }
-        .loader img {
+        .logo-wrapper {
+            position: relative;
+            width: 180px;
+            height: 180px;
+        }
+        .logo-wrapper img {
             width: 180px;
             height: 180px;
             border-radius: 10px;
-            opacity: 0.9;
+            opacity: 0.92;
+            position: relative;
+            z-index: 1;
         }
         .spinner {
-            width: 32px;
-            height: 32px;
-            border: 3px solid #334155;
-            border-top-color: #F59E0B;
+            position: absolute;
+            inset: -14px;
             border-radius: 50%;
-            animation: spin 0.7s linear infinite;
+            border: 3px solid rgba(255, 34, 51, 0.12);
+            border-top-color: #ff2233;
+            animation: spin 1.1s linear infinite;
+            filter: drop-shadow(0 0 6px rgba(255, 34, 51, 0.55));
         }
         @keyframes spin {
             to { transform: rotate(360deg); }
@@ -42,8 +49,10 @@
 </head>
 <body>
     <div class="loader">
-        <img src="assets/img/t35logo.png" alt="T35 Academy">
-        <div class="spinner"></div>
+        <div class="logo-wrapper">
+            <img src="assets/img/t35logo.png" alt="T35 Academy">
+            <div class="spinner"></div>
+        </div>
     </div>
 
     <script type="module">
