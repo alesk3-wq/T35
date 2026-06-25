@@ -147,11 +147,45 @@
         }
         .foto-preview img { width: 100%; height: 100%; object-fit: cover; }
 
-        .url-hint {
+        .upload-label {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.6rem 1rem;
+            border: 1px dashed var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--text-secondary);
+            transition: border-color 0.2s, color 0.2s;
+            background: var(--bg);
+        }
+        .upload-label:hover { border-color: var(--amber); color: var(--amber); }
+        .upload-label input[type="file"] { display: none; }
+
+        .upload-progress {
+            display: none;
+            height: 4px;
+            background: var(--bg3);
+            border-radius: 2px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+        .upload-progress-bar {
+            height: 100%;
+            background: var(--amber);
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.2s;
+        }
+
+        .foto-filename {
             font-size: 11px;
             color: var(--text-secondary);
             margin: 0.3rem 0 0;
-            line-height: 1.4;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .flash {
@@ -261,12 +295,16 @@
             </div>
 
             <div class="form-group">
-                <label>URL da Foto</label>
-                <input type="url" id="fFotoUrl" placeholder="https://drive.google.com/... ou outro link público">
-                <p class="url-hint">
-                    Cole o link de compartilhamento do Google Drive ou qualquer URL pública de imagem.<br>
-                    Links do Drive são convertidos automaticamente.
-                </p>
+                <label>Foto</label>
+                <label class="upload-label">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <span id="uploadLabelText">Escolher foto...</span>
+                    <input type="file" id="fFotoFile" accept="image/*">
+                </label>
+                <p class="foto-filename" id="fotoFilename"></p>
+                <div class="upload-progress" id="uploadProgress">
+                    <div class="upload-progress-bar" id="uploadProgressBar"></div>
+                </div>
                 <div class="foto-preview" id="fotoPreview">🏅</div>
             </div>
 
@@ -309,12 +347,15 @@
     <script type="module">
         import { handleLogout } from '../assets/js/auth.js';
         import { toggleSidebar } from '../assets/js/ui-shell.js';
-        import { auth, db } from '../firebase-config.js';
+        import { auth, db, storage } from '../firebase-config.js';
         import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js';
         import {
             collection, getDocs, addDoc, doc, updateDoc, deleteDoc,
             query, orderBy, where, serverTimestamp
         } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js';
+        import {
+            ref, uploadBytesResumable, getDownloadURL, deleteObject
+        } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-storage.js';
 
         document.getElementById('btnMenu').addEventListener('click', toggleSidebar);
         document.getElementById('btnLogout').addEventListener('click', handleLogout);
@@ -324,29 +365,41 @@
         document.getElementById('btnSave').addEventListener('click', salvar);
         document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) fecharModal(); });
 
-        document.getElementById('fFotoUrl').addEventListener('input', e => {
-            atualizarPreview(e.target.value.trim());
+        document.getElementById('fFotoFile').addEventListener('change', e => {
+            const file = e.target.files[0];
+            if (!file) return;
+            document.getElementById('uploadLabelText').textContent = file.name;
+            document.getElementById('fotoFilename').textContent = `${(file.size / 1024).toFixed(0)} KB`;
+            const reader = new FileReader();
+            reader.onload = ev => {
+                document.getElementById('fotoPreview').innerHTML = `<img src="${ev.target.result}">`;
+            };
+            reader.readAsDataURL(file);
         });
 
         let todos = [];
         let editId = null;
+        let editFotoUrl = null;
 
-        // Converte link de compartilhamento do Google Drive em link direto de imagem
-        function converterUrlFoto(url) {
-            if (!url) return url;
-            const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-            if (match) return `https://lh3.googleusercontent.com/d/${match[1]}`;
-            return url;
-        }
-
-        function atualizarPreview(url) {
-            const prev = document.getElementById('fotoPreview');
-            const convertida = converterUrlFoto(url);
-            if (convertida) {
-                prev.innerHTML = `<img src="${convertida}" onerror="this.parentElement.innerHTML='🏅'">`;
-            } else {
-                prev.innerHTML = '🏅';
-            }
+        function uploadFoto(file) {
+            return new Promise((resolve, reject) => {
+                const ext = file.name.split('.').pop();
+                const path = `condecorados/${Date.now()}.${ext}`;
+                const storageRef = ref(storage, path);
+                const task = uploadBytesResumable(storageRef, file);
+                const progress = document.getElementById('uploadProgress');
+                const bar = document.getElementById('uploadProgressBar');
+                progress.style.display = 'block';
+                task.on('state_changed',
+                    snap => { bar.style.width = (snap.bytesTransferred / snap.totalBytes * 100) + '%'; },
+                    err  => { progress.style.display = 'none'; reject(err); },
+                    async () => {
+                        progress.style.display = 'none';
+                        bar.style.width = '0%';
+                        resolve(await getDownloadURL(task.snapshot.ref));
+                    }
+                );
+            });
         }
 
         onAuthStateChanged(auth, async (user) => {
@@ -401,11 +454,15 @@
 
         function abrirModal(id = null) {
             editId = id;
-            document.getElementById('fFotoUrl').value = '';
+            editFotoUrl = null;
+            document.getElementById('fFotoFile').value = '';
+            document.getElementById('uploadLabelText').textContent = 'Escolher foto...';
+            document.getElementById('fotoFilename').textContent = '';
             document.getElementById('fotoPreview').innerHTML = '🏅';
 
             if (id) {
                 const c = todos.find(x => x.id === id);
+                editFotoUrl = c.foto || null;
                 document.getElementById('modalTitle').textContent = 'Editar Condecorado';
                 document.getElementById('fNome').value      = c.nome || '';
                 document.getElementById('fCargo').value     = c.cargo || '';
@@ -413,8 +470,10 @@
                 document.getElementById('fTitulo').value    = c.titulo || '';
                 document.getElementById('fDescricao').value = c.descricao || '';
                 document.getElementById('fData').value      = c.data || '';
-                document.getElementById('fFotoUrl').value   = c.foto || '';
-                atualizarPreview(c.foto || '');
+                if (c.foto) {
+                    document.getElementById('fotoPreview').innerHTML = `<img src="${c.foto}" onerror="this.parentElement.innerHTML='🏅'">`;
+                    document.getElementById('uploadLabelText').textContent = 'Trocar foto...';
+                }
             } else {
                 document.getElementById('modalTitle').textContent = 'Adicionar Condecorado';
                 document.getElementById('fNome').value      = '';
@@ -442,7 +501,12 @@
             btn.textContent = 'Salvando...';
 
             try {
-                const fotoUrl = converterUrlFoto(document.getElementById('fFotoUrl').value.trim()) || null;
+                const arquivo = document.getElementById('fFotoFile').files[0];
+                let fotoUrl = editFotoUrl;
+                if (arquivo) {
+                    btn.textContent = 'Enviando foto...';
+                    fotoUrl = await uploadFoto(arquivo);
+                }
 
                 const dados = {
                     nome,
@@ -451,7 +515,7 @@
                     titulo,
                     descricao: document.getElementById('fDescricao').value.trim(),
                     data:      document.getElementById('fData').value || null,
-                    foto:      fotoUrl,
+                    foto:      fotoUrl || null,
                     updatedAt: serverTimestamp()
                 };
 

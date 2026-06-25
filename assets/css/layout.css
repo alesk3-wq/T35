@@ -124,6 +124,19 @@
     background: rgba(255, 34, 51, 0.06);
     border: 1px solid var(--border);
     border-radius: 8px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.sidebar-user:hover {
+    border-color: var(--amber);
+    background: rgba(255, 34, 51, 0.1);
+}
+
+.sidebar-user-active {
+    border-color: var(--amber) !important;
+    background: rgba(255, 34, 51, 0.1) !important;
 }
 
 .sidebar-user-avatar {
@@ -164,6 +177,22 @@
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+.sidebar-user-role {
+    display: inline-block;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 3px;
+    width: fit-content;
+}
+
+.role-candidato { background: rgba(34, 255, 89, 0.226);  color: #3ed84a; }
+.role-instrutor  { background: rgba(59,130,246,0.14); color: #3b82f6; }
+.role-admin      { background: rgba(168,85,247,0.14); color: #a855f7; }
 
 .btn-logout {
     width: 100%;

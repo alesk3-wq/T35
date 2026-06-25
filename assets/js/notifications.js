@@ -47,13 +47,21 @@ function _injectSidebarUser() {
     if (!footer || footer.querySelector('.sidebar-user')) return;
 
     const inicial = (_userData.fullName || _userData.email || '?')[0].toUpperCase();
-    const userEl = document.createElement('div');
-    userEl.className = 'sidebar-user';
+    const role    = _userData.role || 'candidato';
+    const roleMap = { candidato: 'Candidato', instrutor: 'Instrutor', admin: 'Admin' };
+    const roleLabel = roleMap[role] || role;
+
+    const isPerfil = window.location.pathname.includes('perfil.html');
+
+    const userEl = document.createElement('a');
+    userEl.className = 'sidebar-user' + (isPerfil ? ' sidebar-user-active' : '');
+    userEl.href = 'perfil.html';
     userEl.innerHTML = `
         <div class="sidebar-user-avatar">${inicial}</div>
         <div class="sidebar-user-info">
             <span class="sidebar-user-name">${_userData.fullName || 'Usuário'}</span>
             <span class="sidebar-user-email">${_userData.email || ''}</span>
+            <span class="sidebar-user-role role-${role}">${roleLabel}</span>
         </div>
     `;
     footer.insertBefore(userEl, footer.firstChild);
