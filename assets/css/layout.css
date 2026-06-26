@@ -598,3 +598,35 @@
 .sidebar::-webkit-scrollbar-thumb:hover {
     background: var(--text-secondary);
 }
+
+/* ============================================
+   LOGO ORBITAL - SIDEBAR
+   ============================================ */
+
+.logo-orbit-wrap {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    flex-shrink: 0;
+}
+
+.logo-orbit {
+    position: absolute;
+    inset: -10px;
+    border-radius: 50%;
+    border: 2.5px solid rgba(255, 34, 51, 0.1);
+    border-top-color: #ff2233;
+    filter: drop-shadow(0 0 5px rgba(255, 34, 51, 0.5));
+    pointer-events: none;
+    opacity: 0;
+}
+
+.logo-orbit.spinning {
+    animation: logo-orbit-once 1.3s linear 1 forwards;
+}
+
+@keyframes logo-orbit-once {
+    0%   { transform: rotate(0deg);   opacity: 1; }
+    80%  { opacity: 1; }
+    100% { transform: rotate(360deg); opacity: 0; }
+}
