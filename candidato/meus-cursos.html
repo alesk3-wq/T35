@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="../assets/css/layout.css">
     <link rel="stylesheet" href="../assets/css/catalogo.css">
     <link rel="stylesheet" href="../assets/css/responsive.css">
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 </head>
 <body>
     <!-- ✅ SIDEBAR (padrão) -->
@@ -132,7 +133,20 @@
                 autocomplete="off"
                 style="width:100%; padding:0.9rem; font-size:22px; font-family:monospace; text-transform:uppercase; letter-spacing:0.15em; text-align:center; background:var(--bg); border:1px solid var(--border); border-radius:8px; color:var(--text); outline:none; margin-bottom:0.5rem;"
             >
-            <p id="presencaModalErro" style="color:#ef4444; font-size:13px; min-height:1.2em; margin:0 0 1rem 0;"></p>
+            <p id="presencaModalErro" style="color:#ef4444; font-size:13px; min-height:1.2em; margin:0 0 0.75rem 0;"></p>
+
+            <!-- Scanner QR -->
+            <div id="qrScannerWrap" style="display:none; margin-bottom:1rem;">
+                <div id="qrReader" style="border-radius:8px; overflow:hidden;"></div>
+                <p style="font-size:11px; color:var(--text-secondary); text-align:center; margin:0.5rem 0 0;">Aponte a câmera para o QR Code do instrutor</p>
+            </div>
+
+            <button id="btnLerQR"
+                style="width:100%; padding:0.65rem; background:rgba(255,34,51,0.08); border:1px solid rgba(255,34,51,0.25); border-radius:8px; color:var(--amber); font-weight:600; font-size:13px; cursor:pointer; margin-bottom:1rem; display:flex; align-items:center; justify-content:center; gap:0.5rem; transition:background 0.2s;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h.01M14 17h.01M17 14h.01M17 17h.01M20 14h.01M20 17h.01M20 20h.01M17 20h.01M14 20h.01"/></svg>
+                Ler QR Code
+            </button>
+
             <div style="display:flex; gap:0.75rem;">
                 <button id="btnCancelarPresenca"
                     style="flex:1; padding:0.75rem; background:var(--bg); border:1px solid var(--border); border-radius:8px; color:var(--text-secondary); cursor:pointer; font-size:14px;">
@@ -351,22 +365,69 @@
 
         let inscricaoModalId = null;
 
+        let html5QrScanner = null;
+        let scannerAtivo = false;
+
+        function pararScanner() {
+            if (html5QrScanner && scannerAtivo) {
+                html5QrScanner.stop().catch(() => {});
+                scannerAtivo = false;
+            }
+            document.getElementById('qrScannerWrap').style.display = 'none';
+            document.getElementById('btnLerQR').innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h.01M14 17h.01M17 14h.01M17 17h.01M20 14h.01M20 17h.01M20 20h.01M17 20h.01M14 20h.01"/></svg>
+                Ler QR Code`;
+        }
+
         window.abrirModalPresenca = function(inscricaoId, cursoTitulo) {
             inscricaoModalId = inscricaoId;
             document.getElementById('presencaModalCurso').textContent = cursoTitulo;
             document.getElementById('codigoInput').value = '';
             document.getElementById('presencaModalErro').textContent = '';
+            pararScanner();
             const modal = document.getElementById('presencaModal');
             modal.style.display = 'flex';
             setTimeout(() => document.getElementById('codigoInput').focus(), 50);
         };
 
+        document.getElementById('btnLerQR').addEventListener('click', () => {
+            if (scannerAtivo) { pararScanner(); return; }
+
+            const wrap = document.getElementById('qrScannerWrap');
+            wrap.style.display = 'block';
+            document.getElementById('btnLerQR').innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                Fechar câmera`;
+
+            if (!html5QrScanner) {
+                html5QrScanner = new Html5Qrcode('qrReader');
+            }
+
+            html5QrScanner.start(
+                { facingMode: 'environment' },
+                { fps: 10, qrbox: { width: 220, height: 220 } },
+                (decodedText) => {
+                    // QR lido — preenche o campo e confirma automaticamente
+                    document.getElementById('codigoInput').value = decodedText.trim().toUpperCase();
+                    pararScanner();
+                    document.getElementById('btnEnviarCodigo').click();
+                },
+                () => {}
+            ).then(() => { scannerAtivo = true; })
+             .catch(() => {
+                document.getElementById('presencaModalErro').textContent = 'Não foi possível acessar a câmera.';
+                pararScanner();
+             });
+        });
+
         document.getElementById('btnCancelarPresenca').addEventListener('click', () => {
+            pararScanner();
             document.getElementById('presencaModal').style.display = 'none';
         });
 
         document.getElementById('presencaModal').addEventListener('click', (e) => {
             if (e.target === document.getElementById('presencaModal')) {
+                pararScanner();
                 document.getElementById('presencaModal').style.display = 'none';
             }
         });

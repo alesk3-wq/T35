@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="../assets/css/design-system.css">
     <link rel="stylesheet" href="../assets/css/layout.css">
     <link rel="stylesheet" href="../assets/css/responsive.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         .content { padding: 2rem; }
 
@@ -101,6 +102,28 @@
             font-size: 11px;
             color: var(--text-secondary);
             margin-top: 0.5rem;
+        }
+
+        /* ── QR Code ── */
+        .qr-wrap {
+            display: none;
+            justify-content: center;
+            margin: 1rem 0 0.5rem;
+        }
+        .qr-wrap.visible { display: flex; }
+        .qr-inner {
+            background: #fff;
+            border-radius: 12px;
+            padding: 10px;
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 4px 20px rgba(0,0,0,0.4);
+        }
+        .qr-inner img, .qr-inner canvas { display: block; border-radius: 4px; }
+        .qr-label {
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            letter-spacing: 0.3px;
         }
 
         .codigo-actions {
@@ -412,6 +435,11 @@
                         </div>
                     </div>
 
+                    <div class="qr-wrap" id="qrWrap">
+                        <div class="qr-inner" id="qrCanvas"></div>
+                    </div>
+                    <p class="qr-label" id="qrLabel" style="display:none">Aponte a câmera do celular para confirmar presença</p>
+
                     <div class="codigo-actions">
                         <button class="btn-gerar" id="btnGerar">Gerar Código</button>
                         <button class="btn-copiar" id="btnCopiar">Copiar</button>
@@ -559,23 +587,45 @@
             await carregarAlunosPresentes();
         }
 
+        let qrInstance = null;
+
         function atualizarExibicaoCodigo() {
-            const box     = document.getElementById('codigoBox');
-            const btnCop  = document.getElementById('btnCopiar');
-            const btnGer  = document.getElementById('btnGerar');
+            const box      = document.getElementById('codigoBox');
+            const btnCop   = document.getElementById('btnCopiar');
+            const btnGer   = document.getElementById('btnGerar');
+            const qrWrap   = document.getElementById('qrWrap');
+            const qrCanvas = document.getElementById('qrCanvas');
+            const qrLabel  = document.getElementById('qrLabel');
 
             if (codigoAtual) {
                 box.classList.add('tem-codigo');
                 box.innerHTML = `
                     <div class="codigo-valor">${codigoAtual}</div>
-                    <div class="codigo-hint">Mostre este código para os alunos presentes</div>`;
+                    <div class="codigo-hint">Mostre este código ou o QR Code para os alunos</div>`;
                 btnCop.classList.add('visible');
                 btnGer.textContent = 'Regenerar Código';
+
+                // Gera QR Code
+                qrCanvas.innerHTML = '';
+                qrInstance = new QRCode(qrCanvas, {
+                    text: codigoAtual,
+                    width: 180,
+                    height: 180,
+                    colorDark: '#111111',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+                qrWrap.classList.add('visible');
+                qrLabel.style.display = 'block';
             } else {
                 box.classList.remove('tem-codigo');
                 box.innerHTML = `<div class="codigo-placeholder">Nenhum código gerado.<br>Clique em "Gerar Código" para criar.</div>`;
                 btnCop.classList.remove('visible');
                 btnGer.textContent = 'Gerar Código';
+                qrWrap.classList.remove('visible');
+                qrLabel.style.display = 'none';
+                qrCanvas.innerHTML = '';
+                qrInstance = null;
             }
         }
 
