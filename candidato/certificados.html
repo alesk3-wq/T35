@@ -8,8 +8,12 @@
     <link rel="stylesheet" href="../assets/css/design-system.css">
     <link rel="stylesheet" href="../assets/css/layout.css">
     <link rel="stylesheet" href="../assets/css/responsive.css">
-    <!-- jsPDF -->
+    <!-- Fontes -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,400;1,700&display=swap">
+    <!-- jsPDF + html2canvas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         .content { padding: 2rem; }
 
@@ -362,104 +366,40 @@
 
             try {
                 const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-
-                const W = 297, H = 210;
-                const curso = insc.curso;
-                const numCert = numeroCertificado(insc.id);
+                const curso     = insc.curso;
+                const numCert   = numeroCertificado(insc.id);
                 const dataConcl = dataConclucao(insc);
 
-                // Fundo levemente creme
-                pdf.setFillColor(255, 255, 252);
-                pdf.rect(0, 0, W, H, 'F');
+                // Logo em base64 para evitar CORS no canvas
+                let logoB64 = '';
+                try { logoB64 = await imgToBase64('../assets/img/t35logo.png'); } catch(_) {}
 
-                // Borda externa âmbar
-                pdf.setDrawColor(245, 158, 11);
-                pdf.setLineWidth(1.5);
-                pdf.rect(8, 8, W - 16, H - 16);
+                // Monta o elemento do certificado fora da tela
+                const el = document.createElement('div');
+                el.style.cssText = 'position:absolute;top:0;left:-1200px;width:1122px;height:794px;';
+                el.innerHTML = buildCertHTML(curso, numCert, dataConcl, logoB64);
+                document.body.appendChild(el);
 
-                // Borda interna fina
-                pdf.setDrawColor(200, 140, 40);
-                pdf.setLineWidth(0.3);
-                pdf.rect(12, 12, W - 24, H - 24);
+                // Aguarda fontes e um frame de pintura
+                await document.fonts.ready;
+                await new Promise(r => setTimeout(r, 250));
 
-                // Logo
-                try {
-                    const logoB64 = await imgToBase64('../assets/img/t35logo.png');
-                    pdf.addImage(logoB64, 'PNG', W / 2 - 14, 16, 28, 28);
-                } catch (_) {}
+                const canvas = await html2canvas(el, {
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: false,
+                    backgroundColor: '#fffef8',
+                    width: 1122,
+                    height: 794,
+                    logging: false
+                });
 
-                // Cabeçalho
-                pdf.setFont('helvetica', 'bold');
-                pdf.setFontSize(10);
-                pdf.setTextColor(130, 90, 10);
-                pdf.text('TEAM 35 ACADEMY', W / 2, 52, { align: 'center' });
+                document.body.removeChild(el);
 
-                // Linha decorativa
-                pdf.setDrawColor(245, 158, 11);
-                pdf.setLineWidth(0.5);
-                pdf.line(W / 2 - 45, 55.5, W / 2 + 45, 55.5);
+                const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+                pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 297, 210);
 
-                // Título
-                pdf.setFont('helvetica', 'bold');
-                pdf.setFontSize(24);
-                pdf.setTextColor(15, 23, 42);
-                pdf.text('CERTIFICADO DE CONCLUSÃO', W / 2, 69, { align: 'center' });
-
-                // Subtexto
-                pdf.setFont('helvetica', 'normal');
-                pdf.setFontSize(12);
-                pdf.setTextColor(80, 80, 80);
-                pdf.text('Certificamos que', W / 2, 82, { align: 'center' });
-
-                // Nome do candidato
-                pdf.setFont('helvetica', 'bolditalic');
-                pdf.setFontSize(22);
-                pdf.setTextColor(15, 23, 42);
-                pdf.text(_userName, W / 2, 95, { align: 'center' });
-
-                // Linha sob o nome
-                const nw = pdf.getTextWidth(_userName);
-                pdf.setDrawColor(15, 23, 42);
-                pdf.setLineWidth(0.35);
-                pdf.line(W / 2 - nw / 2, 97.5, W / 2 + nw / 2, 97.5);
-
-                // Texto do curso
-                pdf.setFont('helvetica', 'normal');
-                pdf.setFontSize(12);
-                pdf.setTextColor(80, 80, 80);
-                pdf.text('concluiu com êxito o curso', W / 2, 108, { align: 'center' });
-
-                // Nome do curso
-                pdf.setFont('helvetica', 'bold');
-                pdf.setFontSize(16);
-                pdf.setTextColor(15, 23, 42);
-                const tituloLines = pdf.splitTextToSize(curso.titulo.toUpperCase(), 200);
-                pdf.text(tituloLines, W / 2, 118, { align: 'center' });
-
-                const yAfterCurso = 118 + (tituloLines.length - 1) * 7;
-
-                // Instrutor e carga horária
-                pdf.setFont('helvetica', 'normal');
-                pdf.setFontSize(11);
-                pdf.setTextColor(90, 90, 90);
-                const detalhes = `ministrado por  ${curso.instrutor}${curso.duracao ? '  ·  carga horária: ' + curso.duracao : ''}`;
-                pdf.text(detalhes, W / 2, yAfterCurso + 12, { align: 'center' });
-
-                // Linha separadora final
-                pdf.setDrawColor(245, 158, 11);
-                pdf.setLineWidth(0.4);
-                pdf.line(W / 2 - 70, yAfterCurso + 18, W / 2 + 70, yAfterCurso + 18);
-
-                // Rodapé
-                pdf.setFont('helvetica', 'normal');
-                pdf.setFontSize(9);
-                pdf.setTextColor(150, 150, 150);
-                pdf.text(`Certificado Nº ${numCert}`, 20, H - 14);
-                pdf.text(`Concluído em ${dataConcl}`, W / 2, H - 14, { align: 'center' });
-                pdf.text('T35 Academy © 2025', W - 20, H - 14, { align: 'right' });
-
-                const nomeArquivo = `certificado-${curso.titulo.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '').toLowerCase()}-${numCert}.pdf`;
+                const nomeArquivo = `certificado-${curso.titulo.replace(/\s+/g,'-').replace(/[^a-zA-Z0-9-]/g,'').toLowerCase()}-${numCert}.pdf`;
                 pdf.save(nomeArquivo);
 
             } catch (err) {
@@ -469,6 +409,101 @@
                 btn.disabled = false;
                 btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Baixar PDF`;
             }
+        }
+
+        function buildCertHTML(curso, numCert, dataConcl, logoB64) {
+            const logoSmall = logoB64
+                ? `<img src="${logoB64}" style="width:70px;height:70px;object-fit:contain;border-radius:12px;display:block;">`
+                : '';
+            const logoLarge = logoB64
+                ? `<img src="${logoB64}" style="width:100%;height:100%;object-fit:contain;border-radius:18px;display:block;">`
+                : '';
+            const instrutor = curso.duracao
+                ? `Ministrado por <strong style="color:#555;">${curso.instrutor}</strong> &nbsp;·&nbsp; Carga horária: <strong style="color:#555;">${curso.duracao}</strong>`
+                : `Ministrado por <strong style="color:#555;">${curso.instrutor}</strong>`;
+
+            return `
+            <div style="width:1122px;height:794px;background:#fffef8;position:relative;overflow:hidden;box-sizing:border-box;font-family:Georgia,serif;">
+
+                <!-- Listras vermelhas -->
+                <div style="position:absolute;top:0;left:0;right:0;height:9px;background:linear-gradient(90deg,#cc1122,#ff2233,#cc1122);"></div>
+                <div style="position:absolute;bottom:0;left:0;right:0;height:9px;background:linear-gradient(90deg,#cc1122,#ff2233,#cc1122);"></div>
+
+                <!-- Bordas douradas -->
+                <div style="position:absolute;top:18px;left:18px;right:18px;bottom:18px;border:1.5px solid #c9a227;box-sizing:border-box;"></div>
+                <div style="position:absolute;top:24px;left:24px;right:24px;bottom:24px;border:0.5px solid rgba(201,162,39,0.4);box-sizing:border-box;"></div>
+
+                <!-- Cantos ornamentais -->
+                <div style="position:absolute;top:10px;left:10px;width:40px;height:40px;border-top:2px solid #c9a227;border-left:2px solid #c9a227;"></div>
+                <div style="position:absolute;top:10px;right:10px;width:40px;height:40px;border-top:2px solid #c9a227;border-right:2px solid #c9a227;"></div>
+                <div style="position:absolute;bottom:10px;left:10px;width:40px;height:40px;border-bottom:2px solid #c9a227;border-left:2px solid #c9a227;"></div>
+                <div style="position:absolute;bottom:10px;right:10px;width:40px;height:40px;border-bottom:2px solid #c9a227;border-right:2px solid #c9a227;"></div>
+
+                <!-- Logo grande decorativa à esquerda (metade visível) -->
+                <div style="position:absolute;top:50%;transform:translateY(-50%);left:-180px;width:540px;height:540px;opacity:0.32;">
+                    ${logoLarge}
+                </div>
+
+                <!-- Brilho radial sutil -->
+                <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 60% 50%,rgba(201,162,39,0.05) 0%,transparent 60%);pointer-events:none;"></div>
+
+                <!-- CONTEÚDO: 3 seções distribuídas verticalmente -->
+                <div style="position:absolute;top:28px;left:40px;right:40px;bottom:28px;display:flex;flex-direction:column;justify-content:space-between;align-items:center;text-align:center;">
+
+                    <!-- ── TOPO ── -->
+                    <div style="display:flex;flex-direction:column;align-items:center;gap:0;padding-top:8px;">
+                        ${logoSmall}
+                        <div style="font-size:13px;letter-spacing:5px;color:#8a6010;text-transform:uppercase;font-weight:bold;margin-top:12px;">
+                            Team35 Academy
+                        </div>
+                        <div style="width:140px;height:1.5px;background:linear-gradient(90deg,transparent,#c9a227,transparent);margin:12px 0;"></div>
+                        <div style="font-size:27px;font-weight:bold;color:#1a1a2e;letter-spacing:4px;text-transform:uppercase;">
+                            Certificado de Conclusão
+                        </div>
+                    </div>
+
+                    <!-- ── CORPO ── -->
+                    <div style="display:flex;flex-direction:column;align-items:center;gap:0;">
+                        <div style="font-size:15px;color:#666;font-style:italic;margin-bottom:10px;">
+                            Certificamos que
+                        </div>
+                        <div style="font-family:'Playfair Display',Georgia,serif;font-size:46px;font-style:italic;font-weight:700;color:#1a1a2e;line-height:1.15;border-bottom:1px solid #1a1a2e;padding-bottom:8px;max-width:740px;">
+                            ${_userName}
+                        </div>
+                        <div style="font-size:15px;color:#666;font-style:italic;margin-top:16px;margin-bottom:10px;">
+                            concluiu com êxito o curso
+                        </div>
+                        <div style="font-size:20px;font-weight:bold;color:#1a1a2e;text-transform:uppercase;letter-spacing:1.5px;max-width:740px;line-height:1.5;">
+                            ${curso.titulo}
+                        </div>
+                        <div style="font-size:13px;color:#666;margin-top:10px;">${instrutor}</div>
+                    </div>
+
+                    <!-- ── RODAPÉ ── -->
+                    <div style="display:flex;align-items:flex-end;justify-content:space-between;width:100%;padding:0 20px 6px;box-sizing:border-box;">
+
+                        <!-- Esquerda: Nº e data -->
+                        <div style="text-align:left;">
+                            <div style="font-family:monospace;font-size:11px;color:#777;letter-spacing:1px;">CERTIFICADO Nº ${numCert}</div>
+                            <div style="font-size:11px;color:#777;margin-top:3px;">Emitido em ${dataConcl}</div>
+                        </div>
+
+                        <!-- Direita: Assinatura + Selo -->
+                        <div style="display:flex;align-items:flex-end;gap:18px;">
+                            <div style="text-align:center;">
+                                <div style="width:140px;height:1px;background:#777;margin-bottom:5px;"></div>
+                                <div style="font-size:11px;color:#777;">T35 Academy &copy; 2025</div>
+                            </div>
+                            <!-- Selo circular -->
+                            <div style="width:76px;height:76px;border-radius:50%;border:1.5px solid #c9a227;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(201,162,39,0.06);flex-shrink:0;">
+                                <div style="font-size:8px;font-weight:bold;color:#8a6010;letter-spacing:2px;text-transform:uppercase;line-height:1.8;">TEAM</div>
+                                <div style="font-size:19px;font-weight:bold;color:#c9a227;line-height:1;">35</div>
+                                <div style="font-size:7px;font-weight:bold;color:#8a6010;letter-spacing:1.5px;text-transform:uppercase;line-height:1.8;">ACADEMY</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
         }
 
         // ── Helpers ───────────────────────────────────────────────────────

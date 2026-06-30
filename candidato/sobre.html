@@ -162,11 +162,30 @@
 
         .contato-row svg { color: var(--amber); flex-shrink: 0; }
 
+        .nt-logo-footer {
+            display: flex;
+            justify-content: center;
+            padding: 2rem 0 1rem;
+            margin-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .nt-logo-img {
+            max-width: 220px;
+            width: 100%;
+            opacity: 0.75;
+            filter: drop-shadow(0 2px 12px rgba(0,0,0,0.4));
+            transition: opacity 0.2s;
+        }
+
+        .nt-logo-img:hover { opacity: 1; }
+
         @media (max-width: 600px) {
             .sobre-hero { flex-direction: column; text-align: center; }
             .team-hero-img { height: 210px; }
             .team-hero-logo { width: 48px; height: 48px; top: 0.75rem; right: 0.75rem; }
             .team-hero-content h2 { font-size: 20px; }
+            .nt-logo-img { max-width: 160px; }
         }
     </style>
 </head>
@@ -280,8 +299,20 @@
             <!-- Sobre a T35 Academy -->
             <div class="sobre-section">
                 <p class="sobre-section-title">T35 Academy</p>
-                <p><!-- TEXTO DA GERÊNCIA: objetivo da plataforma de treinamentos --></p>
+                <p>O **Team 35 Academy** foi desenvolvido com o propósito de fortalecer a conexão entre os candidatos, alunos e a equipe, promovendo maior engajamento, participação e evolução contínua em todas as etapas da formação.
+
+Mais do que uma plataforma de acompanhamento, o aplicativo busca aproximar pessoas, facilitar a comunicação, incentivar a presença nos treinamentos e contribuir para o desenvolvimento individual e coletivo. Todas as funcionalidades foram pensadas para apoiar processos mais eficientes, organizados e transparentes.
+
+O Team 35 Academy reflete os princípios que norteiam a empresa: formar **times que se complementam**, incentivar o **olhar de dono**, valorizar as **pessoas**, agir com **integridade**, colocar os **clientes** em primeiro lugar e buscar constantemente a **melhoria contínua**. Dessa forma, o aplicativo se torna uma ferramenta estratégica para impulsionar resultados, fortalecer a cultura organizacional e promover a evolução constante de toda a equipe.
+</p>
+           
+                    <!-- Logo NT Team 35 -->
+            <div class="nt-logo-footer">
+                <img src="../assets/img/ntteam35-logo.png" alt="NT Team 35" class="nt-logo-img">
+                </div>
             </div>
+
+            
 
             <hr class="divider">
 
@@ -296,11 +327,9 @@
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                     Lençóis Paulista SP
                 </div>
-                <div class="contato-row">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13 19.79 19.79 0 0 1 1.61 4.4 2 2 0 0 1 3.6 2.22h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.13 6.13l.94-.94a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                    <!-- (XX) XXXXX-XXXX -->
-                </div>
             </div>
+
+            
 
         </div>
     </main>

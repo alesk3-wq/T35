@@ -95,37 +95,49 @@
     <!-- ✅ MAIN CONTENT -->
     <main class="main">
         <div class="content">
-            <!-- ✅ Cards de estatísticas -->
+            <!-- Cards de estatísticas -->
             <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon">📚</div>
-                    <div class="stat-content">
-                        <h3>Cursos Inscritos</h3>
-                        <p class="stat-value" id="cursosInscritos">0</p>
+                <div class="stat-card stat-card-blue">
+                    <div class="stat-card-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                    </div>
+                    <div class="stat-card-info">
+                        <span class="stat-card-label">Inscrições</span>
+                        <span class="stat-card-value" id="cursosInscritos">0</span>
+                        <span class="stat-card-sub">cursos</span>
                     </div>
                 </div>
 
-                <div class="stat-card">
-                    <div class="stat-icon">✅</div>
-                    <div class="stat-content">
-                        <h3>Cursos Concluídos</h3>
-                        <p class="stat-value" id="cursosConcluidos">0</p>
+                <div class="stat-card stat-card-green">
+                    <div class="stat-card-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <div class="stat-card-info">
+                        <span class="stat-card-label">Concluídos</span>
+                        <span class="stat-card-value" id="cursosConcluidos">0</span>
+                        <span class="stat-card-sub">cursos</span>
                     </div>
                 </div>
 
-                <div class="stat-card">
-                    <div class="stat-icon">📜</div>
-                    <div class="stat-content">
-                        <h3>Certificados</h3>
-                        <p class="stat-value" id="certificados">0</p>
+                <div class="stat-card stat-card-gold">
+                    <div class="stat-card-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>
+                    </div>
+                    <div class="stat-card-info">
+                        <span class="stat-card-label">Certificados</span>
+                        <span class="stat-card-value" id="certificados">0</span>
+                        <span class="stat-card-sub">emitidos</span>
                     </div>
                 </div>
 
-                <div class="stat-card">
-                    <div class="stat-icon">⏳</div>
-                    <div class="stat-content">
-                        <h3>Pendentes</h3>
-                        <p class="stat-value" id="pendentes">0</p>
+                <div class="stat-card stat-card-orange">
+                    <div class="stat-card-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    </div>
+                    <div class="stat-card-info">
+                        <span class="stat-card-label">Pendentes</span>
+                        <span class="stat-card-value" id="pendentes">0</span>
+                        <span class="stat-card-sub">aguardando</span>
                     </div>
                 </div>
             </div>
