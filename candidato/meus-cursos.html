@@ -258,14 +258,18 @@
                 // Botão de presença só para inscrições aprovadas
                 let presencaHTML = '';
                 if (inscricao.status === 'aprovada') {
-                    presencaHTML = jaConfirmouHoje
-                        ? `<button class="btn-inscrever btn-inscrito" disabled style="margin-top:0.75rem;">
+                    const isEad = (curso.modalidade || 'presencial') === 'ead';
+                    if (jaConfirmouHoje) {
+                        presencaHTML = `<button class="btn-inscrever btn-inscrito" disabled style="margin-top:0.75rem;">
                                ✓ Presença Confirmada Hoje
-                           </button>`
-                        : `<button class="btn-inscrever" style="margin-top:0.75rem;"
+                           </button>`;
+                    } else if (!isEad) {
+                        presencaHTML = `<button class="btn-inscrever" style="margin-top:0.75rem;"
                                onclick="abrirModalPresenca('${inscricao.id}', '${curso.titulo.replace(/'/g, "\\'")}')">
                                Confirmar Presença
                            </button>`;
+                    }
+                    // EAD: presença confirmada assistindo o vídeo — botão Assistir já aparece abaixo
                 }
 
                 // Botão de material (disponível por 7 dias após dataFim)
