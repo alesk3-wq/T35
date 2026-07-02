@@ -320,11 +320,11 @@
                     <option value="inativo">Inativo</option>
                     <option value="concluido">Concluído</option>
                 </select>
-                <select id="formatoFilter">
-                    <option value="">Todos os formatos</option>
+                <select id="modalidadeFilter">
+                    <option value="">Todas as modalidades</option>
                     <option value="presencial">Presencial</option>
+                    <option value="ead">EAD</option>
                     <option value="online">Online</option>
-                    <option value="hibrido">Híbrido</option>
                 </select>
             </div>
 
@@ -334,7 +334,6 @@
                         <tr>
                             <th>Título</th>
                             <th>Instrutor</th>
-                            <th>Formato</th>
                             <th>Início</th>
                             <th>Fim</th>
                             <th>Vagas</th>
@@ -344,7 +343,7 @@
                     </thead>
                     <tbody id="cursosList">
                         <tr>
-                            <td colspan="8" style="text-align:center;color:var(--text-secondary)">Carregando...</td>
+                            <td colspan="7" style="text-align:center;color:var(--text-secondary)">Carregando...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -379,20 +378,9 @@
                     <textarea id="cursoDescricao" placeholder="Descreva o conteúdo do curso" required></textarea>
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Instrutor *</label>
-                        <input type="text" id="cursoInstrutor" placeholder="Nome do instrutor" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Formato *</label>
-                        <select id="cursoFormato" required>
-                            <option value="">Selecione...</option>
-                            <option value="presencial">Presencial</option>
-                            <option value="online">Online</option>
-                            <option value="hibrido">Híbrido</option>
-                        </select>
-                    </div>
+                <div class="form-group">
+                    <label>Instrutor *</label>
+                    <input type="text" id="cursoInstrutor" placeholder="Nome do instrutor" required>
                 </div>
 
                 <div class="form-group">
@@ -476,6 +464,7 @@
         document.getElementById('btnSalvarCurso').addEventListener('click', salvarCurso);
         document.getElementById('searchInput').addEventListener('input', filtrarCursos);
         document.getElementById('statusFilter').addEventListener('change', filtrarCursos);
+        document.getElementById('modalidadeFilter').addEventListener('change', filtrarCursos);
         document.getElementById('cursoModalidade').addEventListener('change', (e) => {
             const isEad = e.target.value === 'ead';
             const input = document.getElementById('cursoVideoUrl');
@@ -550,7 +539,6 @@
                         <span style="display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:999px;margin-left:6px;background:${modCfg.bg};color:${modCfg.color}">${modCfg.label}</span>
                     </td>
                     <td>${c.instrutor}</td>
-                    <td><span class="formato-badge">${c.formato}</span></td>
                     <td>${formatarData(c.dataInicio)}</td>
                     <td>${formatarData(c.dataFim)}</td>
                     <td>${c.vagas ?? '-'}</td>
@@ -581,12 +569,12 @@
         function filtrarCursos() {
             const search = document.getElementById('searchInput').value.toLowerCase();
             const status = document.getElementById('statusFilter').value;
-            const formato = document.getElementById('formatoFilter').value;
+            const modalidade = document.getElementById('modalidadeFilter').value;
 
             const filtered = allCursos.filter(c =>
                 (!search || c.titulo?.toLowerCase().includes(search) || c.instrutor?.toLowerCase().includes(search)) &&
                 (!status || c.status === status) &&
-                (!formato || c.formato === formato)
+                (!modalidade || (c.modalidade || 'presencial') === modalidade)
             );
             renderCursos(filtered);
         }
@@ -604,7 +592,6 @@
                 document.getElementById('cursoTitulo').value = curso.titulo || '';
                 document.getElementById('cursoDescricao').value = curso.descricao || '';
                 document.getElementById('cursoInstrutor').value = curso.instrutor || '';
-                document.getElementById('cursoFormato').value = curso.formato || '';
                 document.getElementById('cursoLocal').value = curso.local || '';
                 document.getElementById('cursoDuracao').value = curso.duracao || '';
                 document.getElementById('cursoVagas').value = curso.vagas || '';
@@ -646,7 +633,6 @@
             const titulo = document.getElementById('cursoTitulo').value.trim();
             const descricao = document.getElementById('cursoDescricao').value.trim();
             const instrutor = document.getElementById('cursoInstrutor').value.trim();
-            const formato = document.getElementById('cursoFormato').value;
             const local = document.getElementById('cursoLocal').value.trim();
             const dataInicioStr = document.getElementById('cursoDataInicio').value;
             const dataFimStr = document.getElementById('cursoDataFim').value;
@@ -655,7 +641,7 @@
             const vagas = parseInt(document.getElementById('cursoVagas').value);
             const status = document.getElementById('cursoStatus').value;
 
-            if (!titulo || !descricao || !instrutor || !formato || !dataInicioStr || !dataFimStr || !vagas) {
+            if (!titulo || !descricao || !instrutor || !dataInicioStr || !dataFimStr || !vagas) {
                 showError('Preencha todos os campos obrigatórios (*).');
                 return;
             }
@@ -680,7 +666,6 @@
                 titulo,
                 descricao,
                 instrutor,
-                formato,
                 modalidade,
                 local,
                 dataInicio,
