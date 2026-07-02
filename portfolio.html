@@ -13,8 +13,8 @@
             --border:  #334155;
             --text:    #F1F5F9;
             --muted:   #94A3B8;
-            --amber:   #F59E0B;
-            --amber2:  #D97706;
+            --amber:   #ff2233;
+            --amber2:  #cc1122;
             --green:   #22C55E;
             --blue:    #3B82F6;
             --purple:  #A855F7;
@@ -80,8 +80,8 @@
             align-items: center;
             gap: 0.4rem;
             padding: 0.3rem 0.9rem;
-            background: rgba(245,158,11,0.1);
-            border: 1px solid rgba(245,158,11,0.25);
+            background: rgba(255,34,51,0.1);
+            border: 1px solid rgba(255,34,51,0.25);
             border-radius: 999px;
             font-size: 11px;
             font-weight: 700;
@@ -124,7 +124,7 @@
             width: 600px;
             height: 600px;
             border-radius: 50%;
-            background: radial-gradient(circle, rgba(245,158,11,0.08) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(255,34,51,0.08) 0%, transparent 70%);
             pointer-events: none;
         }
 
@@ -133,7 +133,7 @@
             height: 90px;
             border-radius: 20px;
             margin-bottom: 1.5rem;
-            box-shadow: 0 0 40px rgba(245,158,11,0.3);
+            box-shadow: 0 0 40px rgba(255,34,51,0.3);
         }
 
         .hero-badge {
@@ -141,8 +141,8 @@
             align-items: center;
             gap: 0.5rem;
             padding: 0.4rem 1rem;
-            background: rgba(245,158,11,0.1);
-            border: 1px solid rgba(245,158,11,0.3);
+            background: rgba(255,34,51,0.1);
+            border: 1px solid rgba(255,34,51,0.3);
             border-radius: 999px;
             font-size: 12px;
             font-weight: 600;
@@ -159,7 +159,7 @@
         }
 
         .hero-title span {
-            background: linear-gradient(135deg, var(--amber), #FCD34D);
+            background: linear-gradient(135deg, var(--amber), #ff6677);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -214,7 +214,7 @@
         }
 
         .card:hover {
-            border-color: rgba(245,158,11,0.4);
+            border-color: rgba(255,34,51,0.4);
             transform: translateY(-3px);
         }
 
@@ -467,7 +467,7 @@
 
     <div class="cards-grid">
         <div class="card">
-            <div class="card-icon" style="background:rgba(245,158,11,0.12);color:var(--amber)">
+            <div class="card-icon" style="background:rgba(255,34,51,0.12);color:var(--amber)">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
             </div>
             <h3>Gestão de cursos</h3>
@@ -495,7 +495,7 @@
             <p>Admin envia avisos para todos os usuários diretamente pela plataforma. Sino com badge exibe as mensagens não lidas em tempo real.</p>
         </div>
         <div class="card">
-            <div class="card-icon" style="background:rgba(245,158,11,0.12);color:var(--amber)">
+            <div class="card-icon" style="background:rgba(255,34,51,0.12);color:var(--amber)">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
             </div>
             <h3>Relatórios</h3>
@@ -567,7 +567,7 @@
 
     <div class="flow">
         <div class="flow-step">
-            <div class="flow-bubble" style="background:rgba(245,158,11,0.1);border-color:rgba(245,158,11,0.4)">📋</div>
+            <div class="flow-bubble" style="background:rgba(255,34,51,0.1);border-color:rgba(255,34,51,0.4)">📋</div>
             <div class="flow-label">Admin cria<br>o curso</div>
         </div>
         <div class="flow-arrow">→</div>
@@ -587,7 +587,7 @@
         </div>
         <div class="flow-arrow">→</div>
         <div class="flow-step">
-            <div class="flow-bubble" style="background:rgba(245,158,11,0.1);border-color:rgba(245,158,11,0.4)">📱</div>
+            <div class="flow-bubble" style="background:rgba(255,34,51,0.1);border-color:rgba(255,34,51,0.4)">📱</div>
             <div class="flow-label">Candidato<br>confirma</div>
         </div>
         <div class="flow-arrow">→</div>
@@ -608,21 +608,21 @@
 
     <div class="stack-grid">
         <div class="stack-item">
-            <div class="stack-dot" style="background:#F59E0B"></div>
+            <div class="stack-dot" style="background:#ff2233"></div>
             <div>
                 <span>Firebase Auth</span>
                 <small>Login e Google OAuth</small>
             </div>
         </div>
         <div class="stack-item">
-            <div class="stack-dot" style="background:#F59E0B"></div>
+            <div class="stack-dot" style="background:#ff2233"></div>
             <div>
                 <span>Cloud Firestore</span>
                 <small>Banco de dados em tempo real</small>
             </div>
         </div>
         <div class="stack-item">
-            <div class="stack-dot" style="background:#F59E0B"></div>
+            <div class="stack-dot" style="background:#ff2233"></div>
             <div>
                 <span>Firebase Hosting</span>
                 <small>Deploy com CDN global</small>
