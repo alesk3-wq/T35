@@ -187,7 +187,7 @@
         import { toggleSidebar } from '../assets/js/ui-shell.js';
         import { db } from '../firebase-config.js';
         import {
-            doc, getDoc, updateDoc, serverTimestamp
+            doc, getDoc, updateDoc, serverTimestamp, arrayUnion
         } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js';
 
         document.getElementById('btnMenu').addEventListener('click', toggleSidebar);
@@ -204,6 +204,8 @@
         let playerReady   = false;
         let jaConcluido   = false;
         let progresso     = {};     // dados atuais do Firestore
+        let modalidadeCurso = 'presencial';
+        let presencaEadRegistrada = false;
 
         // ── Utilitários ────────────────────────────────────────────────────
         function extrairVideoId(url) {
@@ -257,6 +259,20 @@
         // Salva ao fechar/sair da página
         window.addEventListener('beforeunload', () => salvarProgresso(true));
 
+        function showToastVideo(msg, cor = '#22c55e') {
+            let t = document.getElementById('videoToast');
+            if (!t) {
+                t = document.createElement('div');
+                t.id = 'videoToast';
+                t.style.cssText = 'position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);padding:0.75rem 1.5rem;border-radius:10px;font-size:14px;font-weight:600;color:#fff;opacity:0;transition:opacity 0.3s;z-index:9999;pointer-events:none;';
+                document.body.appendChild(t);
+            }
+            t.textContent = msg;
+            t.style.background = cor;
+            t.style.opacity = '1';
+            setTimeout(() => { t.style.opacity = '0'; }, 3500);
+        }
+
         // ── Salvar progresso no Firestore ──────────────────────────────────
         async function salvarProgresso(sincronous = false) {
             if (!inscricaoId) return;
@@ -279,6 +295,19 @@
             if (concluido && !jaConcluido) {
                 jaConcluido = true;
                 mostrarBadgeConcluido();
+
+                if (modalidadeCurso === 'ead' && inscricaoId && !presencaEadRegistrada) {
+                    presencaEadRegistrada = true;
+                    const hoje = new Date().toISOString().split('T')[0];
+                    try {
+                        await updateDoc(doc(db, 'inscricoes', inscricaoId), {
+                            presencas: arrayUnion(hoje)
+                        });
+                        showToastVideo('✓ Presença registrada automaticamente!');
+                    } catch (e) {
+                        console.warn('[video] erro ao registrar presença EAD:', e);
+                    }
+                }
             }
 
             try {
@@ -354,6 +383,7 @@
 
         // ── Render da página ───────────────────────────────────────────────
         async function renderPagina(curso) {
+            modalidadeCurso = curso.modalidade || 'presencial';
             const videoId = extrairVideoId(curso.videoUrl);
             const content = document.getElementById('pageContent');
 
