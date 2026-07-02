@@ -239,7 +239,15 @@
                         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:0.5rem;margin-bottom:0.25rem;">
                             <h3 class="curso-title" style="margin:0">${curso.titulo}</h3>
                             <div style="display:flex;gap:0.35rem;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;">
-                                ${curso.videoUrl ? `<span class="badge-video"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>Vídeo Aula</span>` : ''}
+                                ${(() => {
+                                    const mod = curso.modalidade || 'presencial';
+                                    const cfg = {
+                                        presencial: { icon: '📍', label: 'Presencial', bg: 'rgba(100,116,139,0.15)', color: '#94a3b8' },
+                                        ead:        { icon: '🎬', label: 'EAD',        bg: 'rgba(239,68,68,0.12)',   color: '#ef4444' },
+                                        online:     { icon: '💻', label: 'Online',     bg: 'rgba(59,130,246,0.12)',  color: '#3b82f6' }
+                                    }[mod] || { icon: '📍', label: mod, bg: 'rgba(100,116,139,0.15)', color: '#94a3b8' };
+                                    return `<span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;background:${cfg.bg};color:${cfg.color}">${cfg.icon} ${cfg.label}</span>`;
+                                })()}
                                 ${encerrado ? '<span class="badge-encerrado">Encerrado</span>' : ''}
                             </div>
                         </div>
