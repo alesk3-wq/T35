@@ -25,7 +25,7 @@
         .manual-intro-icon {
             width: 48px;
             height: 48px;
-            background: rgba(245,158,11,0.12);
+            background: rgba(255,34,51,0.12);
             border-radius: 12px;
             display: flex;
             align-items: center;
@@ -139,7 +139,7 @@
             width: 26px;
             height: 26px;
             border-radius: 50%;
-            background: rgba(245,158,11,0.15);
+            background: rgba(255,34,51,0.12);
             color: var(--amber);
             font-size: 12px;
             font-weight: 700;
@@ -186,12 +186,52 @@
             display: flex;
             align-items: flex-start;
             gap: 0.75rem;
-            background: rgba(245,158,11,0.07);
-            border: 1px solid rgba(245,158,11,0.25);
+            background: rgba(255,34,51,0.06);
+            border: 1px solid rgba(255,34,51,0.2);
             border-radius: 10px;
             padding: 0.9rem 1.1rem;
             margin-top: 0.75rem;
         }
+
+        /* Destaque QR */
+        .qr-highlight {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            background: rgba(59,130,246,0.07);
+            border: 1px solid rgba(59,130,246,0.2);
+            border-radius: 10px;
+            padding: 0.9rem 1.1rem;
+            margin-top: 0.75rem;
+        }
+        .qr-highlight svg { flex-shrink: 0; color: #3b82f6; margin-top: 1px; }
+        .qr-highlight p { font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin: 0; }
+        .qr-highlight strong { color: var(--text); }
+
+        /* Opção de método */
+        .method-opt {
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-start;
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 0.9rem 1.1rem;
+        }
+        .method-badge {
+            font-size: 10px;
+            font-weight: 800;
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+            white-space: nowrap;
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+        .method-badge-a { background: rgba(255,34,51,0.12); color: var(--amber); }
+        .method-badge-b { background: rgba(59,130,246,0.12); color: #3b82f6; }
+        .method-body { flex: 1; }
+        .method-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 0.2rem; }
+        .method-desc  { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
 
         .tip svg { flex-shrink: 0; color: var(--amber); margin-top: 1px; }
 
@@ -304,7 +344,7 @@
                     <li><a href="#sec2">Completar seu perfil</a></li>
                     <li><a href="#sec3">Procurar e se inscrever em um curso</a></li>
                     <li><a href="#sec4">Acompanhar suas inscrições</a></li>
-                    <li><a href="#sec5">Confirmar presença no curso</a></li>
+                    <li><a href="#sec5">Confirmar presença — código, QR Code ou vídeo (EAD)</a></li>
                     <li><a href="#sec6">Baixar seu certificado</a></li>
                     <li><a href="#sec7">Instalar o app no celular</a></li>
                 </ol>
@@ -451,24 +491,43 @@
                     <div class="step">
                         <div class="step-num">1</div>
                         <div class="step-body">
-                            <div class="step-title">Peça o código ao instrutor</div>
-                            <div class="step-desc">Durante o curso, o instrutor disponibilizará um código de presença (ex: <strong style="font-family:monospace;letter-spacing:0.1em">AB3X7K</strong>).</div>
+                            <div class="step-title">Acesse Meus Cursos</div>
+                            <div class="step-desc">No card do curso com status <span class="badge badge-aprovada">Aprovado</span>, toque em <strong>Confirmar Presença</strong>.</div>
                         </div>
                     </div>
                     <div class="step">
                         <div class="step-num">2</div>
                         <div class="step-body">
-                            <div class="step-title">Acesse Meus Cursos</div>
-                            <div class="step-desc">No card do curso com status <span class="badge badge-aprovada">Aprovado</span>, clique em <strong>Confirmar Presença</strong>.</div>
+                            <div class="step-title">Escolha como confirmar</div>
+                            <div class="step-desc" style="display:flex; flex-direction:column; gap:0.6rem; margin-top:0.5rem;">
+                                <div class="method-opt">
+                                    <span class="method-badge method-badge-a">A</span>
+                                    <div class="method-body">
+                                        <div class="method-title">Digitar o código</div>
+                                        <div class="method-desc">O instrutor exibe um código alfanumérico (ex: <strong style="font-family:monospace;letter-spacing:0.1em">AB3X7K</strong>). Digite no campo e clique em <strong>Confirmar</strong>.</div>
+                                    </div>
+                                </div>
+                                <div class="method-opt">
+                                    <span class="method-badge method-badge-b">B</span>
+                                    <div class="method-body">
+                                        <div class="method-title">Ler o QR Code</div>
+                                        <div class="method-desc">Toque em <strong>Ler QR Code</strong>, aponte a câmera para o QR exibido pelo instrutor e a presença é confirmada automaticamente — sem digitar nada.</div>
+                                    </div>
+                                </div>
+                                <div class="method-opt">
+                                    <span class="method-badge" style="background:rgba(239,68,68,0.12);color:#ef4444;margin-top:2px;flex-shrink:0;font-size:10px;font-weight:800;padding:0.2rem 0.5rem;border-radius:6px;white-space:nowrap;">C</span>
+                                    <div class="method-body">
+                                        <div class="method-title">Curso EAD — automático</div>
+                                        <div class="method-desc">Em cursos EAD, nenhuma ação é necessária. Ao assistir <strong>80% do vídeo</strong>, a presença é registrada automaticamente e um aviso verde confirma na tela.</div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="step">
-                        <div class="step-num">3</div>
-                        <div class="step-body">
-                            <div class="step-title">Digite o código</div>
-                            <div class="step-desc">Insira o código fornecido pelo instrutor e clique em <strong>Confirmar</strong>. A presença do dia é registrada.</div>
-                        </div>
-                    </div>
+                </div>
+                <div class="qr-highlight">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h.01M14 17h.01M17 14h.01M17 17h.01M20 14h.01M20 17h.01M20 20h.01M17 20h.01M14 20h.01"/></svg>
+                    <p><strong>Dica QR Code:</strong> o método mais rápido no celular. O instrutor mostra a tela com o QR, você aponta a câmera e pronto — sem digitar, sem erro.</p>
                 </div>
                 <div class="tip">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
