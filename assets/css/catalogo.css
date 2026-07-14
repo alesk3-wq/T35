@@ -52,7 +52,7 @@
 
 /* ─── STATUS DOS CARDS (meus-cursos) ──────────────────────────────── */
 
-.status-card-apto {
+.status-card-apto, .status-card-aprovada {
     border-color: rgba(34, 197, 94, 0.45) !important;
     box-shadow: 0 0 0 1px rgba(34,197,94,0.1), 0 4px 16px rgba(0,0,0,0.4) !important;
 }
