@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -99,7 +99,7 @@
             <div class="tabs">
                 <button class="tab-btn active" data-tab="todos">Todos</button>
                 <button class="tab-btn" data-tab="pendente">Pendentes</button>
-                <button class="tab-btn" data-tab="aprovada">Aprovados</button>
+                <button class="tab-btn" data-tab="apto">Aptos</button>
                 <button class="tab-btn" data-tab="concluido">Concluídos</button>
                 <button class="tab-btn" data-tab="falta">Faltas</button>
             </div>
@@ -244,7 +244,7 @@
 
             const statusLabel = {
                 'pendente':  'Pendente',
-                'aprovada':  'Aprovado',
+                'apto':  'Apto',
                 'concluido': 'Concluído',
                 'falta':     'Falta'
             };
@@ -257,7 +257,7 @@
 
                 // Botão de presença só para inscrições aprovadas
                 let presencaHTML = '';
-                if (inscricao.status === 'aprovada') {
+                if (inscricao.status === 'apto') {
                     const isEad = (curso.modalidade || 'presencial') === 'ead';
                     if (jaConfirmouHoje) {
                         presencaHTML = `<button class="btn-inscrever btn-inscrito" disabled style="margin-top:0.75rem;">
@@ -296,7 +296,7 @@
 
                 // Botão de vídeo aula
                 let videoHTML = '';
-                if (curso.videoUrl && (inscricao.status === 'aprovada' || inscricao.status === 'concluido')) {
+                if (curso.videoUrl && (inscricao.status === 'apto' || inscricao.status === 'concluido')) {
                     const prog = inscricao.videoProgresso;
                     const pct  = prog?.percentualVideo || 0;
                     const vConcluido = prog?.concluido || false;

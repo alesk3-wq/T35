@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -67,7 +67,7 @@
             letter-spacing: 0.4px;
         }
         .s-pendente  { color: var(--amber) !important; }
-        .s-aprovada  { color: #22c55e !important; }
+        .s-apto  { color: #22c55e !important; }
         .s-concluido { color: #3b82f6 !important; }
         .s-rejeitada { color: #ef4444 !important; }
 
@@ -111,7 +111,7 @@
             white-space: nowrap;
         }
         .status-pendente  { background: rgba(245,158,11,0.12); color: var(--amber);  border: 1px solid rgba(245,158,11,0.3); }
-        .status-aprovada  { background: rgba(34,197,94,0.12);  color: #22c55e;       border: 1px solid rgba(34,197,94,0.3); }
+        .status-apto  { background: rgba(34,197,94,0.12);  color: #22c55e;       border: 1px solid rgba(34,197,94,0.3); }
         .status-concluido { background: rgba(59,130,246,0.12); color: #3b82f6;       border: 1px solid rgba(59,130,246,0.3); }
         .status-rejeitada { background: rgba(239,68,68,0.12);  color: #ef4444;       border: 1px solid rgba(239,68,68,0.3); }
 
@@ -255,8 +255,8 @@
                     <div class="s-label">Pendentes</div>
                 </div>
                 <div class="summary-card">
-                    <div class="s-value s-aprovada" id="cntAprovada">—</div>
-                    <div class="s-label">Aprovadas</div>
+                    <div class="s-value s-apto" id="cntApto">—</div>
+                    <div class="s-label">Aptos</div>
                 </div>
                 <div class="summary-card">
                     <div class="s-value s-concluido" id="cntConcluido">—</div>
@@ -274,7 +274,7 @@
                 <select id="statusFilter">
                     <option value="">Todos os status</option>
                     <option value="pendente">Pendentes</option>
-                    <option value="aprovada">Aprovadas</option>
+                    <option value="apto">Aptos</option>
                     <option value="concluido">Concluídas</option>
                     <option value="rejeitada">Rejeitadas</option>
                 </select>
@@ -377,11 +377,11 @@
         }
 
         function atualizarResumo() {
-            const cnt = { pendente: 0, aprovada: 0, concluido: 0, rejeitada: 0 };
+            const cnt = { pendente: 0, apto: 0, concluido: 0, rejeitada: 0 };
             todasInscricoes.forEach(i => { if (cnt[i.status] !== undefined) cnt[i.status]++; });
             document.getElementById('cntTotal').textContent    = todasInscricoes.length;
             document.getElementById('cntPendente').textContent = cnt.pendente;
-            document.getElementById('cntAprovada').textContent = cnt.aprovada;
+            document.getElementById('cntApto').textContent = cnt.apto;
             document.getElementById('cntConcluido').textContent = cnt.concluido;
             document.getElementById('cntRejeitada').textContent = cnt.rejeitada;
         }
@@ -439,10 +439,10 @@
 
         function gerarBotoesAcao(i) {
             if (i.status === 'pendente') return `
-                <button class="btn-action btn-aprovar"  data-id="${i.id}" data-acao="aprovada">Aprovar</button>
+                <button class="btn-action btn-aprovar"  data-id="${i.id}" data-acao="apto">Aprovar</button>
                 <button class="btn-action btn-rejeitar" data-id="${i.id}" data-acao="rejeitada">Rejeitar</button>`;
 
-            if (i.status === 'aprovada') return `
+            if (i.status === 'apto') return `
                 <button class="btn-action btn-concluir" data-id="${i.id}" data-acao="concluido">Concluir</button>
                 <button class="btn-action btn-rejeitar" data-id="${i.id}" data-acao="rejeitada">Cancelar</button>`;
 
@@ -453,7 +453,7 @@
         }
 
         function labelStatus(s) {
-            return { pendente: 'Pendente', aprovada: 'Aprovada', concluido: 'Concluída', rejeitada: 'Rejeitada' }[s] ?? s;
+            return { pendente: 'Pendente', apto: 'Apto', concluido: 'Concluída', rejeitada: 'Rejeitada' }[s] ?? s;
         }
 
         async function alterarStatus(inscricaoId, novoStatus) {
@@ -471,7 +471,7 @@
                 renderTabela();
 
                 const msgs = {
-                    aprovada:  'Inscrição aprovada com sucesso!',
+                    apto:  'Inscrição aprovada com sucesso!',
                     rejeitada: 'Inscrição rejeitada.',
                     concluido: 'Inscrição marcada como concluída.',
                     pendente:  'Inscrição reativada.'

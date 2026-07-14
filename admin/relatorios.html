@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -83,7 +83,7 @@
             font-weight: 600;
         }
 
-        .status-aprovada  { background: rgba(34,197,94,0.15);  color: #22c55e; }
+        .status-apto  { background: rgba(34,197,94,0.15);  color: #22c55e; }
         .status-pendente  { background: rgba(245,158,11,0.15); color: var(--amber); }
         .status-rejeitada { background: rgba(239,68,68,0.15);  color: #ef4444; }
         .status-concluido { background: rgba(59,130,246,0.15); color: #3b82f6; }
@@ -294,8 +294,8 @@
                         <div class="summary-label">Total</div>
                     </div>
                     <div class="summary-card">
-                        <div class="summary-num" id="inscAprovadas" style="color: #22c55e;">—</div>
-                        <div class="summary-label">Aprovadas</div>
+                        <div class="summary-num" id="inscAptas" style="color: #22c55e;">—</div>
+                        <div class="summary-label">Aptos</div>
                     </div>
                     <div class="summary-card">
                         <div class="summary-num" id="inscConcluidas" style="color: #3b82f6;">—</div>
@@ -319,7 +319,7 @@
                     <input type="text" id="inscBusca" placeholder="Buscar por candidato ou curso...">
                     <select id="inscStatusFiltro">
                         <option value="">Todos os status</option>
-                        <option value="aprovada">Aprovada</option>
+                        <option value="apto">Apto</option>
                         <option value="concluido">Concluída</option>
                         <option value="falta">Falta</option>
                         <option value="pendente">Pendente</option>
@@ -522,7 +522,7 @@
         }
 
         const labelStatus = {
-            pendente: 'Pendente', aprovada: 'Aprovada',
+            pendente: 'Pendente', apto: 'Apto',
             concluido: 'Concluída', falta: 'Falta', rejeitada: 'Rejeitada'
         };
 
@@ -570,7 +570,7 @@
                 inscSnap.forEach(d => {
                     const insc = d.data();
                     total++;
-                    if (insc.status === 'aprovada')       aprovadas++;
+                    if (insc.status === 'apto')       aprovadas++;
                     else if (insc.status === 'concluido') concluidas++;
                     else if (insc.status === 'falta')     faltas++;
                     else if (insc.status === 'pendente')  pendentes++;
@@ -588,7 +588,7 @@
                 });
 
                 document.getElementById('inscTotal').textContent      = total;
-                document.getElementById('inscAprovadas').textContent  = aprovadas;
+                document.getElementById('inscAptas').textContent  = aprovadas;
                 document.getElementById('inscConcluidas').textContent = concluidas;
                 document.getElementById('inscFaltas').textContent     = faltas;
                 document.getElementById('inscPendentes').textContent  = pendentes;
@@ -728,7 +728,7 @@
                         && (!status || i.status === status);
                 });
 
-                const statusLabel2 = { pendente:'Pendente', aprovada:'Aprovada', concluido:'Concluída', falta:'Falta', rejeitada:'Rejeitada' };
+                const statusLabel2 = { pendente:'Pendente', apto:'Apto', concluido:'Concluída', falta:'Falta', rejeitada:'Rejeitada' };
                 const sub = status ? `Filtro: ${statusLabel2[status]}` : 'Todos os status';
                 const { jsPDF } = window.jspdf;
                 const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });

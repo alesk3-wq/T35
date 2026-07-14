@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // DASHBOARD DO CANDIDATO - COMPLETO
 // ============================================
 
@@ -95,7 +95,7 @@ async function loadCursos() {
             const inscricao = inscricaoDoc.data();
 
             // Apenas cursos aprovados
-            if (inscricao.status !== 'aprovada') continue;
+            if (inscricao.status !== 'apto') continue;
 
             try {
                 // Busca o curso

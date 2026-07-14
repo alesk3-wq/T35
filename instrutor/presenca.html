@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -429,6 +429,10 @@
                         <strong id="cursoNome">—</strong>
                     </div>
 
+                    <div id="eadBanner" style="display:none;background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:0.65rem 0.9rem;font-size:12px;color:#fca5a5;margin-bottom:0.75rem;line-height:1.5;">
+                        🎬 <strong style="color:#f87171">Curso EAD</strong> — a presença é registrada automaticamente quando o aluno atinge 80% do vídeo. Código de presença é opcional.
+                    </div>
+
                     <div class="codigo-box" id="codigoBox">
                         <div class="codigo-placeholder">
                             Nenhum código gerado.<br>Clique em "Gerar Código" para criar.
@@ -453,7 +457,7 @@
                         <div class="relatorio-row">
                             <select id="filtroRelatorio" class="filtro-relatorio">
                                 <option value="">Todos</option>
-                                <option value="aprovada">Aprovados</option>
+                                <option value="apto">Aptos</option>
                                 <option value="concluido">Concluídos</option>
                                 <option value="pendente">Pendentes</option>
                                 <option value="falta">Falta</option>
@@ -556,10 +560,14 @@
                 listEl.innerHTML = meusCursos.map(c => {
                     const ini = c.dataInicio?.toDate ? c.dataInicio.toDate() : new Date(c.dataInicio);
                     const fim = c.dataFim?.toDate   ? c.dataFim.toDate()   : new Date(c.dataFim);
+                    const isEad = (c.modalidade || 'presencial') === 'ead';
                     return `
                         <div class="turma-item" data-id="${c.id}">
-                            <div class="turma-nome">${c.titulo}</div>
-                            <div class="turma-info">${c.formato} · ${ini.toLocaleDateString('pt-BR')} → ${fim.toLocaleDateString('pt-BR')}</div>
+                            <div class="turma-nome">
+                                ${c.titulo}
+                                ${isEad ? '<span style="display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:999px;margin-left:6px;background:rgba(239,68,68,0.12);color:#ef4444;">🎬 EAD</span>' : ''}
+                            </div>
+                            <div class="turma-info">${ini.toLocaleDateString('pt-BR')} → ${fim.toLocaleDateString('pt-BR')}</div>
                         </div>`;
                 }).join('');
 
@@ -581,6 +589,8 @@
 
             document.getElementById('cursoNome').textContent = cursoSelecionado.titulo;
             document.getElementById('codigoPanel').classList.add('visible');
+            document.getElementById('eadBanner').style.display =
+                (cursoSelecionado.modalidade || 'presencial') === 'ead' ? 'block' : 'none';
 
             atualizarExibicaoCodigo();
             atualizarMaterial();
@@ -749,7 +759,7 @@
                 // Header
                 pdf.setFillColor(15, 23, 42);
                 pdf.rect(0, 0, 297, 28, 'F');
-                const filtroLabel = { '': 'Todos os Alunos', aprovada: 'Aprovados', concluido: 'Concluídos', pendente: 'Pendentes', falta: 'Falta', rejeitada: 'Rejeitados' };
+                const filtroLabel = { '': 'Todos os Alunos', apto: 'Aptos', concluido: 'Concluídos', pendente: 'Pendentes', falta: 'Falta', rejeitada: 'Rejeitados' };
                 pdf.setTextColor(245, 158, 11);
                 pdf.setFontSize(16);
                 pdf.setFont('helvetica', 'bold');
@@ -774,7 +784,7 @@
                 pdf.line(14, 49, 283, 49);
 
                 // Tabela
-                const statusLabel = { pendente: 'Pendente', aprovada: 'Aprovado', concluido: 'Concluído', falta: 'Falta', rejeitada: 'Rejeitado' };
+                const statusLabel = { pendente: 'Pendente', apto: 'Apto', concluido: 'Concluído', falta: 'Falta', rejeitada: 'Rejeitado' };
 
                 pdf.autoTable({
                     startY: 53,

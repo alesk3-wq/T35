@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -132,7 +132,7 @@
         .badge-ok       { background: rgba(34,197,94,0.15);   color: #22c55e; }
         .badge-suspeito { background: rgba(239,68,68,0.15);   color: #ef4444; }
         .badge-andamento{ background: rgba(148,163,184,0.15); color: var(--text-secondary); }
-        .badge-aprovado { background: rgba(34,197,94,0.15);   color: #22c55e; }
+        .badge-apto { background: rgba(34,197,94,0.15);   color: #22c55e; }
         .badge-concluido{ background: rgba(59,130,246,0.15);  color: #3b82f6; }
         .badge-falta    { background: rgba(168,85,247,0.15);  color: #a855f7; }
         .badge-pendente { background: rgba(245,158,11,0.15);  color: var(--amber); }
@@ -226,7 +226,7 @@
                     </select>
                     <select id="pFiltroStatus">
                         <option value="">Todos os status</option>
-                        <option value="aprovada">Aprovados</option>
+                        <option value="apto">Aptos</option>
                         <option value="concluido">Concluídos</option>
                         <option value="falta">Falta</option>
                         <option value="pendente">Pendentes</option>
@@ -484,14 +484,14 @@
             }
 
             const statusBadge = {
-                aprovada:  '<span class="badge badge-aprovado">Aprovado</span>',
+                apto:  '<span class="badge badge-apto">Apto</span>',
                 concluido: '<span class="badge badge-concluido">Concluído</span>',
                 falta:     '<span class="badge badge-falta">Falta</span>',
                 pendente:  '<span class="badge badge-pendente">Pendente</span>'
             };
 
             tbody.innerHTML = filtrados.map(r => `
-                <tr style="${r.qtd === 0 && r.status === 'aprovada' ? 'background:rgba(239,68,68,0.04)' : ''}">
+                <tr style="${r.qtd === 0 && r.status === 'apto' ? 'background:rgba(239,68,68,0.04)' : ''}">
                     <td><strong>${r.candidato}</strong></td>
                     <td>${r.cursoTitulo}</td>
                     <td style="text-align:center;font-weight:700;font-size:16px;color:var(--amber)">${r.qtd}</td>

@@ -1,4 +1,4 @@
-/* ============================================
+﻿/* ============================================
    CATÁLOGO - Estilos específicos
    ============================================ */
 
@@ -52,11 +52,11 @@
 
 /* ─── STATUS DOS CARDS (meus-cursos) ──────────────────────────────── */
 
-.status-card-aprovada {
+.status-card-apto {
     border-color: rgba(34, 197, 94, 0.45) !important;
     box-shadow: 0 0 0 1px rgba(34,197,94,0.1), 0 4px 16px rgba(0,0,0,0.4) !important;
 }
-.status-card-aprovada:hover {
+.status-card-apto:hover {
     border-color: rgba(34, 197, 94, 0.75) !important;
     box-shadow: 0 0 0 1px rgba(34,197,94,0.2), 0 10px 28px rgba(34,197,94,0.12) !important;
 }
@@ -256,7 +256,7 @@
     border: 1px solid rgba(255, 34, 51, 0.3);
 }
 
-.status-aprovada {
+.status-apto {
     background: rgba(34, 197, 94, 0.12);
     color: #22c55e;
     border: 1px solid rgba(34, 197, 94, 0.3);
