@@ -460,18 +460,26 @@
         async function alterarStatus(inscricaoId, novoStatus) {
             let statusFinal = novoStatus;
 
-            // Ao concluir, verifica se o instrutor já gerou um código para o curso
             if (novoStatus === 'concluido') {
                 const insc = todasInscricoes.find(i => i.id === inscricaoId);
-                if (!insc?._curso?.codigoPresenca) {
+                const isEad = (insc?._curso?.modalidade || 'presencial') === 'ead';
+
+                // Cursos presencial/online exigem que o instrutor tenha gerado código
+                if (!isEad && !insc?._curso?.codigoPresenca) {
                     showAlert('Gere um código de presença na tela de Presença antes de concluir.', 'error');
                     return;
                 }
 
-                // Busca dados frescos do Firestore para checar se candidato confirmou
+                // Busca dados frescos do Firestore para checar se candidato confirmou presença
                 const inscDoc = await getDoc(doc(db, 'inscricoes', inscricaoId));
                 const presencas = inscDoc.data()?.presencas;
                 const temPresenca = Array.isArray(presencas) && presencas.length > 0;
+
+                if (isEad && !temPresenca) {
+                    showAlert('O aluno ainda não assistiu ao vídeo (80% necessário para confirmar presença EAD).', 'error');
+                    return;
+                }
+
                 statusFinal = temPresenca ? 'concluido' : 'falta';
             }
 
