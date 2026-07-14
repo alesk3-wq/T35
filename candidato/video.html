@@ -206,6 +206,7 @@
         let progresso     = {};     // dados atuais do Firestore
         let modalidadeCurso = 'presencial';
         let presencaEadRegistrada = false;
+        let maxPct        = 0;      // maior % atingida — nunca regride
 
         // ── Utilitários ────────────────────────────────────────────────────
         function extrairVideoId(url) {
@@ -276,14 +277,14 @@
         // ── Salvar progresso no Firestore ──────────────────────────────────
         async function salvarProgresso(sincronous = false) {
             if (!inscricaoId) return;
-            const pct      = getPercentual();
+            maxPct = Math.max(maxPct, getPercentual()); // garante sincronismo antes de salvar
             const dur      = getDuracao();
-            const concluido = pct >= 80;
+            const concluido = maxPct >= 80;
             const suspeito  = concluido && dur > 0 && tempoTela < dur * 0.5;
 
             const dados = {
                 videoProgresso: {
-                    percentualVideo: pct,
+                    percentualVideo: maxPct,
                     tempoTela,
                     videoDuracao: dur,
                     ultimoAcesso: serverTimestamp(),
@@ -319,21 +320,20 @@
 
         // ── Atualizar UI de progresso ──────────────────────────────────────
         function atualizarUI() {
-            const pct = getPercentual();
+            maxPct = Math.max(maxPct, getPercentual()); // só cresce
             const dur = getDuracao();
 
-            const fillEl = document.getElementById('progressFill');
-            const pctEl  = document.getElementById('statPct');
+            const fillEl  = document.getElementById('progressFill');
+            const pctEl   = document.getElementById('statPct');
             const tempoEl = document.getElementById('statTempo');
-            const durEl  = document.getElementById('statDur');
+            const durEl   = document.getElementById('statDur');
+            const pctLbl  = document.getElementById('pctLabel');
 
-            if (fillEl)  fillEl.style.width  = pct + '%';
-            if (pctEl)   pctEl.textContent   = pct + '%';
-            if (tempoEl) tempoEl.textContent  = formatarTempo(tempoTela);
+            if (fillEl)  fillEl.style.width    = maxPct + '%';
+            if (pctEl)   pctEl.textContent     = maxPct + '%';
+            if (tempoEl) tempoEl.textContent   = formatarTempo(tempoTela);
             if (durEl && dur) durEl.textContent = formatarTempo(dur);
-
-            const pctLbl = document.getElementById('pctLabel');
-            if (pctLbl) pctLbl.textContent = pct + '%';
+            if (pctLbl)  pctLbl.textContent    = maxPct + '%';
         }
 
         function mostrarBadgeConcluido() {
@@ -452,6 +452,7 @@
 
             jaConcluido = progresso.concluido || false;
             tempoTela   = progresso.tempoTela || 0;
+            maxPct      = progresso.percentualVideo || 0;
 
             // Se API do YouTube já estava pronta antes do render, inicia o player agora
             if (window.YT?.Player) iniciarPlayer();
