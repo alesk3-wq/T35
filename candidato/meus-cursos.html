@@ -318,9 +318,12 @@
                     <div class="curso-header">
                         <div class="curso-header-top">
                             <h3 class="curso-title">${curso.titulo}</h3>
-                            <span class="status-badge status-${inscricao.status}">
-                                ${statusLabel[inscricao.status] ?? inscricao.status}
-                            </span>
+                            <div style="display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap">
+                                ${inscricao.obrigatorio ? `<span style="font-size:10px;background:rgba(245,158,11,0.15);color:var(--amber);border:1px solid rgba(245,158,11,0.3);border-radius:999px;padding:0.15rem 0.55rem;font-weight:700;white-space:nowrap">⚡ Obrigatório</span>` : ''}
+                                <span class="status-badge status-${inscricao.status}">
+                                    ${statusLabel[inscricao.status] ?? inscricao.status}
+                                </span>
+                            </div>
                         </div>
                         <p class="curso-instructor">👨‍🏫 ${curso.instrutor}</p>
                     </div>

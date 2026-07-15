@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="../assets/img/favi-t35.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grupos - T35 Academy</title>
+    <link rel="stylesheet" href="../assets/css/design-system.css">
+    <link rel="stylesheet" href="../assets/css/layout.css">
+    <link rel="stylesheet" href="../assets/css/responsive.css">
+    <style>
+        .content { padding: 2rem; }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .page-header h1 { color: var(--text); font-size: 26px; margin: 0; }
+
+        .btn-new {
+            padding: 0.65rem 1.25rem;
+            background: var(--amber);
+            color: var(--bg);
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-new:hover { background: var(--amber-dark); }
+
+        .filters {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .filters input {
+            flex: 1;
+            min-width: 220px;
+            padding: 0.65rem 1rem;
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 13px;
+        }
+
+        .table-container {
+            background: var(--bg2);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            overflow-x: auto;
+            overflow-y: auto;
+            max-height: calc(100vh - 260px);
+        }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        thead { background: var(--bg); border-bottom: 2px solid var(--border); }
+        thead th { position: sticky; top: 0; background: var(--bg2); z-index: 1; }
+        th {
+            padding: 0.9rem 1rem;
+            text-align: left;
+            color: var(--text-secondary);
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+        td {
+            padding: 0.85rem 1rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+            font-size: 13px;
+        }
+        tbody tr:last-child td { border-bottom: none; }
+        tbody tr:hover { background: rgba(245,158,11,0.04); }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.2rem 0.65rem;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        .status-ativo   { background: rgba(34,197,94,0.12);  color: #22c55e;      border: 1px solid rgba(34,197,94,0.3); }
+        .status-inativo { background: rgba(107,114,128,0.12); color: #6b7280;     border: 1px solid rgba(107,114,128,0.3); }
+
+        .actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .btn-action {
+            padding: 0.35rem 0.8rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .btn-edit    { background: rgba(59,130,246,0.15);  color: #3b82f6; }
+        .btn-edit:hover    { background: rgba(59,130,246,0.3); }
+        .btn-membros { background: rgba(168,85,247,0.15); color: #a855f7; }
+        .btn-membros:hover { background: rgba(168,85,247,0.3); }
+        .btn-delete  { background: rgba(239,68,68,0.15);  color: #ef4444; }
+        .btn-delete:hover  { background: rgba(239,68,68,0.3); }
+
+        /* ── Modais ── */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: var(--bg2);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 560px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+        }
+        .modal-content.modal-lg { max-width: 640px; }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .modal-header h2 { color: var(--text); font-size: 18px; margin: 0; }
+        .btn-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 22px;
+            cursor: pointer;
+            line-height: 1;
+            padding: 0.2rem;
+        }
+        .btn-close:hover { color: var(--text); }
+        .modal-body { padding: 1.5rem; }
+        .form-group { margin-bottom: 1.25rem; }
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-bottom: 0.4rem;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.65rem 0.9rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .form-group textarea { min-height: 70px; resize: vertical; }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--amber);
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            padding: 1.25rem 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+        .btn-cancel {
+            padding: 0.65rem 1.25rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-save {
+            padding: 0.65rem 1.5rem;
+            background: var(--amber);
+            border: none;
+            border-radius: 8px;
+            color: var(--bg);
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .btn-save:hover { background: var(--amber-dark); }
+
+        /* ── Check list (cursos e membros) ── */
+        .section-label {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-bottom: 0.5rem;
+        }
+        .check-list {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            background: var(--bg);
+        }
+        .check-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.65rem 0.9rem;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.15s;
+        }
+        .check-item:last-child { border-bottom: none; }
+        .check-item:hover { background: rgba(245,158,11,0.05); }
+        .check-item input[type=checkbox] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--amber);
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+        .check-item span,
+        .check-item div { font-size: 13px; color: var(--text); }
+        .search-membros {
+            width: 100%;
+            padding: 0.6rem 0.9rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 13px;
+            box-sizing: border-box;
+            margin-bottom: 0.5rem;
+        }
+        .search-membros:focus { outline: none; border-color: var(--amber); }
+
+        /* ── Feedback ── */
+        .success-message, .error-message {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        .success-message { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); color: #22c55e; }
+        .error-message   { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #ef4444; }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 768px) {
+            .page-header { flex-direction: column; align-items: flex-start; }
+            .btn-new { width: 100%; }
+            table { font-size: 12px; }
+            th, td { padding: 0.6rem 0.5rem; }
+            .actions { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img src="../assets/img/t35logo.png" alt="T35 Academy" class="logo">
+            <h2>T35 Academy</h2>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="dashboard.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                <span>Dashboard</span>
+            </a>
+            <a href="usuarios.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                <span>Usuários</span>
+            </a>
+            <a href="cursos.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
+                <span>Cursos</span>
+            </a>
+            <a href="inscricoes.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"></path>
+                    <rect x="9" y="3" width="6" height="4" rx="1"></rect>
+                    <line x1="9" y1="12" x2="15" y2="12"></line>
+                    <line x1="9" y1="16" x2="13" y2="16"></line>
+                </svg>
+                <span>Inscrições</span>
+            </a>
+            <a href="grupos.html" class="nav-item active">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"></path>
+                    <line x1="19" y1="8" x2="19" y2="14"></line>
+                    <line x1="22" y1="11" x2="16" y2="11"></line>
+                </svg>
+                <span>Grupos</span>
+            </a>
+            <a href="empresas.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                </svg>
+                <span>Empresas</span>
+            </a>
+            <a href="relatorios.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="20" x2="18" y2="10"></line>
+                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                    <line x1="6" y1="20" x2="6" y2="14"></line>
+                </svg>
+                <span>Relatórios</span>
+            </a>
+            <a href="condecorados.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>
+                <span>Condecorados</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <button class="btn-logout" id="btnLogout">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                <span>Logout</span>
+            </button>
+        </div>
+    </aside>
+
+    <div class="topbar">
+        <button class="btn-menu" id="btnMenu">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
+        <h1 class="page-title">Grupos</h1>
+    </div>
+
+    <main class="main">
+        <div class="content">
+            <div class="page-header">
+                <h1>Grupos de Candidatos</h1>
+                <button class="btn-new" id="btnNovoGrupo">+ Novo Grupo</button>
+            </div>
+
+            <div id="successMessage" class="success-message"></div>
+            <div id="errorMessage"   class="error-message"></div>
+
+            <div class="filters">
+                <input type="text" id="searchInput" placeholder="Buscar grupo por nome...">
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Descrição</th>
+                            <th>Cursos</th>
+                            <th>Membros</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="gruposList">
+                        <tr><td colspan="6" style="text-align:center;color:var(--text-secondary)">Carregando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal: Criar / Editar Grupo + Cursos -->
+    <div class="modal" id="grupoModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Novo Grupo</h2>
+                <button class="btn-close" id="btnCloseModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Nome do Grupo *</label>
+                    <input type="text" id="grupoNome" placeholder="Ex: Novos Funcionários">
+                </div>
+                <div class="form-group">
+                    <label>Descrição</label>
+                    <textarea id="grupoDescricao" placeholder="Descreva o objetivo deste grupo..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="grupoStatus">
+                        <option value="ativo">Ativo</option>
+                        <option value="inativo">Inativo</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <div class="section-label">Cursos Obrigatórios</div>
+                    <div class="check-list" id="cursosCheck">
+                        <div style="padding:1rem;color:var(--text-secondary);font-size:13px">Carregando cursos...</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" id="btnCancelModal">Cancelar</button>
+                <button class="btn-save" id="btnSalvarGrupo">Salvar Grupo</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Gerenciar Membros -->
+    <div class="modal" id="membrosModal">
+        <div class="modal-content modal-lg">
+            <div class="modal-header">
+                <h2>Membros — <span id="membrosGrupoNome" style="color:var(--amber)"></span></h2>
+                <button class="btn-close" id="btnCloseMembros">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size:13px;color:var(--text-secondary);margin:0 0 1rem">
+                    Marque os candidatos que pertencem a este grupo. Ao salvar, inscrições obrigatórias serão criadas automaticamente para os novos membros.
+                </p>
+                <input type="text" class="search-membros" id="membrosSearch" placeholder="Buscar candidato por nome, email ou empresa...">
+                <div class="check-list" id="candidatosList" style="max-height:300px">
+                    <div style="padding:1rem;color:var(--text-secondary);font-size:13px">Carregando candidatos...</div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" id="btnCancelMembros">Cancelar</button>
+                <button class="btn-save" id="btnSalvarMembros">Salvar Membros</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { handleLogout } from '../assets/js/auth.js';
+        import { toggleSidebar } from '../assets/js/ui-shell.js';
+        import { auth, db } from '../firebase-config.js';
+        import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js';
+        import {
+            collection, getDocs, addDoc, doc, updateDoc, deleteDoc,
+            query, where, serverTimestamp
+        } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js';
+
+        document.getElementById('btnMenu').addEventListener('click', toggleSidebar);
+        document.getElementById('btnLogout').addEventListener('click', handleLogout);
+        document.getElementById('btnNovoGrupo').addEventListener('click', () => openModal());
+        document.getElementById('btnCloseModal').addEventListener('click', closeModal);
+        document.getElementById('btnCancelModal').addEventListener('click', closeModal);
+        document.getElementById('btnSalvarGrupo').addEventListener('click', salvarGrupo);
+        document.getElementById('btnCloseMembros').addEventListener('click', closeMembrosModal);
+        document.getElementById('btnCancelMembros').addEventListener('click', closeMembrosModal);
+        document.getElementById('btnSalvarMembros').addEventListener('click', salvarMembros);
+        document.getElementById('searchInput').addEventListener('input', filtrarGrupos);
+        document.getElementById('membrosSearch').addEventListener('input', () => renderCandidatosList());
+        document.getElementById('grupoModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+        document.getElementById('membrosModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeMembrosModal(); });
+
+        let allGrupos = [];
+        let allCursos = [];
+        let allCandidatos = [];
+        let currentGrupoId = null;
+        let currentMembrosGrupoId = null;
+        let currentMembrosSelecao = new Set();
+
+        onAuthStateChanged(auth, async user => {
+            if (!user) { window.location.href = '../login.html'; return; }
+            const snap = await getDocs(query(collection(db, 'users'), where('uid', '==', user.uid)));
+            if (snap.docs[0]?.data()?.role !== 'admin') {
+                alert('Acesso negado!'); window.location.href = '../login.html'; return;
+            }
+            carregarDados();
+        });
+
+        async function carregarDados() {
+            try {
+                const [gruposSnap, cursosSnap, usersSnap] = await Promise.all([
+                    getDocs(collection(db, 'grupos')),
+                    getDocs(query(collection(db, 'cursos'), where('status', '==', 'ativo'))),
+                    getDocs(query(collection(db, 'users'), where('role', '==', 'candidato')))
+                ]);
+                allGrupos     = gruposSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+                allCursos     = cursosSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+                allCandidatos = usersSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+                    .sort((a, b) => (a.fullName ?? '').localeCompare(b.fullName ?? ''));
+                renderGrupos(allGrupos);
+            } catch (err) {
+                showError('Erro ao carregar dados: ' + err.message);
+                console.error(err);
+            }
+        }
+
+        function renderGrupos(lista) {
+            const tbody = document.getElementById('gruposList');
+            if (lista.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">Nenhum grupo encontrado.</div></td></tr>`;
+                return;
+            }
+            tbody.innerHTML = lista.map(g => `
+                <tr>
+                    <td><strong>${g.nome}</strong></td>
+                    <td style="color:var(--text-secondary);font-size:12px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                        ${g.descricao || '—'}
+                    </td>
+                    <td style="text-align:center">${(g.cursos ?? []).length}</td>
+                    <td style="text-align:center">${(g.membros ?? []).length}</td>
+                    <td><span class="status-badge status-${g.status ?? 'ativo'}">${g.status === 'inativo' ? 'Inativo' : 'Ativo'}</span></td>
+                    <td>
+                        <div class="actions">
+                            <button class="btn-action btn-edit"    data-id="${g.id}">Editar</button>
+                            <button class="btn-action btn-membros" data-id="${g.id}">Membros</button>
+                            <button class="btn-action btn-delete"  data-id="${g.id}">Excluir</button>
+                        </div>
+                    </td>
+                </tr>`).join('');
+
+            tbody.querySelectorAll('.btn-edit').forEach(b =>
+                b.addEventListener('click', () => openModal(b.dataset.id)));
+            tbody.querySelectorAll('.btn-membros').forEach(b =>
+                b.addEventListener('click', () => openMembrosModal(b.dataset.id)));
+            tbody.querySelectorAll('.btn-delete').forEach(b =>
+                b.addEventListener('click', () => excluirGrupo(b.dataset.id)));
+        }
+
+        function filtrarGrupos() {
+            const busca = document.getElementById('searchInput').value.toLowerCase();
+            renderGrupos(busca
+                ? allGrupos.filter(g => g.nome?.toLowerCase().includes(busca))
+                : allGrupos);
+        }
+
+        function openModal(grupoId = null) {
+            currentGrupoId = grupoId;
+            const g = grupoId ? allGrupos.find(x => x.id === grupoId) : null;
+            document.getElementById('modalTitle').textContent = g ? 'Editar Grupo' : 'Novo Grupo';
+            document.getElementById('grupoNome').value      = g?.nome ?? '';
+            document.getElementById('grupoDescricao').value = g?.descricao ?? '';
+            document.getElementById('grupoStatus').value    = g?.status ?? 'ativo';
+
+            const selecionados = g?.cursos ?? [];
+            const cont = document.getElementById('cursosCheck');
+            if (allCursos.length === 0) {
+                cont.innerHTML = '<div style="padding:1rem;color:var(--text-secondary);font-size:13px">Nenhum curso ativo cadastrado.</div>';
+            } else {
+                cont.innerHTML = allCursos.map(c => `
+                    <label class="check-item">
+                        <input type="checkbox" value="${c.id}" ${selecionados.includes(c.id) ? 'checked' : ''}>
+                        <span>${c.titulo}</span>
+                    </label>`).join('');
+            }
+            document.getElementById('grupoModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('grupoModal').classList.remove('active');
+            currentGrupoId = null;
+        }
+
+        async function salvarGrupo() {
+            const nome      = document.getElementById('grupoNome').value.trim();
+            const descricao = document.getElementById('grupoDescricao').value.trim();
+            const status    = document.getElementById('grupoStatus').value;
+
+            if (!nome) { showError('O nome do grupo é obrigatório.'); return; }
+
+            const novosCursos = [...document.querySelectorAll('#cursosCheck input:checked')].map(cb => cb.value);
+            const grupoAnterior   = currentGrupoId ? allGrupos.find(g => g.id === currentGrupoId) : null;
+            const cursosAnteriores = grupoAnterior?.cursos ?? [];
+            const membrosAtuais   = grupoAnterior?.membros ?? [];
+            const cursosAdicionados = novosCursos.filter(id => !cursosAnteriores.includes(id));
+
+            const payload = { nome, descricao, cursos: novosCursos, status, updatedAt: serverTimestamp() };
+
+            try {
+                let grupoId = currentGrupoId;
+                if (currentGrupoId) {
+                    await updateDoc(doc(db, 'grupos', currentGrupoId), payload);
+                } else {
+                    payload.membros    = [];
+                    payload.createdAt  = serverTimestamp();
+                    const ref = await addDoc(collection(db, 'grupos'), payload);
+                    grupoId = ref.id;
+                }
+
+                for (const cursoId of cursosAdicionados) {
+                    for (const uid of membrosAtuais) {
+                        await criarInscricao(uid, cursoId, grupoId);
+                    }
+                }
+
+                showSuccess(currentGrupoId ? 'Grupo atualizado com sucesso!' : 'Grupo criado com sucesso!');
+                closeModal();
+                await carregarDados();
+            } catch (err) {
+                showError('Erro ao salvar: ' + err.message);
+                console.error(err);
+            }
+        }
+
+        function openMembrosModal(grupoId) {
+            currentMembrosGrupoId = grupoId;
+            const grupo = allGrupos.find(g => g.id === grupoId);
+            currentMembrosSelecao = new Set(grupo?.membros ?? []);
+            document.getElementById('membrosGrupoNome').textContent = grupo?.nome ?? '';
+            document.getElementById('membrosSearch').value = '';
+            renderCandidatosList();
+            document.getElementById('membrosModal').classList.add('active');
+        }
+
+        function closeMembrosModal() {
+            document.getElementById('membrosModal').classList.remove('active');
+            currentMembrosGrupoId = null;
+        }
+
+        function renderCandidatosList() {
+            const busca = document.getElementById('membrosSearch').value.toLowerCase();
+            const lista = busca
+                ? allCandidatos.filter(c =>
+                    c.fullName?.toLowerCase().includes(busca) ||
+                    c.email?.toLowerCase().includes(busca) ||
+                    c.empresa?.toLowerCase().includes(busca))
+                : allCandidatos;
+
+            const cont = document.getElementById('candidatosList');
+            if (lista.length === 0) {
+                cont.innerHTML = '<div style="padding:1rem;color:var(--text-secondary);font-size:13px">Nenhum candidato encontrado.</div>';
+                return;
+            }
+            cont.innerHTML = lista.map(c => `
+                <label class="check-item">
+                    <input type="checkbox" data-uid="${c.uid}" ${currentMembrosSelecao.has(c.uid) ? 'checked' : ''}>
+                    <div>
+                        <div>${c.fullName}</div>
+                        <div style="font-size:11px;color:var(--text-secondary)">${c.empresa ? c.empresa + ' · ' : ''}${c.email}</div>
+                    </div>
+                </label>`).join('');
+
+            cont.querySelectorAll('input[type=checkbox]').forEach(cb => {
+                cb.addEventListener('change', () => {
+                    if (cb.checked) currentMembrosSelecao.add(cb.dataset.uid);
+                    else currentMembrosSelecao.delete(cb.dataset.uid);
+                });
+            });
+        }
+
+        async function salvarMembros() {
+            const grupo = allGrupos.find(g => g.id === currentMembrosGrupoId);
+            const membrosAnteriores = new Set(grupo?.membros ?? []);
+            const cursosDOGrupo    = grupo?.cursos ?? [];
+            const novosMembros     = [...currentMembrosSelecao];
+            const membrosAdicionados = novosMembros.filter(uid => !membrosAnteriores.has(uid));
+
+            try {
+                await updateDoc(doc(db, 'grupos', currentMembrosGrupoId), {
+                    membros: novosMembros,
+                    updatedAt: serverTimestamp()
+                });
+
+                for (const uid of membrosAdicionados) {
+                    for (const cursoId of cursosDOGrupo) {
+                        await criarInscricao(uid, cursoId, currentMembrosGrupoId);
+                    }
+                }
+
+                const qtd = membrosAdicionados.length;
+                showSuccess(`Membros atualizados!${qtd > 0 ? ` ${qtd} inscrição(ões) obrigatória(s) criada(s).` : ''}`);
+                closeMembrosModal();
+                await carregarDados();
+            } catch (err) {
+                showError('Erro ao salvar membros: ' + err.message);
+                console.error(err);
+            }
+        }
+
+        async function criarInscricao(uid, cursoId, grupoId) {
+            const q = query(collection(db, 'inscricoes'),
+                where('candidatoId', '==', uid),
+                where('cursoId', '==', cursoId));
+            const snap = await getDocs(q);
+            if (!snap.empty) return;
+            await addDoc(collection(db, 'inscricoes'), {
+                candidatoId: uid,
+                cursoId,
+                grupoId,
+                status: 'apto',
+                obrigatorio: true,
+                presencas: [],
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            });
+        }
+
+        async function excluirGrupo(grupoId) {
+            const grupo = allGrupos.find(g => g.id === grupoId);
+            if (!confirm(`Excluir o grupo "${grupo?.nome}"?\n\nAs inscrições já geradas não serão canceladas.`)) return;
+            try {
+                await deleteDoc(doc(db, 'grupos', grupoId));
+                showSuccess('Grupo excluído.');
+                await carregarDados();
+            } catch (err) {
+                showError('Erro ao excluir: ' + err.message);
+                console.error(err);
+            }
+        }
+
+        function showSuccess(msg) {
+            const el = document.getElementById('successMessage');
+            el.textContent = msg; el.style.display = 'block';
+            setTimeout(() => { el.style.display = 'none'; }, 4000);
+        }
+        function showError(msg) {
+            const el = document.getElementById('errorMessage');
+            el.textContent = msg; el.style.display = 'block';
+            setTimeout(() => { el.style.display = 'none'; }, 5000);
+        }
+    </script>
+</body>
+</html>
