@@ -231,9 +231,10 @@
         function renderCursos() {
             cursosGrid.innerHTML = '';
 
+            const tabAlias = { apto: ['apto', 'aprovada'] };
             const filtered = currentTab === 'todos'
                 ? allInscricoes
-                : allInscricoes.filter(i => i.status === currentTab);
+                : allInscricoes.filter(i => (tabAlias[currentTab] ?? [currentTab]).includes(i.status));
 
             if (filtered.length === 0) {
                 emptyState.style.display = 'block';
@@ -258,7 +259,7 @@
 
                 // Botão de presença só para inscrições aprovadas
                 let presencaHTML = '';
-                if (inscricao.status === 'apto') {
+                if (inscricao.status === 'apto' || inscricao.status === 'aprovada') {
                     const isEad = (curso.modalidade || 'presencial') === 'ead';
                     if (jaConfirmouHoje) {
                         presencaHTML = `<button class="btn-inscrever btn-inscrito" disabled style="margin-top:0.75rem;">
@@ -297,7 +298,7 @@
 
                 // Botão de vídeo aula
                 let videoHTML = '';
-                if (curso.videoUrl && (inscricao.status === 'apto' || inscricao.status === 'concluido')) {
+                if (curso.videoUrl && (inscricao.status === 'apto' || inscricao.status === 'aprovada' || inscricao.status === 'concluido')) {
                     const prog = inscricao.videoProgresso;
                     const pct  = prog?.percentualVideo || 0;
                     const vConcluido = prog?.concluido || false;
