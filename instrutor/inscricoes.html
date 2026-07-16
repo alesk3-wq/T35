@@ -160,6 +160,64 @@
             .filters input, .filters select { min-width: auto; }
             .summary-grid { grid-template-columns: repeat(2, 1fr); }
         }
+
+        /* ── Modal confirmação falta ── */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-box {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 420px;
+        }
+        .modal-box-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .modal-box-header h2 { margin: 0; font-size: 17px; color: #ef4444; }
+        .modal-box-body { padding: 1.25rem 1.5rem; font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+        .modal-box-body strong { color: var(--text); }
+        .modal-box-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+        .btn-modal-cancel {
+            padding: 0.6rem 1.2rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-modal-falta {
+            padding: 0.6rem 1.2rem;
+            background: #ef4444;
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .btn-modal-falta:hover { background: #dc2626; }
     </style>
 </head>
 <body>
@@ -291,6 +349,20 @@
         </div>
     </main>
 
+    <!-- Modal: confirmar falta -->
+    <div class="modal-overlay" id="modalConfirmarFalta">
+        <div class="modal-box">
+            <div class="modal-box-header">
+                <h2>⚠ Registrar Falta</h2>
+            </div>
+            <div class="modal-box-body" id="textoModalFalta"></div>
+            <div class="modal-box-footer">
+                <button class="btn-modal-cancel" id="btnCancelarFalta">Cancelar</button>
+                <button class="btn-modal-falta"  id="btnConfirmarFalta">Confirmar Falta</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { handleLogout, checkAuth } from '../assets/js/auth.js';
         import { toggleSidebar } from '../assets/js/ui-shell.js';
@@ -305,8 +377,14 @@
         document.getElementById('searchInput').addEventListener('input', renderTabela);
         document.getElementById('statusFilter').addEventListener('change', renderTabela);
         document.getElementById('cursoFilter').addEventListener('change', renderTabela);
+        document.getElementById('btnCancelarFalta').addEventListener('click', fecharModalFalta);
+        document.getElementById('btnConfirmarFalta').addEventListener('click', confirmarFalta);
+        document.getElementById('modalConfirmarFalta').addEventListener('click', e => {
+            if (e.target === e.currentTarget) fecharModalFalta();
+        });
 
         let todasInscricoes = [];
+        let pendingFaltaId = null;
 
         checkAuth().then(async user => {
             if (!user) { window.location.href = '../login.html'; return; }
@@ -378,6 +456,7 @@
 
                 atualizarResumo();
                 renderTabela();
+                await processarEnceramentosEad();
             } catch (err) {
                 showAlert('Erro ao carregar dados: ' + err.message, 'error');
                 console.error(err);
@@ -443,14 +522,35 @@
             if (i.status === 'pendente') return `
                 <button class="btn-action btn-aprovar"  data-id="${i.id}" data-acao="apto">Aprovar</button>
                 <button class="btn-action btn-rejeitar" data-id="${i.id}" data-acao="rejeitada">Rejeitar</button>`;
-            if (i.status === 'apto') return `
+            if (i.status === 'apto') {
+                const isEad = (i._curso?.modalidade || 'presencial') === 'ead';
+                if (isEad) {
+                    const df = getDataFimStr(i._curso);
+                    const info = df ? `encerra ${formatarDataStr(df)}` : 'automático';
+                    return `<span style="color:var(--text-secondary);font-size:12px">🎬 EAD · ${info}</span>`;
+                }
+                return `
                 <button class="btn-action btn-concluir" data-id="${i.id}" data-acao="concluido">Concluir</button>
                 <button class="btn-action btn-rejeitar" data-id="${i.id}" data-acao="rejeitada">Cancelar</button>`;
+            }
             if (i.status === 'rejeitada') return `
                 <button class="btn-action btn-reativar" data-id="${i.id}" data-acao="pendente">Reativar</button>`;
             if (i.status === 'falta') return `
                 <button class="btn-action btn-reativar" data-id="${i.id}" data-acao="apto">Reativar</button>`;
             return '<span style="color:var(--text-secondary);font-size:12px">—</span>';
+        }
+
+        function getDataFimStr(curso) {
+            if (!curso?.dataFim) return null;
+            if (typeof curso.dataFim === 'string') return curso.dataFim;
+            if (curso.dataFim?.toDate) return curso.dataFim.toDate().toISOString().split('T')[0];
+            return null;
+        }
+
+        function formatarDataStr(iso) {
+            if (!iso) return '—';
+            const [y, m, d] = iso.split('-');
+            return `${d}/${m}/${y}`;
         }
 
         function labelStatus(s) {
@@ -459,31 +559,53 @@
         }
 
         async function alterarStatus(inscricaoId, novoStatus) {
-            let statusFinal = novoStatus;
-
             if (novoStatus === 'concluido') {
                 const insc = todasInscricoes.find(i => i.id === inscricaoId);
                 const isEad = (insc?._curso?.modalidade || 'presencial') === 'ead';
 
-                // Cursos presencial/online exigem que o instrutor tenha gerado código
-                if (!isEad && !insc?._curso?.codigoPresenca) {
-                    showAlert('Gere um código de presença na tela de Presença antes de concluir.', 'error');
+                // EAD nunca pode ser concluído manualmente
+                if (isEad) {
+                    showAlert('Cursos EAD são encerrados automaticamente ao atingir a data fim.', 'error');
                     return;
                 }
 
-                // Busca dados frescos do Firestore para checar se candidato confirmou presença
+                // Presencial/Online: verifica presença fresca do Firestore
                 const inscDoc = await getDoc(doc(db, 'inscricoes', inscricaoId));
-                const presencas = inscDoc.data()?.presencas;
-                const temPresenca = Array.isArray(presencas) && presencas.length > 0;
+                const presencas = inscDoc.data()?.presencas ?? [];
+                const temPresenca = presencas.length > 0;
 
-                if (isEad && !temPresenca) {
-                    showAlert('O aluno ainda não assistiu ao vídeo (80% necessário para confirmar presença EAD).', 'error');
-                    return;
+                if (temPresenca) {
+                    await executarAlterarStatus(inscricaoId, 'concluido');
+                } else {
+                    const nome = insc?._candidato?.fullName ?? 'este candidato';
+                    abrirModalFalta(inscricaoId, nome);
                 }
-
-                statusFinal = temPresenca ? 'concluido' : 'falta';
+                return;
             }
 
+            await executarAlterarStatus(inscricaoId, novoStatus);
+        }
+
+        function abrirModalFalta(inscricaoId, nomeCandidato) {
+            pendingFaltaId = inscricaoId;
+            document.getElementById('textoModalFalta').innerHTML =
+                `<strong>${nomeCandidato}</strong> não confirmou presença neste curso.<br><br>Deseja registrar <strong style="color:#ef4444">Falta</strong>?`;
+            document.getElementById('modalConfirmarFalta').classList.add('active');
+        }
+
+        function fecharModalFalta() {
+            pendingFaltaId = null;
+            document.getElementById('modalConfirmarFalta').classList.remove('active');
+        }
+
+        async function confirmarFalta() {
+            if (!pendingFaltaId) return;
+            const id = pendingFaltaId;
+            fecharModalFalta();
+            await executarAlterarStatus(id, 'falta');
+        }
+
+        async function executarAlterarStatus(inscricaoId, statusFinal) {
             try {
                 await updateDoc(doc(db, 'inscricoes', inscricaoId), {
                     status: statusFinal,
@@ -497,16 +619,46 @@
                 renderTabela();
 
                 const msgs = {
-                    apto:  '✓ Inscrição aprovada!',
+                    apto:      '✓ Inscrição aprovada!',
                     rejeitada: 'Inscrição rejeitada.',
                     concluido: '✓ Inscrição concluída com presença confirmada.',
-                    falta:     'Falta registrada — candidato não confirmou presença.',
+                    falta:     'Falta registrada.',
                     pendente:  'Inscrição reativada.'
                 };
                 showAlert(msgs[statusFinal] ?? 'Status atualizado.', statusFinal === 'falta' ? 'error' : 'success');
             } catch (err) {
                 showAlert('Erro ao atualizar: ' + err.message, 'error');
                 console.error(err);
+            }
+        }
+
+        async function processarEnceramentosEad() {
+            const hoje = new Date().toISOString().split('T')[0];
+            const pendentes = todasInscricoes.filter(i => {
+                const isEad = (i._curso?.modalidade || 'presencial') === 'ead';
+                const dataFim = getDataFimStr(i._curso);
+                return isEad && i.status === 'apto' && dataFim && dataFim < hoje;
+            });
+            if (pendentes.length === 0) return;
+
+            let processadas = 0;
+            for (const i of pendentes) {
+                try {
+                    const snap = await getDoc(doc(db, 'inscricoes', i.id));
+                    const presencas = snap.data()?.presencas ?? [];
+                    const statusFinal = presencas.length > 0 ? 'concluido' : 'falta';
+                    await updateDoc(doc(db, 'inscricoes', i.id), { status: statusFinal, updatedAt: serverTimestamp() });
+                    i.status = statusFinal;
+                    processadas++;
+                } catch (err) {
+                    console.error('Erro ao processar EAD:', i.id, err);
+                }
+            }
+
+            if (processadas > 0) {
+                atualizarResumo();
+                renderTabela();
+                showAlert(`${processadas} inscrição(ões) EAD encerrada(s) automaticamente.`, 'success');
             }
         }
 
