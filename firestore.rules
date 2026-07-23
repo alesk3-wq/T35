@@ -1,0 +1,89 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    // ── users ────────────────────────────────────────────────────────────────
+    // Qualquer autenticado lê (admin/grupos precisam buscar candidatos).
+    // Criação: apenas o próprio usuário, sempre com role 'candidato'.
+    // Atualização própria: qualquer campo exceto role e uid (previne auto-promoção).
+    // Atualização alheia: permitida para autenticados (necessário para admin/usuarios.html).
+    // NOTA: proteção completa de role exige Firebase Custom Claims (melhoria futura).
+    match /users/{docId} {
+      allow read: if isAuth();
+
+      allow create: if isAuth()
+                    && request.resource.data.uid == request.auth.uid
+                    && request.resource.data.role == 'candidato';
+
+      allow update: if isAuth() && (
+          // Atualizando o próprio perfil: não pode mudar role nem uid
+          (resource.data.uid == request.auth.uid
+           && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'uid']))
+          // Atualizando perfil alheio (admin/usuarios.html)
+          || resource.data.uid != request.auth.uid
+      );
+
+      allow delete: if false;
+    }
+
+    // ── cursos ───────────────────────────────────────────────────────────────
+    match /cursos/{cursoId} {
+      allow read: if isAuth();
+      allow write: if isAuth();
+    }
+
+    // ── inscricoes ───────────────────────────────────────────────────────────
+    // Leitura: todos autenticados (admin e instrutor precisam ver todas).
+    // Criação por candidato: apenas a própria inscrição, status pendente, não obrigatório.
+    // Criação por admin/instrutor: para outro candidato (candidatoId != uid do autor).
+    // Atualização por candidato: apenas campo presencas na própria inscrição.
+    // Atualização por admin/instrutor: qualquer campo em inscrição alheia.
+    match /inscricoes/{inscricaoId} {
+      allow read: if isAuth();
+
+      allow create: if isAuth() && (
+          // Candidato se inscrevendo no catálogo
+          (request.resource.data.candidatoId == request.auth.uid
+           && request.resource.data.status == 'pendente'
+           && request.resource.data.get('obrigatorio', false) == false)
+          // Admin/instrutor/grupos criando para outro candidato
+          || request.resource.data.candidatoId != request.auth.uid
+      );
+
+      allow update: if isAuth() && (
+          // Admin/instrutor atualizando inscrição alheia (status, etc.)
+          resource.data.candidatoId != request.auth.uid
+          // Candidato atualizando apenas presencas na própria inscrição
+          || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['presencas', 'updatedAt'])
+      );
+
+      allow delete: if false;
+    }
+
+    // ── grupos ───────────────────────────────────────────────────────────────
+    match /grupos/{grupoId} {
+      allow read, write: if isAuth();
+    }
+
+    // ── empresas ─────────────────────────────────────────────────────────────
+    match /empresas/{empresaId} {
+      allow read, write: if isAuth();
+    }
+
+    // ── condecorados ─────────────────────────────────────────────────────────
+    match /condecorados/{id} {
+      allow read, write: if isAuth();
+    }
+
+    // ── notificacoes ─────────────────────────────────────────────────────────
+    // Escrita apenas via Firebase Console ou Admin SDK.
+    match /notificacoes/{id} {
+      allow read: if isAuth();
+      allow write: if false;
+    }
+  }
+}
