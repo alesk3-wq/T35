@@ -18,6 +18,15 @@ import {
 let _userDocId = null;
 let _userData  = null;
 
+function esc(str) {
+    return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 // Auto-inicializa quando o módulo é importado
 onAuthStateChanged(auth, async (user) => {
     if (!user) return;
@@ -46,7 +55,7 @@ function _injectSidebarUser() {
     const footer = document.querySelector('.sidebar-footer');
     if (!footer || footer.querySelector('.sidebar-user')) return;
 
-    const inicial = (_userData.fullName || _userData.email || '?')[0].toUpperCase();
+    const inicial = esc((_userData.fullName || _userData.email || '?')[0].toUpperCase());
     const role    = _userData.role || 'candidato';
     const roleMap = { candidato: 'Candidato', instrutor: 'Instrutor', admin: 'Admin' };
     const roleLabel = roleMap[role] || role;
@@ -59,9 +68,9 @@ function _injectSidebarUser() {
     userEl.innerHTML = `
         <div class="sidebar-user-avatar">${inicial}</div>
         <div class="sidebar-user-info">
-            <span class="sidebar-user-name">${_userData.fullName || 'Usuário'}</span>
-            <span class="sidebar-user-email">${_userData.email || ''}</span>
-            <span class="sidebar-user-role role-${role}">${roleLabel}</span>
+            <span class="sidebar-user-name">${esc(_userData.fullName || 'Usuário')}</span>
+            <span class="sidebar-user-email">${esc(_userData.email || '')}</span>
+            <span class="sidebar-user-role role-${esc(role)}">${esc(roleLabel)}</span>
         </div>
     `;
     footer.insertBefore(userEl, footer.firstChild);
@@ -151,12 +160,12 @@ async function _loadNotifications() {
                 ? n.createdAt.toDate().toLocaleDateString('pt-BR')
                 : '';
             return `
-                <div class="notif-item${lida ? ' lida' : ''}" data-id="${n.id}">
-                    <div class="notif-icon-wrap tipo-${n.tipo || 'aviso'}">${_tipoIcon(n.tipo)}</div>
+                <div class="notif-item${lida ? ' lida' : ''}" data-id="${esc(n.id)}">
+                    <div class="notif-icon-wrap tipo-${esc(n.tipo || 'aviso')}">${_tipoIcon(n.tipo)}</div>
                     <div class="notif-body">
-                        <p class="notif-titulo">${n.titulo}</p>
-                        <p class="notif-msg">${n.mensagem}</p>
-                        <span class="notif-data">${data}</span>
+                        <p class="notif-titulo">${esc(n.titulo)}</p>
+                        <p class="notif-msg">${esc(n.mensagem)}</p>
+                        <span class="notif-data">${esc(data)}</span>
                     </div>
                     ${!lida ? '<div class="notif-dot"></div>' : ''}
                 </div>`;
