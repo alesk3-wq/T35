@@ -93,35 +93,36 @@
         .modal-content {
             background: var(--bg2);
             border-radius: 12px;
-            padding: 2rem;
             width: 90%;
             max-width: 500px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         }
 
         .modal-header {
+            padding: 1.5rem 2rem 0;
+            flex-shrink: 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
         }
 
-        .modal-header h2 { color: var(--text); font-size: 20px; margin: 0; }
-
-        .btn-close {
-            background: none;
-            border: none;
-            color: var(--text-secondary);
-            font-size: 24px;
-            cursor: pointer;
-            line-height: 1;
+        .modal-body {
+            padding: 0.5rem 2rem 1rem;
+            overflow-y: auto;
+            flex: 1;
         }
 
         .modal-actions {
+            padding: 0.75rem 2rem 1.5rem;
+            flex-shrink: 0;
             display: flex;
             gap: 1rem;
             justify-content: flex-end;
-            margin-top: 1.5rem;
+            border-top: 1px solid var(--border);
         }
 
         .btn-cancel, .btn-save {
@@ -308,6 +309,7 @@
                 <h2>Editar Usuário</h2>
                 <button class="btn-close" id="btnCloseModal">&times;</button>
             </div>
+            <div class="modal-body">
             <form id="editForm">
                 <div class="form-group">
                     <label>Nome</label>
@@ -355,6 +357,7 @@
                     <input type="text" id="editEmpresa">
                 </div>
             </form>
+            </div>
             <div class="modal-actions">
                 <button class="btn-cancel" id="btnCancelModal">Cancelar</button>
                 <button class="btn-save" id="btnSaveUser">Salvar</button>
