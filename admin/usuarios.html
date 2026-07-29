@@ -318,12 +318,29 @@
                     <input type="email" id="editEmail" disabled>
                 </div>
                 <div class="form-group">
-                    <label>Perfil</label>
+                    <label>Perfil principal</label>
                     <select id="editRole" required>
                         <option value="candidato">Candidato</option>
                         <option value="instrutor">Instrutor</option>
                         <option value="admin">Admin</option>
                     </select>
+                </div>
+                <div class="form-group">
+                    <label>Perfis de acesso</label>
+                    <div style="display:flex;gap:1.25rem;margin-top:0.4rem;flex-wrap:wrap">
+                        <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;font-size:14px">
+                            <input type="checkbox" class="chk-perfil" value="candidato"> Candidato
+                        </label>
+                        <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;font-size:14px">
+                            <input type="checkbox" class="chk-perfil" value="instrutor"> Instrutor
+                        </label>
+                        <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;font-size:14px">
+                            <input type="checkbox" class="chk-perfil" value="admin"> Admin
+                        </label>
+                    </div>
+                    <p style="font-size:12px;color:var(--text-secondary);margin:0.4rem 0 0">
+                        Marque mais de um para o usuário escolher o perfil ao logar.
+                    </p>
                 </div>
                 <div class="form-group">
                     <label>CPF</label>
@@ -449,6 +466,10 @@
             document.getElementById('editCpf').value = user.cpf || '';
             document.getElementById('editPhone').value = user.phone || '';
             document.getElementById('editEmpresa').value = user.empresa || '';
+            const perfisAtivos = user.perfis || [user.role || 'candidato'];
+            document.querySelectorAll('.chk-perfil').forEach(chk => {
+                chk.checked = perfisAtivos.includes(chk.value);
+            });
             document.getElementById('editModal').classList.add('active');
         }
 
@@ -464,9 +485,11 @@
             const roleChanged = user && user.role !== newRole;
 
             try {
+                const perfis = [...document.querySelectorAll('.chk-perfil:checked')].map(c => c.value);
                 await updateDoc(doc(db, 'users', currentEditId), {
                     fullName: document.getElementById('editName').value,
                     role: newRole,
+                    perfis: perfis.length > 0 ? perfis : [newRole],
                     cpf: document.getElementById('editCpf').value,
                     phone: document.getElementById('editPhone').value,
                     empresa: document.getElementById('editEmpresa').value,

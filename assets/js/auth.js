@@ -94,12 +94,16 @@ export async function handleLogin(email, password) {
         }
 
         const userData = querySnapshot.docs[0].data();
-        const role = userData.role;
 
-        console.log('✅ Login realizado com sucesso!', role);
+        console.log('✅ Login realizado com sucesso!');
 
-        // ✅ 3. Redireciona conforme o role
-        redirectByRole(role);
+        // ✅ 3. Redireciona conforme perfis disponíveis
+        const perfis = userData.perfis;
+        if (Array.isArray(perfis) && perfis.length > 1) {
+            return { needsRoleSelection: true, perfis };
+        }
+        const destino = (Array.isArray(perfis) && perfis[0]) || userData.role;
+        redirectByRole(destino);
 
     } catch (error) {
         console.error('❌ Erro no login:', error);
@@ -157,10 +161,15 @@ export async function handleGoogleLogin() {
 
         // ✅ 3. Usuário já existe - faz login normal
         const userData = querySnapshot.docs[0].data();
-        const role = userData.role;
 
-        console.log('✅ Login Google realizado com sucesso!', role);
-        redirectByRole(role);
+        console.log('✅ Login Google realizado com sucesso!');
+
+        const perfis = userData.perfis;
+        if (Array.isArray(perfis) && perfis.length > 1) {
+            return { needsRoleSelection: true, perfis };
+        }
+        const destino = (Array.isArray(perfis) && perfis[0]) || userData.role;
+        redirectByRole(destino);
 
     } catch (error) {
         console.error('❌ Erro no Google Login:', error);
@@ -172,7 +181,7 @@ export async function handleGoogleLogin() {
  * Redireciona o usuário conforme seu role
  * @param {string} role - Role do usuário (candidato, instrutor, admin)
  */
-function redirectByRole(role) {
+export function redirectByRole(role) {
     const roleMap = {
         'candidato': 'candidato/dashboard.html',
         'instrutor': 'instrutor/dashboard.html',

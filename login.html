@@ -222,13 +222,40 @@
         
     </div>
 
+    <!-- Modal seleção de perfil -->
+    <div id="modalPerfil" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;">
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:2rem;max-width:360px;width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+            <div style="font-size:32px;margin-bottom:0.75rem">👤</div>
+            <h3 style="margin:0 0 0.4rem;font-size:18px;color:var(--text)">Como deseja entrar?</h3>
+            <p style="color:var(--text-secondary);font-size:14px;margin:0 0 1.5rem;line-height:1.5">Você tem acesso em mais de um perfil.<br>Escolha como deseja continuar.</p>
+            <div id="perfilBtns" style="display:flex;flex-direction:column;gap:0.75rem"></div>
+        </div>
+    </div>
+
     <script type="module">
-        import { handleLogin, handleGoogleLogin } from './assets/js/auth.js';
+        import { handleLogin, handleGoogleLogin, redirectByRole } from './assets/js/auth.js';
 
         const loginForm = document.getElementById('loginForm');
         const btnGoogle = document.getElementById('btnGoogle');
         const errorMessage = document.getElementById('errorMessage');
         const btnLogin = document.getElementById('btnLogin');
+
+        const labelMap = { candidato: 'Candidato', instrutor: 'Instrutor', admin: 'Administrador' };
+
+        function mostrarModalPerfil(perfis) {
+            const btns = document.getElementById('perfilBtns');
+            btns.innerHTML = perfis.map(p => `
+                <button data-perfil="${p}"
+                        style="padding:0.8rem 1.25rem;border-radius:8px;border:1px solid var(--border);
+                               background:var(--bg3);color:var(--text);cursor:pointer;font-size:15px;
+                               font-weight:600;transition:background 0.2s,border-color 0.2s">
+                    ${labelMap[p] || p}
+                </button>`).join('');
+            document.getElementById('modalPerfil').style.display = 'flex';
+            btns.querySelectorAll('button').forEach(btn =>
+                btn.addEventListener('click', () => redirectByRole(btn.dataset.perfil))
+            );
+        }
 
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -240,7 +267,12 @@
             errorMessage.style.display = 'none';
 
             try {
-                await handleLogin(email, password);
+                const result = await handleLogin(email, password);
+                if (result?.needsRoleSelection) {
+                    btnLogin.classList.remove('loading');
+                    btnLogin.textContent = 'Entrar';
+                    mostrarModalPerfil(result.perfis);
+                }
             } catch (error) {
                 console.error('Erro no login:', error);
                 errorMessage.textContent = 'Email ou senha inválidos';
@@ -256,7 +288,12 @@
             errorMessage.style.display = 'none';
 
             try {
-                await handleGoogleLogin();
+                const result = await handleGoogleLogin();
+                if (result?.needsRoleSelection) {
+                    btnGoogle.classList.remove('loading');
+                    btnGoogle.textContent = 'Entrar com Google';
+                    mostrarModalPerfil(result.perfis);
+                }
             } catch (error) {
                 console.error('Erro no Google Login:', error);
                 errorMessage.textContent = 'Erro ao conectar com Google';
