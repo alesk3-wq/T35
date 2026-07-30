@@ -302,6 +302,7 @@
                     const prog = inscricao.videoProgresso;
                     const pct  = prog?.percentualVideo || 0;
                     const vConcluido = prog?.concluido || false;
+                    const vSuspeito  = prog?.suspeito  || false;
                     const label = vConcluido ? '✓ Aula Assistida' : pct > 0 ? `Continuar Aula (${pct}%)` : 'Assistir Aula';
                     const cor   = vConcluido ? '34,197,94' : '239,68,68';
                     videoHTML = `
@@ -309,7 +310,12 @@
                            style="display:flex;align-items:center;gap:0.45rem;margin-top:0.5rem;padding:0.55rem 0.9rem;background:rgba(${cor},0.1);border:1px solid rgba(${cor},0.25);border-radius:8px;color:rgb(${cor});font-size:13px;font-weight:600;text-decoration:none;width:fit-content;transition:background 0.2s;">
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                             ${label}
-                        </a>`;
+                        </a>
+                        ${vSuspeito && !vConcluido ? `
+                        <div style="margin-top:0.5rem;padding:0.6rem 0.9rem;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);border-radius:8px;color:#ef4444;font-size:12px;line-height:1.5;display:flex;align-items:flex-start;gap:0.5rem;">
+                            <span style="flex-shrink:0">⚠</span>
+                            <span>Detectamos que o vídeo foi avançado sem ser assistido. Se o curso encerrar com este status, você ficará com <strong>falta</strong>. Assista o vídeo normalmente para regularizar.</span>
+                        </div>` : ''}`;
                 }
 
                 const card = document.createElement('div');
