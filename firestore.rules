@@ -57,8 +57,8 @@ service cloud.firestore {
       allow update: if isAuth() && (
           // Admin/instrutor atualizando inscrição alheia (status, etc.)
           resource.data.candidatoId != request.auth.uid
-          // Candidato atualizando apenas presencas na própria inscrição
-          || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['presencas', 'updatedAt'])
+          // Candidato atualizando apenas presencas/progresso de vídeo na própria inscrição
+          || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['presencas', 'updatedAt', 'videoProgresso'])
       );
 
       allow delete: if false;
@@ -70,8 +70,10 @@ service cloud.firestore {
     }
 
     // ── empresas ─────────────────────────────────────────────────────────────
+    // Leitura pública: select de empresas no register.html (página sem auth).
     match /empresas/{empresaId} {
-      allow read, write: if isAuth();
+      allow read: if true;
+      allow write: if isAuth();
     }
 
     // ── condecorados ─────────────────────────────────────────────────────────
@@ -80,10 +82,11 @@ service cloud.firestore {
     }
 
     // ── notificacoes ─────────────────────────────────────────────────────────
-    // Escrita apenas via Firebase Console ou Admin SDK.
+    // Create: admin via dashboard. Update/delete bloqueados.
     match /notificacoes/{id} {
       allow read: if isAuth();
-      allow write: if false;
+      allow create: if isAuth();
+      allow update, delete: if false;
     }
   }
 }
