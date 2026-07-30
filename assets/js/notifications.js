@@ -12,7 +12,7 @@ import {
 import {
     collection, query, where, getDocs,
     doc, updateDoc, arrayUnion,
-    orderBy, limit
+    orderBy, limit, Timestamp
 } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js';
 
 let _userDocId = null;
@@ -129,8 +129,15 @@ async function _loadNotifications() {
     const lidas = _userData.notificacoesLidas || [];
 
     try {
+        // Só exibe notificações criadas após o cadastro do usuário
+        const cadastroRaw = _userData.createdAt || _userData.dataCriacao;
+        const cadastroTs  = cadastroRaw instanceof Timestamp
+            ? cadastroRaw
+            : Timestamp.fromDate(new Date(cadastroRaw));
+
         const snap = await getDocs(query(
             collection(db, 'notificacoes'),
+            where('createdAt', '>=', cadastroTs),
             orderBy('createdAt', 'desc'),
             limit(30)
         ));
