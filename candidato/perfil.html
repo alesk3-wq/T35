@@ -147,6 +147,12 @@
             margin-top: 0.25rem;
         }
 
+        .profile-forms {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
         @media (max-width: 900px) {
             .profile-layout { grid-template-columns: 1fr; }
             .profile-card { position: static; }
@@ -246,59 +252,90 @@
                 </div>
 
                 <!-- Formulário de edição -->
-                <div class="form-card">
-                    <div class="form-card-header">
-                        <h2>Editar Informações</h2>
-                    </div>
-                    <div class="form-card-body">
-                        <div class="form-grid">
-                            <div class="form-group full">
-                                <label for="fullName">Nome Completo *</label>
-                                <input type="text" id="fullName" placeholder="Seu nome completo">
-                            </div>
+                <div class="profile-forms">
+                    <div class="form-card">
+                        <div class="form-card-header">
+                            <h2>Editar Informações</h2>
+                        </div>
+                        <div class="form-card-body">
+                            <div class="form-grid">
+                                <div class="form-group full">
+                                    <label for="fullName">Nome Completo *</label>
+                                    <input type="text" id="fullName" placeholder="Seu nome completo">
+                                </div>
 
-                            <div class="form-group">
-                                <label for="email">Email</label>
-                                <input type="email" id="email" disabled>
-                                <span class="hint">O email não pode ser alterado</span>
-                            </div>
+                                <div class="form-group">
+                                    <label for="email">Email</label>
+                                    <input type="email" id="email" disabled>
+                                    <span class="hint">O email não pode ser alterado</span>
+                                </div>
 
-                            <div class="form-group">
-                                <label for="phone">Telefone</label>
-                                <input type="tel" id="phone" placeholder="(11) 99999-9999">
-                            </div>
+                                <div class="form-group">
+                                    <label for="phone">Telefone</label>
+                                    <input type="tel" id="phone" placeholder="(11) 99999-9999">
+                                </div>
 
-                            <div class="form-group">
-                                <label for="cpf">CPF</label>
-                                <input type="text" id="cpf" disabled placeholder="000.000.000-00">
-                                <span class="hint" id="hintCpf">CPF não pode ser alterado</span>
-                            </div>
+                                <div class="form-group">
+                                    <label for="cpf">CPF</label>
+                                    <input type="text" id="cpf" disabled placeholder="000.000.000-00">
+                                    <span class="hint" id="hintCpf">CPF não pode ser alterado</span>
+                                </div>
 
-                            <div class="form-group">
-                                <label for="matricula">Matrícula</label>
-                                <input type="text" id="matricula" disabled>
-                                <span class="hint" id="hintMatricula">Contate o admin para alterar</span>
-                            </div>
+                                <div class="form-group">
+                                    <label for="matricula">Matrícula</label>
+                                    <input type="text" id="matricula" disabled>
+                                    <span class="hint" id="hintMatricula">Contate o admin para alterar</span>
+                                </div>
 
-                            <div class="form-group">
-                                <label for="empresa">Empresa</label>
-                                <select id="empresa">
-                                    <option value="">Carregando...</option>
-                                </select>
-                            </div>
+                                <div class="form-group">
+                                    <label for="empresa">Empresa</label>
+                                    <select id="empresa">
+                                        <option value="">Carregando...</option>
+                                    </select>
+                                </div>
 
-                            <div class="form-group full">
-                                <label for="localAtuacao">Local de Atuação</label>
-                                <input type="text" id="localAtuacao" placeholder="Cidade / Unidade">
+                                <div class="form-group full">
+                                    <label for="localAtuacao">Local de Atuação</label>
+                                    <input type="text" id="localAtuacao" placeholder="Cidade / Unidade">
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="form-card-footer">
-                        <div>
-                            <div class="msg-success" id="msgSuccess">Perfil atualizado com sucesso!</div>
-                            <div class="msg-error" id="msgError"></div>
+                        <div class="form-card-footer">
+                            <div>
+                                <div class="msg-success" id="msgSuccess">Perfil atualizado com sucesso!</div>
+                                <div class="msg-error" id="msgError"></div>
+                            </div>
+                            <button class="btn-save" id="btnSave">Salvar Alterações</button>
                         </div>
-                        <button class="btn-save" id="btnSave">Salvar Alterações</button>
+                    </div>
+
+                    <div class="form-card" id="cardAlterarSenha">
+                        <div class="form-card-header">
+                            <h2>Alterar Senha</h2>
+                        </div>
+                        <div class="form-card-body">
+                            <div class="form-grid">
+                                <div class="form-group full">
+                                    <label for="senhaAtual">Senha Atual *</label>
+                                    <input type="password" id="senhaAtual" placeholder="Digite sua senha atual" autocomplete="current-password">
+                                </div>
+                                <div class="form-group">
+                                    <label for="novaSenha">Nova Senha *</label>
+                                    <input type="password" id="novaSenha" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+                                </div>
+                                <div class="form-group">
+                                    <label for="confirmarSenha">Confirmar Nova Senha *</label>
+                                    <input type="password" id="confirmarSenha" placeholder="Repita a nova senha" autocomplete="new-password">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-card-footer">
+                            <div>
+                                <div class="msg-success" id="msgSenhaSuccess">Senha alterada com sucesso!</div>
+                                <div class="msg-error" id="msgSenhaError"></div>
+                            </div>
+                            <button class="btn-save" id="btnAlterarSenha">Alterar Senha</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -309,7 +346,10 @@
         import { handleLogout, checkAuth } from '../assets/js/auth.js';
         import { toggleSidebar } from '../assets/js/ui-shell.js';
         import { formatCPF, formatPhone, validateCPF, removeCPFFormat, removePhoneFormat, applyMask } from '../assets/js/utils.js';
-        import { db } from '../firebase-config.js';
+        import { auth, db } from '../firebase-config.js';
+        import {
+            EmailAuthProvider, reauthenticateWithCredential, updatePassword
+        } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js';
         import {
             collection, getDocs, query, where, orderBy, doc, updateDoc
         } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js';
@@ -355,7 +395,19 @@
         checkAuth().then(async user => {
             if (!user) { window.location.href = '../login.html'; return; }
             loadPerfil(user.uid);
+            verificarProvedorSenha(user);
         });
+
+        function verificarProvedorSenha(user) {
+            const temSenhaEmail = user.providerData.some(p => p.providerId === 'password');
+            if (!temSenhaEmail) {
+                document.getElementById('cardAlterarSenha').innerHTML = `
+                    <div class="form-card-header"><h2>Alterar Senha</h2></div>
+                    <div class="form-card-body">
+                        <p class="hint">Sua conta usa login do Google — a senha é gerenciada pelo Google e não pode ser alterada aqui.</p>
+                    </div>`;
+            }
+        }
 
         async function loadPerfil(uid) {
             try {
@@ -483,6 +535,56 @@
 
         function showError(msg) {
             const el = document.getElementById('msgError');
+            el.textContent = msg;
+            el.style.display = 'block';
+            setTimeout(() => el.style.display = 'none', 4000);
+        }
+
+        document.getElementById('btnAlterarSenha').addEventListener('click', async () => {
+            const senhaAtual     = document.getElementById('senhaAtual').value;
+            const novaSenha      = document.getElementById('novaSenha').value;
+            const confirmarSenha = document.getElementById('confirmarSenha').value;
+
+            if (!senhaAtual || !novaSenha || !confirmarSenha) { showSenhaError('Preencha todos os campos'); return; }
+            if (novaSenha.length < 6) { showSenhaError('A nova senha deve ter pelo menos 6 caracteres'); return; }
+            if (novaSenha !== confirmarSenha) { showSenhaError('As senhas não coincidem'); return; }
+
+            const btn = document.getElementById('btnAlterarSenha');
+            btn.disabled = true;
+            btn.textContent = 'Alterando...';
+
+            try {
+                const user = auth.currentUser;
+                const credential = EmailAuthProvider.credential(user.email, senhaAtual);
+                await reauthenticateWithCredential(user, credential);
+                await updatePassword(user, novaSenha);
+
+                document.getElementById('senhaAtual').value = '';
+                document.getElementById('novaSenha').value = '';
+                document.getElementById('confirmarSenha').value = '';
+                showSenhaSuccess();
+            } catch (err) {
+                if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+                    showSenhaError('Senha atual incorreta');
+                } else if (err.code === 'auth/too-many-requests') {
+                    showSenhaError('Muitas tentativas. Tente novamente mais tarde.');
+                } else {
+                    showSenhaError('Erro ao alterar senha: ' + err.message);
+                }
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Alterar Senha';
+            }
+        });
+
+        function showSenhaSuccess() {
+            const el = document.getElementById('msgSenhaSuccess');
+            el.style.display = 'block';
+            setTimeout(() => el.style.display = 'none', 3000);
+        }
+
+        function showSenhaError(msg) {
+            const el = document.getElementById('msgSenhaError');
             el.textContent = msg;
             el.style.display = 'block';
             setTimeout(() => el.style.display = 'none', 4000);
