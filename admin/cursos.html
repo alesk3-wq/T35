@@ -213,6 +213,78 @@
             cursor: pointer;
         }
 
+        .hint-modulos {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin: 0.25rem 0 0.75rem 0;
+        }
+
+        .modulo-row {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .modulo-row-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .modulo-numero { font-size: 13px; font-weight: 700; color: var(--amber); }
+
+        .modulo-row-actions { display: flex; gap: 0.4rem; }
+
+        .btn-modulo-up, .btn-modulo-down, .btn-modulo-remove, .btn-modulo-doc-remove {
+            padding: 0.25rem 0.6rem;
+            border: 1px solid var(--border);
+            background: transparent;
+            border-radius: 6px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+        .btn-modulo-up:hover, .btn-modulo-down:hover { color: var(--text); border-color: var(--amber); }
+        .btn-modulo-up:disabled, .btn-modulo-down:disabled { opacity: 0.3; cursor: not-allowed; }
+        .btn-modulo-remove, .btn-modulo-doc-remove { color: #ef4444; border-color: rgba(239,68,68,0.3); }
+        .btn-modulo-remove:hover, .btn-modulo-doc-remove:hover { background: rgba(239,68,68,0.1); }
+
+        .modulo-doc-atual {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 0.5rem 0.75rem;
+            background: rgba(59,130,246,0.08);
+            border: 1px solid rgba(59,130,246,0.25);
+            border-radius: 8px;
+            font-size: 13px;
+        }
+        .modulo-doc-atual a { color: #3b82f6; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        .modulo-doc-pendente {
+            display: block;
+            margin-top: 0.4rem;
+            font-size: 12px;
+            color: var(--amber);
+        }
+
+        .btn-add-modulo {
+            padding: 0.6rem 1.1rem;
+            background: rgba(245,158,11,0.1);
+            border: 1px dashed var(--amber);
+            border-radius: 8px;
+            color: var(--amber);
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            width: 100%;
+        }
+        .btn-add-modulo:hover { background: rgba(245,158,11,0.18); }
+
         @media (max-width: 768px) {
             .page-header { flex-direction: column; gap: 1rem; align-items: flex-start; }
             .btn-new { width: 100%; }
@@ -451,6 +523,13 @@
                         </select>
                     </div>
                 </div>
+
+                <div class="form-group" id="modulosSection">
+                    <label>Módulos da Trilha (opcional)</label>
+                    <p class="hint-modulos">Adicione módulos para transformar este curso numa trilha com vídeo e/ou documento por etapa. Ao usar módulos, a modalidade fica travada em EAD (conclusão automática por progresso).</p>
+                    <div id="modulosList"></div>
+                    <button type="button" class="btn-add-modulo" id="btnAddModulo">+ Adicionar Módulo</button>
+                </div>
             </form>
 
             <div class="modal-actions">
@@ -463,12 +542,15 @@
     <script type="module">
         import { handleLogout } from '../assets/js/auth.js';
         import { toggleSidebar } from '../assets/js/ui-shell.js';
-        import { auth, db } from '../firebase-config.js';
+        import { auth, db, storage } from '../firebase-config.js';
         import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js';
         import {
-            collection, getDocs, addDoc, doc, updateDoc,
+            collection, getDocs, doc, setDoc, updateDoc,
             deleteDoc, serverTimestamp, query, where, orderBy
         } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js';
+        import {
+            ref, uploadBytesResumable, getDownloadURL, deleteObject
+        } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-storage.js';
 
         document.getElementById('btnMenu').addEventListener('click', toggleSidebar);
         document.getElementById('btnLogout').addEventListener('click', handleLogout);
@@ -486,9 +568,137 @@
             input.required = isEad;
             label.textContent = isEad ? 'URL do Vídeo (YouTube) *' : 'URL do Vídeo (YouTube)';
         });
+        document.getElementById('btnAddModulo').addEventListener('click', () => {
+            modulosState.push({ id: gerarId(), titulo: '', video: null, documento: null, _file: null });
+            renderModulos();
+            atualizarModalidadeLock();
+        });
 
         let allCursos = [];
         let currentCursoId = null;
+        let modulosState = [];
+        let originalModulosCount = 0;
+        let documentosParaRemover = [];
+
+        function gerarId() {
+            return crypto.randomUUID ? crypto.randomUUID() : ('mod_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8));
+        }
+
+        function esc(str) {
+            return String(str ?? '')
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        function atualizarModalidadeLock() {
+            const sel  = document.getElementById('cursoModalidade');
+            const bloquear = modulosState.length > 0;
+            sel.disabled = bloquear;
+            if (bloquear) {
+                sel.value = 'ead';
+                document.getElementById('cursoVideoUrl').required = false;
+                document.getElementById('videoUrlLabel').textContent = 'URL do Vídeo (YouTube)';
+            }
+        }
+
+        function renderModulos() {
+            const container = document.getElementById('modulosList');
+            container.innerHTML = modulosState.map((m, idx) => `
+                <div class="modulo-row">
+                    <div class="modulo-row-header">
+                        <span class="modulo-numero">Módulo ${idx + 1}</span>
+                        <div class="modulo-row-actions">
+                            <button type="button" class="btn-modulo-up" data-idx="${idx}" ${idx === 0 ? 'disabled' : ''}>▲</button>
+                            <button type="button" class="btn-modulo-down" data-idx="${idx}" ${idx === modulosState.length - 1 ? 'disabled' : ''}>▼</button>
+                            <button type="button" class="btn-modulo-remove" data-idx="${idx}">Remover</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Título do módulo *</label>
+                        <input type="text" class="modulo-titulo" data-idx="${idx}" value="${esc(m.titulo || '')}" placeholder="Ex: Introdução à NR-10">
+                    </div>
+                    <div class="form-group">
+                        <label>URL do Vídeo (YouTube)</label>
+                        <input type="url" class="modulo-video" data-idx="${idx}" value="${esc(m.video?.url || '')}" placeholder="https://www.youtube.com/watch?v=...">
+                    </div>
+                    <div class="form-group">
+                        <label>Documento (PDF)</label>
+                        ${m.documento ? `
+                            <div class="modulo-doc-atual">
+                                <a href="${m.documento.url}" target="_blank">${esc(m.documento.nome)}</a>
+                                <button type="button" class="btn-modulo-doc-remove" data-idx="${idx}">Remover</button>
+                            </div>
+                        ` : `
+                            <input type="file" class="modulo-doc-input" data-idx="${idx}" accept=".pdf">
+                            ${m._file ? `<span class="modulo-doc-pendente">${esc(m._file.name)} (será enviado ao salvar)</span>` : ''}
+                        `}
+                    </div>
+                </div>
+            `).join('');
+
+            container.querySelectorAll('.modulo-titulo').forEach(input =>
+                input.addEventListener('input', e => { modulosState[+e.target.dataset.idx].titulo = e.target.value; })
+            );
+            container.querySelectorAll('.modulo-video').forEach(input =>
+                input.addEventListener('input', e => {
+                    const val = e.target.value.trim();
+                    modulosState[+e.target.dataset.idx].video = val ? { url: val } : null;
+                })
+            );
+            container.querySelectorAll('.modulo-doc-input').forEach(input =>
+                input.addEventListener('change', e => {
+                    modulosState[+e.target.dataset.idx]._file = e.target.files[0] || null;
+                    renderModulos();
+                })
+            );
+            container.querySelectorAll('.btn-modulo-doc-remove').forEach(btn =>
+                btn.addEventListener('click', () => {
+                    const idx = +btn.dataset.idx;
+                    const m = modulosState[idx];
+                    if (m.documento && currentCursoId) {
+                        documentosParaRemover.push({ cursoId: currentCursoId, moduloId: m.id, nome: m.documento.nome });
+                    }
+                    m.documento = null;
+                    renderModulos();
+                })
+            );
+            container.querySelectorAll('.btn-modulo-up').forEach(btn =>
+                btn.addEventListener('click', () => {
+                    const idx = +btn.dataset.idx;
+                    [modulosState[idx - 1], modulosState[idx]] = [modulosState[idx], modulosState[idx - 1]];
+                    renderModulos();
+                })
+            );
+            container.querySelectorAll('.btn-modulo-down').forEach(btn =>
+                btn.addEventListener('click', () => {
+                    const idx = +btn.dataset.idx;
+                    [modulosState[idx + 1], modulosState[idx]] = [modulosState[idx], modulosState[idx + 1]];
+                    renderModulos();
+                })
+            );
+            container.querySelectorAll('.btn-modulo-remove').forEach(btn =>
+                btn.addEventListener('click', () => {
+                    const idx = +btn.dataset.idx;
+                    const m = modulosState[idx];
+                    if (m.documento && currentCursoId) {
+                        documentosParaRemover.push({ cursoId: currentCursoId, moduloId: m.id, nome: m.documento.nome });
+                    }
+                    modulosState.splice(idx, 1);
+                    renderModulos();
+                    atualizarModalidadeLock();
+                })
+            );
+        }
+
+        function uploadModuloDocumento(cursoId, moduloId, file) {
+            return new Promise((resolve, reject) => {
+                const storageRef = ref(storage, `materiais/${cursoId}/modulos/${moduloId}/${file.name}`);
+                const task = uploadBytesResumable(storageRef, file);
+                task.on('state_changed', null, reject, async () => {
+                    resolve(await getDownloadURL(task.snapshot.ref));
+                });
+            });
+        }
 
         // Verificar autenticação e role admin
         onAuthStateChanged(auth, async (user) => {
@@ -597,6 +807,8 @@
             const form = document.getElementById('cursoForm');
             form.reset();
 
+            documentosParaRemover = [];
+
             if (cursoId) {
                 const curso = allCursos.find(c => c.id === cursoId);
                 if (!curso) return;
@@ -629,10 +841,23 @@
                     const d = curso.dataFim.toDate ? curso.dataFim.toDate() : new Date(curso.dataFim);
                     document.getElementById('cursoDataFim').value = d.toISOString().split('T')[0];
                 }
+
+                modulosState = (curso.modulos || []).map(m => ({
+                    id: m.id,
+                    titulo: m.titulo || '',
+                    video: m.video?.url ? { url: m.video.url } : null,
+                    documento: m.documento ? { ...m.documento } : null,
+                    _file: null
+                }));
             } else {
                 document.getElementById('modalTitle').textContent = 'Novo Curso';
                 document.getElementById('cursoStatus').value = 'ativo';
+                modulosState = [];
             }
+
+            originalModulosCount = modulosState.length;
+            renderModulos();
+            atualizarModalidadeLock();
 
             document.getElementById('cursoModal').classList.add('active');
         }
@@ -640,6 +865,8 @@
         function closeModal() {
             document.getElementById('cursoModal').classList.remove('active');
             currentCursoId = null;
+            modulosState = [];
+            documentosParaRemover = [];
         }
 
         async function salvarCurso() {
@@ -669,41 +896,87 @@
 
             const videoUrl = document.getElementById('cursoVideoUrl').value.trim() || null;
             const modalidade = document.getElementById('cursoModalidade').value;
+            const temModulos = modulosState.length > 0;
 
-            if (modalidade === 'ead' && !videoUrl) {
+            if (modalidade === 'ead' && !videoUrl && !temModulos) {
                 showError('Cursos EAD precisam de uma URL de vídeo do YouTube.');
                 return;
             }
 
-            const payload = {
-                titulo,
-                descricao,
-                instrutor,
-                modalidade,
-                local,
-                dataInicio,
-                dataFim,
-                horaInicio,
-                duracao,
-                vagas,
-                status,
-                videoUrl,
-                updatedAt: serverTimestamp()
-            };
+            for (const m of modulosState) {
+                if (!m.titulo.trim()) {
+                    showError('Todo módulo precisa de um título.');
+                    return;
+                }
+                if (!m.video?.url && !m.documento && !m._file) {
+                    showError(`O módulo "${m.titulo}" precisa ter vídeo e/ou documento.`);
+                    return;
+                }
+            }
+
+            if (temModulos && originalModulosCount === 0 && currentCursoId) {
+                const inscSnap = await getDocs(query(collection(db, 'inscricoes'), where('cursoId', '==', currentCursoId)));
+                if (!inscSnap.empty) {
+                    const ok = confirm(`Este curso já tem ${inscSnap.size} inscrição(ões). Converter para trilha com módulos não migra o progresso de vídeo já registrado. Deseja continuar?`);
+                    if (!ok) return;
+                }
+            }
+
+            const cursoRef = currentCursoId ? doc(db, 'cursos', currentCursoId) : doc(collection(db, 'cursos'));
+
+            const btnSalvar = document.getElementById('btnSalvarCurso');
+            btnSalvar.disabled = true;
+            btnSalvar.textContent = 'Salvando...';
 
             try {
-                if (currentCursoId) {
-                    await updateDoc(doc(db, 'cursos', currentCursoId), payload);
-                    showSuccess('Curso atualizado com sucesso!');
-                } else {
-                    payload.createdAt = serverTimestamp();
-                    await addDoc(collection(db, 'cursos'), payload);
-                    showSuccess('Curso criado com sucesso!');
+                for (const m of modulosState) {
+                    if (m._file) {
+                        const url = await uploadModuloDocumento(cursoRef.id, m.id, m._file);
+                        m.documento = { url, nome: m._file.name, uploadedAt: new Date().toISOString() };
+                        m._file = null;
+                    }
                 }
+
+                const modulosFinal = modulosState.map((m, idx) => ({
+                    id: m.id,
+                    titulo: m.titulo.trim(),
+                    ordem: idx,
+                    video: m.video?.url ? { url: m.video.url } : null,
+                    documento: m.documento || null
+                }));
+
+                const payload = {
+                    titulo,
+                    descricao,
+                    instrutor,
+                    modalidade: temModulos ? 'ead' : modalidade,
+                    local,
+                    dataInicio,
+                    dataFim,
+                    horaInicio,
+                    duracao,
+                    vagas,
+                    status,
+                    videoUrl,
+                    modulos: modulosFinal,
+                    updatedAt: serverTimestamp()
+                };
+                if (!currentCursoId) payload.createdAt = serverTimestamp();
+
+                await setDoc(cursoRef, payload, { merge: true });
+
+                for (const rem of documentosParaRemover) {
+                    await deleteObject(ref(storage, `materiais/${rem.cursoId}/modulos/${rem.moduloId}/${rem.nome}`)).catch(() => {});
+                }
+
+                showSuccess(currentCursoId ? 'Curso atualizado com sucesso!' : 'Curso criado com sucesso!');
                 closeModal();
                 loadCursos();
             } catch (err) {
                 showError('Erro ao salvar curso: ' + err.message);
+            } finally {
+                btnSalvar.disabled = false;
+                btnSalvar.textContent = 'Salvar';
             }
         }
 

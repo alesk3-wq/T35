@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="../assets/img/favi-t35.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documento - T35 Academy</title>
+    <link rel="stylesheet" href="../assets/css/design-system.css">
+    <link rel="stylesheet" href="../assets/css/layout.css">
+    <link rel="stylesheet" href="../assets/css/responsive.css">
+    <style>
+        .content { padding: 1.5rem; max-width: 900px; }
+
+        .doc-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: var(--text-secondary);
+            font-size: 13px;
+            text-decoration: none;
+            margin-bottom: 1rem;
+            transition: color 0.2s;
+        }
+        .doc-back:hover { color: var(--amber); }
+
+        .doc-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text);
+            margin: 0 0 0.25rem 0;
+        }
+        .doc-subtitulo {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin: 0 0 1.25rem 0;
+        }
+
+        .progress-bar-wrap {
+            margin-bottom: 1rem;
+            background: var(--bg2);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .stat-item { display: flex; flex-direction: column; gap: 0.2rem; }
+        .stat-label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-value { font-size: 18px; font-weight: 700; color: var(--text); }
+
+        .progress-track { flex: 1; min-width: 180px; }
+        .progress-track-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-bottom: 0.3rem;
+        }
+        .progress-track-bar {
+            height: 6px;
+            background: var(--border);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+        .progress-track-fill {
+            height: 100%;
+            background: var(--amber);
+            border-radius: 999px;
+            transition: width 0.4s ease;
+        }
+
+        .badge-concluido {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.4rem 0.9rem;
+            background: rgba(34,197,94,0.12);
+            border: 1px solid rgba(34,197,94,0.3);
+            color: #22c55e;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .pdf-container {
+            height: calc(100vh - 320px);
+            min-height: 420px;
+            overflow-y: auto;
+            background: var(--bg2);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            padding: 1.25rem 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .pdf-page-placeholder {
+            background: #fff;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+            margin-bottom: 1rem;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #94a3b8;
+            font-size: 12px;
+        }
+        .pdf-page-placeholder canvas { display: block; }
+
+        .no-doc {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+        .no-doc svg { width: 56px; height: 56px; opacity: 0.3; margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img src="../assets/img/t35logo.png" alt="T35 Academy" class="logo">
+            <h2>T35 Academy</h2>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="dashboard.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                <span>Dashboard</span>
+            </a>
+            <a href="catalogo.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                <span>Catálogo</span>
+            </a>
+            <a href="meus-cursos.html" class="nav-item active">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                <span>Meus Cursos</span>
+            </a>
+            <a href="certificados.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6-3 6 3v6l-6 3-6-3V9z"/><path d="M12 12v6"/></svg>
+                <span>Certificados</span>
+            </a>
+            <a href="condecorados.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>
+                <span>Condecorados</span>
+            </a>
+            <a href="sobre.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <span>Sobre</span>
+            </a>
+            <a href="manual.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <span>Ajuda</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <button class="btn-logout" id="btnLogout">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                <span>Logout</span>
+            </button>
+        </div>
+    </aside>
+
+    <div class="topbar">
+        <button class="btn-menu" id="btnMenu">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <h1 class="page-title">Documento</h1>
+    </div>
+
+    <main class="main">
+        <div class="content" id="pageContent">
+            <div style="color:var(--text-secondary);padding:3rem;text-align:center">Carregando...</div>
+        </div>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+    <script type="module">
+        import { handleLogout, checkAuth } from '../assets/js/auth.js';
+        import { toggleSidebar } from '../assets/js/ui-shell.js';
+        import { db } from '../firebase-config.js';
+        import {
+            doc, getDoc, updateDoc, serverTimestamp
+        } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js';
+        import { registrarPresencaSeCompleto } from '../assets/js/trilha-progress.js';
+
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        document.getElementById('btnMenu').addEventListener('click', toggleSidebar);
+        document.getElementById('btnLogout').addEventListener('click', handleLogout);
+
+        const params      = new URLSearchParams(location.search);
+        const inscricaoId = params.get('inscricaoId');
+        const cursoId     = params.get('cursoId');
+        const moduloId    = params.get('moduloId');
+
+        let cursoDataMem     = null;
+        let inscricaoDataMem = null;
+        let maxScrollPct     = 0;   // maior % de rolagem atingida — nunca regride
+        let jaConcluido      = false;
+        let saveTimeout      = null;
+
+        function showToastDoc(msg, cor = '#22c55e') {
+            let t = document.getElementById('docToast');
+            if (!t) {
+                t = document.createElement('div');
+                t.id = 'docToast';
+                t.style.cssText = 'position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);padding:0.75rem 1.5rem;border-radius:10px;font-size:14px;font-weight:600;color:#fff;opacity:0;transition:opacity 0.3s;z-index:9999;pointer-events:none;';
+                document.body.appendChild(t);
+            }
+            t.textContent = msg;
+            t.style.background = cor;
+            t.style.opacity = '1';
+            setTimeout(() => { t.style.opacity = '0'; }, 3500);
+        }
+
+        function atualizarUI() {
+            const fillEl = document.getElementById('progressFill');
+            const pctEl  = document.getElementById('statPct');
+            const pctLbl = document.getElementById('pctLabel');
+            if (fillEl) fillEl.style.width = maxScrollPct + '%';
+            if (pctEl)  pctEl.textContent  = maxScrollPct + '%';
+            if (pctLbl) pctLbl.textContent = maxScrollPct + '%';
+            if (maxScrollPct >= 80) {
+                const badge = document.getElementById('badgeConcluido');
+                if (badge) badge.style.display = 'inline-flex';
+            }
+        }
+
+        // ── Salvar progresso no Firestore ──────────────────────────────────
+        async function salvarProgresso() {
+            if (!inscricaoId || !moduloId) return;
+            const concluido = maxScrollPct >= 80;
+
+            const documentoProgresso = {
+                percentualScroll: maxScrollPct,
+                concluido,
+                ultimoAcesso: serverTimestamp()
+            };
+
+            if (concluido && !jaConcluido) jaConcluido = true;
+
+            try {
+                await updateDoc(doc(db, 'inscricoes', inscricaoId), {
+                    [`modulosProgresso.${moduloId}.documento`]: documentoProgresso
+                });
+            } catch (e) {
+                console.warn('[documento] erro ao salvar progresso:', e);
+                return;
+            }
+
+            if (cursoDataMem && inscricaoDataMem) {
+                inscricaoDataMem.modulosProgresso = { ...(inscricaoDataMem.modulosProgresso || {}) };
+                inscricaoDataMem.modulosProgresso[moduloId] = {
+                    ...(inscricaoDataMem.modulosProgresso[moduloId] || {}),
+                    documento: documentoProgresso
+                };
+                const registrou = await registrarPresencaSeCompleto(db, inscricaoId, cursoDataMem, inscricaoDataMem);
+                if (registrou) {
+                    const hoje = new Date().toISOString().split('T')[0];
+                    inscricaoDataMem.presencas = [...(inscricaoDataMem.presencas || []), hoje];
+                    showToastDoc('✓ Presença registrada automaticamente — trilha concluída!');
+                }
+            }
+        }
+
+        function salvarProgressoDebounced() {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(salvarProgresso, 1500);
+        }
+
+        window.addEventListener('beforeunload', salvarProgresso);
+
+        // ── Renderização do PDF (lazy, via IntersectionObserver) ───────────
+        async function renderizarPdf(url, container) {
+            const pdf = await pdfjsLib.getDocument({ url, disableRange: true, disableStream: true }).promise;
+            const larguraDisponivel = container.clientWidth - 32;
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (!entry.isIntersecting) return;
+                    const placeholder = entry.target;
+                    if (placeholder.dataset.rendered === '1') return;
+                    placeholder.dataset.rendered = '1';
+                    observer.unobserve(placeholder);
+                    renderizarPagina(pdf, +placeholder.dataset.pagina, placeholder);
+                });
+            }, { root: container, rootMargin: '600px 0px' });
+
+            for (let n = 1; n <= pdf.numPages; n++) {
+                const page = await pdf.getPage(n);
+                const unscaled = page.getViewport({ scale: 1 });
+                const scale = larguraDisponivel / unscaled.width;
+                const viewport = page.getViewport({ scale });
+
+                const placeholder = document.createElement('div');
+                placeholder.className = 'pdf-page-placeholder';
+                placeholder.style.width  = Math.round(viewport.width) + 'px';
+                placeholder.style.height = Math.round(viewport.height) + 'px';
+                placeholder.dataset.pagina = n;
+                placeholder.textContent = `Página ${n}`;
+                container.appendChild(placeholder);
+                observer.observe(placeholder);
+            }
+
+            container.addEventListener('scroll', () => {
+                const max = container.scrollHeight - container.clientHeight;
+                const pct = max > 0 ? Math.round((container.scrollTop / max) * 100) : 100;
+                maxScrollPct = Math.max(maxScrollPct, Math.min(100, pct));
+                atualizarUI();
+                salvarProgressoDebounced();
+            });
+        }
+
+        async function renderizarPagina(pdf, numero, placeholder) {
+            const page = await pdf.getPage(numero);
+            const unscaled = page.getViewport({ scale: 1 });
+            const scale = placeholder.clientWidth / unscaled.width;
+            const viewport = page.getViewport({ scale });
+
+            const outputScale = window.devicePixelRatio || 1;
+            const canvas = document.createElement('canvas');
+            canvas.width  = Math.floor(viewport.width * outputScale);
+            canvas.height = Math.floor(viewport.height * outputScale);
+            canvas.style.width  = viewport.width + 'px';
+            canvas.style.height = viewport.height + 'px';
+
+            placeholder.textContent = '';
+            placeholder.appendChild(canvas);
+
+            const ctx = canvas.getContext('2d');
+            const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
+            await page.render({ canvasContext: ctx, viewport, transform }).promise;
+        }
+
+        // ── Render da página ───────────────────────────────────────────────
+        async function renderPagina(curso, modulo) {
+            const content = document.getElementById('pageContent');
+            const voltarHref = `trilha.html?inscricaoId=${inscricaoId}&cursoId=${cursoId}`;
+
+            if (!modulo?.documento?.url) {
+                content.innerHTML = `
+                    <a href="${voltarHref}" class="doc-back">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                        Voltar para a Trilha
+                    </a>
+                    <div class="no-doc">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                        </svg>
+                        <p>Nenhum documento disponível para este módulo.</p>
+                    </div>`;
+                return;
+            }
+
+            const pct = maxScrollPct;
+
+            content.innerHTML = `
+                <a href="${voltarHref}" class="doc-back">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                    Voltar para a Trilha
+                </a>
+
+                <h1 class="doc-title">${modulo.titulo}</h1>
+                <p class="doc-subtitulo">${curso.titulo} · 📄 ${modulo.documento.nome}</p>
+
+                <div class="progress-bar-wrap">
+                    <div class="stat-item">
+                        <span class="stat-label">Lido</span>
+                        <span class="stat-value" id="statPct">${pct}%</span>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-track-label">
+                            <span>Progresso</span>
+                            <span id="pctLabel">${pct}%</span>
+                        </div>
+                        <div class="progress-track-bar">
+                            <div class="progress-track-fill" id="progressFill" style="width:${pct}%"></div>
+                        </div>
+                    </div>
+                    <span class="badge-concluido" id="badgeConcluido" style="${pct >= 80 ? '' : 'display:none'}">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                        Documento concluído
+                    </span>
+                </div>
+
+                <div class="pdf-container" id="pdfContainer"></div>
+            `;
+
+            const pdfContainer = document.getElementById('pdfContainer');
+            try {
+                await renderizarPdf(modulo.documento.url, pdfContainer);
+            } catch (err) {
+                console.error('[documento] erro ao renderizar PDF:', err);
+                pdfContainer.innerHTML = '<p style="color:var(--text-secondary);padding:2rem">Erro ao carregar o documento.</p>';
+            }
+        }
+
+        // ── Inicialização ──────────────────────────────────────────────────
+        checkAuth().then(async user => {
+            if (!user) { window.location.href = '../login.html'; return; }
+            if (!inscricaoId || !cursoId || !moduloId) { window.location.href = 'meus-cursos.html'; return; }
+
+            try {
+                const [inscricaoSnap, cursoSnap] = await Promise.all([
+                    getDoc(doc(db, 'inscricoes', inscricaoId)),
+                    getDoc(doc(db, 'cursos', cursoId))
+                ]);
+
+                if (!inscricaoSnap.exists() || inscricaoSnap.data().candidatoId !== user.uid) {
+                    window.location.href = 'meus-cursos.html';
+                    return;
+                }
+
+                inscricaoDataMem = inscricaoSnap.data();
+                const curso = cursoSnap.data();
+                cursoDataMem = curso;
+                const modulo = curso.modulos?.find(m => m.id === moduloId) || null;
+
+                maxScrollPct = inscricaoDataMem.modulosProgresso?.[moduloId]?.documento?.percentualScroll || 0;
+                jaConcluido  = inscricaoDataMem.modulosProgresso?.[moduloId]?.documento?.concluido || false;
+
+                await renderPagina(curso, modulo);
+            } catch (err) {
+                console.error(err);
+                document.getElementById('pageContent').innerHTML =
+                    '<p style="color:var(--text-secondary);padding:2rem">Erro ao carregar o documento.</p>';
+            }
+        });
+    </script>
+</body>
+</html>

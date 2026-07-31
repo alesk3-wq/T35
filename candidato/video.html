@@ -189,6 +189,7 @@
         import {
             doc, getDoc, updateDoc, serverTimestamp, arrayUnion
         } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js';
+        import { registrarPresencaSeCompleto } from '../assets/js/trilha-progress.js';
 
         document.getElementById('btnMenu').addEventListener('click', toggleSidebar);
         document.getElementById('btnLogout').addEventListener('click', handleLogout);
@@ -196,6 +197,7 @@
         const params      = new URLSearchParams(location.search);
         const inscricaoId = params.get('inscricaoId');
         const cursoId     = params.get('cursoId');
+        const moduloId    = params.get('moduloId'); // presente apenas quando o vídeo pertence a um módulo de trilha
 
         // ── Estado de rastreamento ─────────────────────────────────────────
         let player        = null;
@@ -203,10 +205,12 @@
         let timerInterval = null;
         let playerReady   = false;
         let jaConcluido   = false;
-        let progresso     = {};     // dados atuais do Firestore
+        let progresso     = {};     // dados atuais do Firestore (videoProgresso legado OU modulosProgresso[moduloId].video)
         let modalidadeCurso = 'presencial';
         let presencaEadRegistrada = false;
         let maxPct        = 0;      // maior % atingida — nunca regride
+        let cursoDataMem      = null; // curso completo, usado para calcular progresso da trilha quando há moduloId
+        let inscricaoDataMem  = null; // inscrição completa, mesclada em memória a cada save
 
         // ── Utilitários ────────────────────────────────────────────────────
         function extrairVideoId(url) {
@@ -282,39 +286,55 @@
             const concluido = maxPct >= 80;
             const suspeito  = concluido && dur > 0 && tempoTela < dur * 0.5;
 
-            const dados = {
-                videoProgresso: {
-                    percentualVideo: maxPct,
-                    tempoTela,
-                    videoDuracao: dur,
-                    ultimoAcesso: serverTimestamp(),
-                    concluido,
-                    suspeito
-                }
+            const videoProgresso = {
+                percentualVideo: maxPct,
+                tempoTela,
+                videoDuracao: dur,
+                ultimoAcesso: serverTimestamp(),
+                concluido,
+                suspeito
             };
+
+            const dados = moduloId
+                ? { [`modulosProgresso.${moduloId}.video`]: videoProgresso }
+                : { videoProgresso };
 
             if (concluido && !suspeito && !jaConcluido) {
                 jaConcluido = true;
                 mostrarBadgeConcluido();
-
-                if (modalidadeCurso === 'ead' && inscricaoId && !presencaEadRegistrada) {
-                    presencaEadRegistrada = true;
-                    const hoje = new Date().toISOString().split('T')[0];
-                    try {
-                        await updateDoc(doc(db, 'inscricoes', inscricaoId), {
-                            presencas: arrayUnion(hoje)
-                        });
-                        showToastVideo('✓ Presença registrada automaticamente!');
-                    } catch (e) {
-                        console.warn('[video] erro ao registrar presença EAD:', e);
-                    }
-                }
             }
 
             try {
                 await updateDoc(doc(db, 'inscricoes', inscricaoId), dados);
             } catch (e) {
                 console.warn('[video] erro ao salvar progresso:', e);
+                return;
+            }
+
+            if (moduloId && cursoDataMem && inscricaoDataMem) {
+                // mescla em memória (sem novo getDoc) e verifica se a trilha inteira terminou
+                inscricaoDataMem.modulosProgresso = { ...(inscricaoDataMem.modulosProgresso || {}) };
+                inscricaoDataMem.modulosProgresso[moduloId] = {
+                    ...(inscricaoDataMem.modulosProgresso[moduloId] || {}),
+                    video: videoProgresso
+                };
+                const registrou = await registrarPresencaSeCompleto(db, inscricaoId, cursoDataMem, inscricaoDataMem);
+                if (registrou) {
+                    const hoje = new Date().toISOString().split('T')[0];
+                    inscricaoDataMem.presencas = [...(inscricaoDataMem.presencas || []), hoje];
+                    showToastVideo('✓ Presença registrada automaticamente — trilha concluída!');
+                }
+            } else if (!moduloId && modalidadeCurso === 'ead' && concluido && !suspeito && !presencaEadRegistrada) {
+                presencaEadRegistrada = true;
+                const hoje = new Date().toISOString().split('T')[0];
+                try {
+                    await updateDoc(doc(db, 'inscricoes', inscricaoId), {
+                        presencas: arrayUnion(hoje)
+                    });
+                    showToastVideo('✓ Presença registrada automaticamente!');
+                } catch (e) {
+                    console.warn('[video] erro ao registrar presença EAD:', e);
+                }
             }
         }
 
@@ -384,8 +404,11 @@
         // ── Render da página ───────────────────────────────────────────────
         async function renderPagina(curso) {
             modalidadeCurso = curso.modalidade || 'presencial';
-            const videoId = extrairVideoId(curso.videoUrl);
+            const modulo  = moduloId ? curso.modulos?.find(m => m.id === moduloId) : null;
+            const videoId = extrairVideoId(moduloId ? modulo?.video?.url : curso.videoUrl);
             const content = document.getElementById('pageContent');
+            const voltarHref = moduloId ? `trilha.html?inscricaoId=${inscricaoId}&cursoId=${cursoId}` : 'meus-cursos.html';
+            const voltarLabel = moduloId ? 'Voltar para a Trilha' : 'Voltar para Meus Cursos';
 
             if (!videoId) {
                 content.innerHTML = `
@@ -402,13 +425,13 @@
             const pct = progresso.percentualVideo || 0;
 
             content.innerHTML = `
-                <a href="meus-cursos.html" class="video-back">
+                <a href="${voltarHref}" class="video-back">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-                    Voltar para Meus Cursos
+                    ${voltarLabel}
                 </a>
 
-                <h1 class="video-title">${curso.titulo}</h1>
-                <p class="video-instrutor">👨‍🏫 ${curso.instrutor}</p>
+                <h1 class="video-title">${modulo ? modulo.titulo : curso.titulo}</h1>
+                <p class="video-instrutor">${modulo ? `${curso.titulo} · 👨‍🏫 ${curso.instrutor}` : `👨‍🏫 ${curso.instrutor}`}</p>
 
                 <div class="player-wrap">
                     <iframe
@@ -474,8 +497,13 @@
                     return;
                 }
 
-                progresso = inscricaoSnap.data().videoProgresso || {};
+                inscricaoDataMem = inscricaoSnap.data();
                 const curso = cursoSnap.data();
+                cursoDataMem = curso;
+
+                progresso = moduloId
+                    ? (inscricaoDataMem.modulosProgresso?.[moduloId]?.video || {})
+                    : (inscricaoDataMem.videoProgresso || {});
 
                 await renderPagina(curso);
             } catch (err) {

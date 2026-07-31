@@ -58,7 +58,7 @@ service cloud.firestore {
           // Admin/instrutor atualizando inscrição alheia (status, etc.)
           resource.data.candidatoId != request.auth.uid
           // Candidato atualizando apenas presencas/progresso de vídeo na própria inscrição
-          || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['presencas', 'updatedAt', 'videoProgresso'])
+          || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['presencas', 'updatedAt', 'videoProgresso', 'modulosProgresso'])
       );
 
       allow delete: if false;

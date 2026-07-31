@@ -171,6 +171,7 @@
         import {
             collection, query, where, getDocs, doc, getDoc, updateDoc, arrayUnion
         } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js';
+        import { calcularProgressoTrilha } from '../assets/js/trilha-progress.js';
 
         const btnMenu = document.getElementById('btnMenu');
         const btnLogout = document.getElementById('btnLogout');
@@ -296,9 +297,24 @@
                     }
                 }
 
-                // Botão de vídeo aula
+                // Trilha (curso com módulos) — substitui o botão de vídeo único
+                const temModulos = curso.modulos?.length > 0;
+                let trilhaHTML = '';
+                if (temModulos && (inscricao.status === 'apto' || inscricao.status === 'aprovada' || inscricao.status === 'concluido')) {
+                    const { totalPct, todosConcluidos } = calcularProgressoTrilha(curso, inscricao);
+                    const corTrilha  = todosConcluidos ? '34,197,94' : '245,158,11';
+                    const labelTrilha = todosConcluidos ? `✓ Trilha Concluída (${totalPct}%)` : totalPct > 0 ? `Continuar Trilha (${totalPct}%)` : 'Ver Trilha';
+                    trilhaHTML = `
+                        <a href="trilha.html?inscricaoId=${inscricao.id}&cursoId=${inscricao.cursoId}"
+                           style="display:flex;align-items:center;gap:0.45rem;margin-top:0.5rem;padding:0.55rem 0.9rem;background:rgba(${corTrilha},0.1);border:1px solid rgba(${corTrilha},0.25);border-radius:8px;color:rgb(${corTrilha});font-size:13px;font-weight:600;text-decoration:none;width:fit-content;transition:background 0.2s;">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                            ${labelTrilha}
+                        </a>`;
+                }
+
+                // Botão de vídeo aula (cursos simples, sem módulos)
                 let videoHTML = '';
-                if (curso.videoUrl && (inscricao.status === 'apto' || inscricao.status === 'aprovada' || inscricao.status === 'concluido')) {
+                if (!temModulos && curso.videoUrl && (inscricao.status === 'apto' || inscricao.status === 'aprovada' || inscricao.status === 'concluido')) {
                     const prog = inscricao.videoProgresso;
                     const pct  = prog?.percentualVideo || 0;
                     const vConcluido = prog?.concluido || false;
@@ -369,6 +385,7 @@
                             </div>
                         </div>
 
+                        ${trilhaHTML}
                         ${videoHTML}
                         ${presencaHTML}
                         ${materialHTML}
