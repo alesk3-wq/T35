@@ -293,6 +293,8 @@
                 <button class="tab-btn" data-tab="cursos">Cursos</button>
                 <button class="tab-btn" data-tab="usuarios">Usuários</button>
                 <button class="tab-btn" data-tab="video">Vídeos</button>
+                <button class="tab-btn" data-tab="empresa">Por Empresa</button>
+                <button class="tab-btn" data-tab="compliance">Grupos</button>
             </div>
 
             <!-- Relatório: Inscrições -->
@@ -387,11 +389,12 @@
                                 <th>Concluídos</th>
                                 <th>Faltas</th>
                                 <th>Ocupação</th>
+                                <th>Taxa Conclusão</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
                         <tbody id="cursosList">
-                            <tr><td colspan="8" style="text-align:center;color:var(--text-secondary)">Carregando...</td></tr>
+                            <tr><td colspan="9" style="text-align:center;color:var(--text-secondary)">Carregando...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -477,6 +480,62 @@
                     </table>
                 </div>
             </div>
+
+            <!-- Relatório: Por Empresa -->
+            <div class="report-panel" id="panel-empresa">
+                <div class="export-bar">
+                    <button class="btn-export-pdf" id="btnExportEmpresa">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                        Exportar PDF
+                    </button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Empresa</th>
+                                <th>Candidatos</th>
+                                <th>Inscrições</th>
+                                <th>Concluídas</th>
+                                <th>Faltas</th>
+                                <th>Pendentes</th>
+                                <th>Taxa Conclusão</th>
+                            </tr>
+                        </thead>
+                        <tbody id="empresaList">
+                            <tr><td colspan="7" style="text-align:center;color:var(--text-secondary)">Carregando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Relatório: Compliance de Grupos -->
+            <div class="report-panel" id="panel-compliance">
+                <div class="export-bar">
+                    <button class="btn-export-pdf" id="btnExportCompliance">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                        Exportar PDF
+                    </button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Grupo</th>
+                                <th>Curso</th>
+                                <th>Membros</th>
+                                <th>Concluíram</th>
+                                <th>Pendentes</th>
+                                <th>Faltas</th>
+                                <th>Compliance</th>
+                            </tr>
+                        </thead>
+                        <tbody id="complianceList">
+                            <tr><td colspan="7" style="text-align:center;color:var(--text-secondary)">Carregando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </main>
 
@@ -526,7 +585,9 @@
                 loadInscricoes(),
                 loadCursosReport(),
                 loadUsuariosReport(),
-                loadVideoReport()
+                loadVideoReport(),
+                loadEmpresaReport(),
+                loadComplianceReport()
             ]);
         }
 
@@ -613,6 +674,10 @@
             }
         }
 
+        function taxaCor(pct) {
+            return pct >= 80 ? '#22c55e' : pct >= 50 ? '#f59e0b' : '#ef4444';
+        }
+
         let todosCursosReport = [];
 
         function renderCursosReport() {
@@ -639,11 +704,12 @@
                             <div class="progress-bar-wrap">
                                 <div class="progress-bar" style="width:${c._pct}%"></div>
                             </div>
-                            <span style="font-size:11px;color:var(--text-secondary)">${c._pct}%</span>
+                            <span style="font-size:11px;color:var(--text-secondary)">${c._dados.total}/${c.vagas ?? '—'} (${c._pct}%)</span>
                         </td>
+                        <td><span style="font-weight:700;color:${taxaCor(c._taxa)}">${c._dados.total > 0 ? c._taxa + '%' : '—'}</span></td>
                         <td><span class="status-badge status-${c.status}">${c.status}</span></td>
                     </tr>`).join('')
-                : '<tr><td colspan="8" style="text-align:center;color:var(--text-secondary);padding:2rem">Nenhum curso encontrado</td></tr>';
+                : '<tr><td colspan="9" style="text-align:center;color:var(--text-secondary);padding:2rem">Nenhum curso encontrado</td></tr>';
         }
 
         async function loadCursosReport() {
@@ -670,7 +736,8 @@
                         _titulo:    (c.titulo    || '').toLowerCase(),
                         _instrutor: (c.instrutor || '').toLowerCase(),
                         _dados: dados,
-                        _pct: c.vagas ? Math.min(100, Math.round((dados.concluidos / c.vagas) * 100)) : 0
+                        _pct:  c.vagas ? Math.min(100, Math.round((dados.total / c.vagas) * 100)) : 0,
+                        _taxa: dados.total > 0 ? Math.round((dados.concluidos / dados.total) * 100) : 0
                     };
                 });
 
@@ -771,11 +838,11 @@
                 const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
                 pdfHeader(pdf, 'Relatório de Cursos', sub);
                 pdfTable(pdf,
-                    ['#', 'Curso', 'Instrutor', 'Vagas', 'Inscritos', 'Concluídos', 'Faltas', 'Ocup. %', 'Status'],
+                    ['#', 'Curso', 'Instrutor', 'Vagas', 'Inscritos', 'Concluídos', 'Faltas', 'Ocup. %', 'Taxa Concl.', 'Status'],
                     filtrados.map((c, idx) => [
                         idx + 1, c.titulo, c.instrutor,
                         c.vagas ?? '—', c._dados.total, c._dados.concluidos, c._dados.faltas,
-                        c._pct + '%', c.status
+                        c._pct + '%', c._dados.total > 0 ? c._taxa + '%' : '—', c.status
                     ])
                 );
                 pdfFooter(pdf);
@@ -889,6 +956,179 @@
             } finally {
                 btnLoading(btn, false);
             }
+        });
+
+        // ── Relatório: Por Empresa ────────────────────────────────────────
+
+        let todosEmpresaReport = [];
+
+        async function loadEmpresaReport() {
+            try {
+                const [usersSnap, inscSnap] = await Promise.all([
+                    getDocs(collection(db, 'users')),
+                    getDocs(collection(db, 'inscricoes'))
+                ]);
+
+                const userMap = {};
+                const candidatosPorEmpresa = {};
+                usersSnap.forEach(d => {
+                    const u = d.data();
+                    userMap[u.uid] = u;
+                    if (u.role === 'candidato' || (Array.isArray(u.perfis) && u.perfis.includes('candidato'))) {
+                        const emp = u.empresa || 'Sem empresa';
+                        candidatosPorEmpresa[emp] = (candidatosPorEmpresa[emp] || 0) + 1;
+                    }
+                });
+
+                const empresaMap = {};
+                inscSnap.forEach(d => {
+                    const insc = d.data();
+                    if (insc.status === 'rejeitada') return;
+                    const emp = userMap[insc.candidatoId]?.empresa || 'Sem empresa';
+                    if (!empresaMap[emp]) empresaMap[emp] = { inscritos: 0, concluidos: 0, faltas: 0, pendentes: 0 };
+                    empresaMap[emp].inscritos++;
+                    if (insc.status === 'concluido') empresaMap[emp].concluidos++;
+                    else if (insc.status === 'falta') empresaMap[emp].faltas++;
+                    else empresaMap[emp].pendentes++;
+                });
+
+                const empresas = new Set([...Object.keys(candidatosPorEmpresa), ...Object.keys(empresaMap)]);
+                todosEmpresaReport = [...empresas].map(emp => {
+                    const dados = empresaMap[emp] || { inscritos: 0, concluidos: 0, faltas: 0, pendentes: 0 };
+                    return {
+                        empresa: emp,
+                        candidatos: candidatosPorEmpresa[emp] || 0,
+                        ...dados,
+                        taxa: dados.inscritos > 0 ? Math.round((dados.concluidos / dados.inscritos) * 100) : 0
+                    };
+                }).sort((a, b) => a.empresa.localeCompare(b.empresa));
+
+                const tbody = document.getElementById('empresaList');
+                tbody.innerHTML = todosEmpresaReport.length > 0
+                    ? todosEmpresaReport.map(e => `
+                        <tr>
+                            <td><strong>${e.empresa}</strong></td>
+                            <td>${e.candidatos}</td>
+                            <td>${e.inscritos}</td>
+                            <td><span class="status-badge status-concluido">${e.concluidos}</span></td>
+                            <td><span class="status-badge status-falta">${e.faltas}</span></td>
+                            <td><span class="status-badge status-pendente">${e.pendentes}</span></td>
+                            <td style="min-width:120px;">
+                                <div class="progress-bar-wrap">
+                                    <div class="progress-bar" style="width:${e.taxa}%;background:${taxaCor(e.taxa)}"></div>
+                                </div>
+                                <span style="font-size:11px;font-weight:700;color:${taxaCor(e.taxa)}">${e.inscritos > 0 ? e.taxa + '%' : '—'}</span>
+                            </td>
+                        </tr>`).join('')
+                    : '<tr><td colspan="7" style="text-align:center;color:var(--text-secondary);padding:2rem">Nenhum dado encontrado</td></tr>';
+            } catch (err) {
+                console.error('Erro empresa report:', err);
+            }
+        }
+
+        document.getElementById('btnExportEmpresa').addEventListener('click', () => {
+            const btn = document.getElementById('btnExportEmpresa');
+            btnLoading(btn, true);
+            try {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+                pdfHeader(pdf, 'Relatório por Empresa', `${todosEmpresaReport.length} empresas`);
+                pdfTable(pdf,
+                    ['#', 'Empresa', 'Candidatos', 'Inscrições', 'Concluídas', 'Faltas', 'Pendentes', 'Taxa %'],
+                    todosEmpresaReport.map((e, idx) => [
+                        idx + 1, e.empresa, e.candidatos, e.inscritos,
+                        e.concluidos, e.faltas, e.pendentes,
+                        e.inscritos > 0 ? e.taxa + '%' : '—'
+                    ])
+                );
+                pdfFooter(pdf);
+                pdf.save(`empresas_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.pdf`);
+            } catch (e) { console.error(e); }
+            finally { btnLoading(btn, false); }
+        });
+
+        // ── Relatório: Compliance de Grupos ───────────────────────────────
+
+        let todosComplianceReport = [];
+
+        async function loadComplianceReport() {
+            try {
+                const [gruposSnap, cursosSnap, inscSnap] = await Promise.all([
+                    getDocs(collection(db, 'grupos')),
+                    getDocs(collection(db, 'cursos')),
+                    getDocs(collection(db, 'inscricoes'))
+                ]);
+
+                const cursoMap = {};
+                cursosSnap.forEach(d => { cursoMap[d.id] = d.data(); });
+
+                const inscricoes = inscSnap.docs.map(d => d.data());
+
+                todosComplianceReport = [];
+                gruposSnap.forEach(d => {
+                    const grupo = d.data();
+                    const membros = grupo.membros || [];
+                    (grupo.cursos || []).forEach(cursoId => {
+                        let concluidos = 0, faltas = 0, pendentes = 0;
+                        membros.forEach(uid => {
+                            const insc = inscricoes.find(i => i.candidatoId === uid && i.cursoId === cursoId);
+                            if (insc?.status === 'concluido')  concluidos++;
+                            else if (insc?.status === 'falta') faltas++;
+                            else pendentes++;
+                        });
+                        todosComplianceReport.push({
+                            grupo: grupo.nome || '—',
+                            curso: cursoMap[cursoId]?.titulo || '—',
+                            membros: membros.length,
+                            concluidos, faltas, pendentes,
+                            taxa: membros.length > 0 ? Math.round((concluidos / membros.length) * 100) : 0
+                        });
+                    });
+                });
+
+                todosComplianceReport.sort((a, b) => a.grupo.localeCompare(b.grupo) || a.curso.localeCompare(b.curso));
+
+                const tbody = document.getElementById('complianceList');
+                tbody.innerHTML = todosComplianceReport.length > 0
+                    ? todosComplianceReport.map(r => `
+                        <tr>
+                            <td><strong>${r.grupo}</strong></td>
+                            <td>${r.curso}</td>
+                            <td>${r.membros}</td>
+                            <td><span class="status-badge status-concluido">${r.concluidos}</span></td>
+                            <td><span class="status-badge status-pendente">${r.pendentes}</span></td>
+                            <td><span class="status-badge status-falta">${r.faltas}</span></td>
+                            <td style="min-width:120px;">
+                                <div class="progress-bar-wrap">
+                                    <div class="progress-bar" style="width:${r.taxa}%;background:${taxaCor(r.taxa)}"></div>
+                                </div>
+                                <span style="font-size:11px;font-weight:700;color:${taxaCor(r.taxa)}">${r.taxa}%</span>
+                            </td>
+                        </tr>`).join('')
+                    : '<tr><td colspan="7" style="text-align:center;color:var(--text-secondary);padding:2rem">Nenhum grupo com cursos obrigatórios</td></tr>';
+            } catch (err) {
+                console.error('Erro compliance report:', err);
+            }
+        }
+
+        document.getElementById('btnExportCompliance').addEventListener('click', () => {
+            const btn = document.getElementById('btnExportCompliance');
+            btnLoading(btn, true);
+            try {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+                pdfHeader(pdf, 'Compliance de Grupos', 'Progresso dos membros nos cursos obrigatórios');
+                pdfTable(pdf,
+                    ['#', 'Grupo', 'Curso', 'Membros', 'Concluíram', 'Pendentes', 'Faltas', 'Compliance %'],
+                    todosComplianceReport.map((r, idx) => [
+                        idx + 1, r.grupo, r.curso, r.membros,
+                        r.concluidos, r.pendentes, r.faltas, r.taxa + '%'
+                    ])
+                );
+                pdfFooter(pdf);
+                pdf.save(`compliance_grupos_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.pdf`);
+            } catch (e) { console.error(e); }
+            finally { btnLoading(btn, false); }
         });
 
         async function loadUsuariosReport() {
