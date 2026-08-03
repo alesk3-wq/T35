@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="../assets/img/favi-t35.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meus Cursos - T35 Academy</title>
+    <link rel="stylesheet" href="../assets/css/design-system.css">
+    <link rel="stylesheet" href="../assets/css/layout.css">
+    <link rel="stylesheet" href="../assets/css/responsive.css">
+    <style>
+        .content { padding: 2rem; }
+
+        .cursos-container {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 1.5rem;
+            align-items: start;
+        }
+
+        .presenca-card {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .presenca-card h2 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text);
+            margin: 0 0 1.25rem 0;
+        }
+
+        .turmas-list { display: flex; flex-direction: column; gap: 0.6rem; }
+
+        .turma-item {
+            padding: 0.9rem 1rem;
+            border-radius: 8px;
+            border: 2px solid var(--border);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: var(--bg);
+        }
+        .turma-item:hover { border-color: var(--amber); background: rgba(255,34,51,0.05); }
+        .turma-item.selected { border-color: var(--amber); background: rgba(255,34,51,0.08); }
+        .turma-nome { font-weight: 600; color: var(--text); font-size: 13px; margin-bottom: 0.2rem; }
+        .turma-info { font-size: 11px; color: var(--text-secondary); }
+
+        .vazio { text-align: center; padding: 2rem 1rem; color: var(--text-secondary); font-size: 14px; }
+
+        .painel-curso { display: none; }
+        .painel-curso.visible { display: block; }
+
+        .curso-selecionado-label {
+            background: var(--bg);
+            border-left: 4px solid var(--amber);
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            margin-bottom: 1.25rem;
+        }
+        .curso-selecionado-label span {
+            display: block;
+            font-size: 11px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-bottom: 0.2rem;
+        }
+        .curso-selecionado-label strong { font-size: 15px; color: var(--text); }
+        .curso-selecionado-meta { font-size: 12px; color: var(--text-secondary); margin-top: 0.35rem; }
+
+        /* Material */
+        .content-section {
+            border-top: 1px solid var(--border);
+            padding-top: 1.25rem;
+            margin-top: 1.25rem;
+        }
+        .content-section h3 {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 0 0 0.85rem 0;
+        }
+        .content-section-hint {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin: -0.5rem 0 0.85rem 0;
+        }
+        .material-file-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--bg);
+            border: 1.5px dashed var(--border);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-sizing: border-box;
+            margin-bottom: 0.6rem;
+        }
+        .material-file-label:hover,
+        .material-file-label.has-file { border-color: var(--amber); color: var(--amber); border-style: solid; }
+        .btn-enviar-material {
+            width: 100%;
+            padding: 0.7rem;
+            background: var(--amber);
+            color: var(--bg);
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            display: none;
+        }
+        .btn-enviar-material:hover { background: var(--amber-dark); }
+        .progress-wrap {
+            background: var(--bg);
+            border-radius: 6px;
+            height: 6px;
+            margin: 0.5rem 0;
+            overflow: hidden;
+            display: none;
+        }
+        .progress-bar-inner {
+            height: 100%;
+            background: var(--amber);
+            border-radius: 6px;
+            width: 0%;
+            transition: width 0.15s;
+        }
+        .material-atual {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255,34,51,0.08);
+            border: 1px solid rgba(255,34,51,0.25);
+            border-radius: 8px;
+            padding: 0.65rem 0.9rem;
+            margin-bottom: 0.6rem;
+            font-size: 13px;
+            gap: 0.5rem;
+        }
+        .material-atual-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text);
+            font-weight: 600;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+        .btn-remover-material {
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            flex-shrink: 0;
+            transition: background 0.2s;
+        }
+        .btn-remover-material:hover { background: rgba(239,68,68,0.1); }
+
+        /* Módulos */
+        .modulo-row {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+        }
+        .modulo-row-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+        .modulo-numero { font-size: 13px; font-weight: 700; color: var(--amber); }
+        .modulo-row-actions { display: flex; gap: 0.4rem; }
+        .btn-modulo-up, .btn-modulo-down, .btn-modulo-remove, .btn-modulo-doc-remove {
+            padding: 0.25rem 0.6rem;
+            border: 1px solid var(--border);
+            background: transparent;
+            border-radius: 6px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+        .btn-modulo-up:hover, .btn-modulo-down:hover { color: var(--text); border-color: var(--amber); }
+        .btn-modulo-up:disabled, .btn-modulo-down:disabled { opacity: 0.3; cursor: not-allowed; }
+        .btn-modulo-remove, .btn-modulo-doc-remove { color: #ef4444; border-color: rgba(239,68,68,0.3); }
+        .btn-modulo-remove:hover, .btn-modulo-doc-remove:hover { background: rgba(239,68,68,0.1); }
+        .modulo-field { margin-bottom: 0.75rem; }
+        .modulo-field label {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-bottom: 0.35rem;
+        }
+        .modulo-field input[type="text"], .modulo-field input[type="url"] {
+            width: 100%;
+            padding: 0.6rem 0.8rem;
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 13px;
+            box-sizing: border-box;
+        }
+        .modulo-doc-atual {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 0.5rem 0.75rem;
+            background: rgba(59,130,246,0.08);
+            border: 1px solid rgba(59,130,246,0.25);
+            border-radius: 8px;
+            font-size: 13px;
+        }
+        .modulo-doc-atual a { color: #3b82f6; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .modulo-doc-pendente { display: block; margin-top: 0.4rem; font-size: 12px; color: var(--amber); }
+        .btn-add-modulo {
+            padding: 0.6rem 1.1rem;
+            background: rgba(245,158,11,0.1);
+            border: 1px dashed var(--amber);
+            border-radius: 8px;
+            color: var(--amber);
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 0.85rem;
+        }
+        .btn-add-modulo:hover { background: rgba(245,158,11,0.18); }
+        .btn-salvar-modulos {
+            width: 100%;
+            padding: 0.7rem;
+            background: var(--amber);
+            color: var(--bg);
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .btn-salvar-modulos:hover { background: var(--amber-dark); }
+        .btn-salvar-modulos:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 2rem; right: 2rem;
+            padding: 0.85rem 1.25rem; border-radius: 8px;
+            font-size: 14px; font-weight: 600;
+            opacity: 0; transform: translateY(10px);
+            transition: all 0.3s ease; pointer-events: none; z-index: 9999;
+        }
+        .toast.show { opacity: 1; transform: translateY(0); }
+        .toast-success { background: rgba(34,197,94,0.9); color: white; }
+        .toast-error   { background: rgba(239,68,68,0.9); color: white; }
+        .toast-warning { background: rgba(245,158,11,0.9); color: var(--bg); }
+        .toast-info    { background: rgba(59,130,246,0.9); color: white; }
+
+        @media (max-width: 768px) {
+            .cursos-container { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img src="../assets/img/t35logo.png" alt="T35 Academy" class="logo">
+            <h2>T35 Academy</h2>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="dashboard.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                <span>Dashboard</span>
+            </a>
+            <a href="cursos.html" class="nav-item active">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
+                <span>Meus Cursos</span>
+            </a>
+            <a href="presenca.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 11 12 14 22 4"></polyline>
+                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                </svg>
+                <span>Presença</span>
+            </a>
+            <a href="inscricoes.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"></path>
+                    <rect x="9" y="3" width="6" height="4" rx="1"></rect>
+                    <line x1="9" y1="12" x2="15" y2="12"></line>
+                    <line x1="9" y1="16" x2="13" y2="16"></line>
+                </svg>
+                <span>Inscrições</span>
+            </a>
+            <a href="relatorios.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                <span>Relatórios</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <button class="btn-logout" id="btnLogout">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                <span>Logout</span>
+            </button>
+        </div>
+    </aside>
+
+    <div class="topbar">
+        <button class="btn-menu" id="btnMenu">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
+        <h1 class="page-title">Meus Cursos</h1>
+    </div>
+
+    <main class="main">
+        <div class="content">
+            <div class="cursos-container">
+
+                <!-- Coluna 1: seleção de curso -->
+                <div class="presenca-card">
+                    <h2>Selecionar Curso</h2>
+                    <div class="turmas-list" id="turmasList">
+                        <div class="vazio">Carregando cursos...</div>
+                    </div>
+                </div>
+
+                <!-- Coluna 2: conteúdo do curso -->
+                <div class="presenca-card painel-curso" id="painelCurso">
+                    <div class="curso-selecionado-label">
+                        <span>Curso selecionado</span>
+                        <strong id="cursoNome">—</strong>
+                        <div class="curso-selecionado-meta" id="cursoMeta"></div>
+                    </div>
+
+                    <!-- Material (curso simples) -->
+                    <div class="content-section">
+                        <h3>Material do Curso (PDF)</h3>
+                        <p class="content-section-hint">Um único documento que fica disponível para o aluno baixar durante o curso.</p>
+                        <div id="materialAtual" style="display:none"></div>
+                        <label class="material-file-label" id="materialLabel" for="materialInput">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                            </svg>
+                            <span id="materialLabelText">Selecionar PDF</span>
+                        </label>
+                        <input type="file" id="materialInput" accept=".pdf" style="display:none">
+                        <div class="progress-wrap" id="progressWrap">
+                            <div class="progress-bar-inner" id="progressBar"></div>
+                        </div>
+                        <button class="btn-enviar-material" id="btnEnviarMaterial">Enviar Material</button>
+                    </div>
+
+                    <!-- Módulos da trilha -->
+                    <div class="content-section">
+                        <h3>Módulos da Trilha</h3>
+                        <p class="content-section-hint">Adicione módulos com vídeo e/ou documento para transformar este curso numa trilha. Ao ter módulos, a conclusão passa a ser automática por progresso (mesmo padrão do EAD).</p>
+                        <div id="modulosList"></div>
+                        <button type="button" class="btn-add-modulo" id="btnAddModulo">+ Adicionar Módulo</button>
+                        <button type="button" class="btn-salvar-modulos" id="btnSalvarModulos">Salvar Módulos</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <div class="toast" id="toast"></div>
+
+    <script type="module">
+        import { handleLogout, checkAuth } from '../assets/js/auth.js';
+        import { toggleSidebar } from '../assets/js/ui-shell.js';
+        import { db, storage } from '../firebase-config.js';
+        import {
+            collection, getDocs, query, where, doc, setDoc, updateDoc, serverTimestamp
+        } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js';
+        import {
+            ref, uploadBytesResumable, getDownloadURL, deleteObject
+        } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-storage.js';
+
+        document.getElementById('btnMenu').addEventListener('click', toggleSidebar);
+        document.getElementById('btnLogout').addEventListener('click', handleLogout);
+
+        let cursoSelecionado = null;
+        let meusCursos = [];
+
+        checkAuth().then(async user => {
+            if (!user) { window.location.href = '../login.html'; return; }
+
+            const snap = await getDocs(query(collection(db, 'users'), where('uid', '==', user.uid)));
+            const userData = snap.docs[0]?.data();
+
+            if (!userData || userData.role !== 'instrutor') {
+                window.location.href = '../login.html';
+                return;
+            }
+
+            carregarCursos(userData.fullName, userData.email);
+        });
+
+        async function carregarCursos(nome, email) {
+            const listEl = document.getElementById('turmasList');
+            try {
+                const snap = await getDocs(collection(db, 'cursos'));
+                meusCursos = snap.docs
+                    .map(d => ({ id: d.id, ...d.data() }))
+                    .filter(c => c.instrutor === nome || c.instrutorEmail === email);
+
+                if (meusCursos.length === 0) {
+                    listEl.innerHTML = `<div class="vazio">Nenhum curso vinculado ao nome <strong>${nome}</strong></div>`;
+                    return;
+                }
+
+                listEl.innerHTML = meusCursos.map(c => {
+                    const ini = c.dataInicio?.toDate ? c.dataInicio.toDate() : new Date(c.dataInicio);
+                    const fim = c.dataFim?.toDate   ? c.dataFim.toDate()   : new Date(c.dataFim);
+                    const isEad = (c.modalidade || 'presencial') === 'ead';
+                    return `
+                        <div class="turma-item" data-id="${c.id}">
+                            <div class="turma-nome">
+                                ${c.titulo}
+                                ${isEad ? '<span style="display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:999px;margin-left:6px;background:rgba(239,68,68,0.12);color:#ef4444;">🎬 EAD</span>' : ''}
+                            </div>
+                            <div class="turma-info">${ini.toLocaleDateString('pt-BR')} → ${fim.toLocaleDateString('pt-BR')}</div>
+                        </div>`;
+                }).join('');
+
+                listEl.querySelectorAll('.turma-item').forEach(el =>
+                    el.addEventListener('click', () => selecionarCurso(el))
+                );
+            } catch (err) {
+                listEl.innerHTML = '<div class="vazio">Erro ao carregar cursos</div>';
+                console.error(err);
+            }
+        }
+
+        function selecionarCurso(el) {
+            document.querySelectorAll('.turma-item').forEach(i => i.classList.remove('selected'));
+            el.classList.add('selected');
+
+            cursoSelecionado = meusCursos.find(c => c.id === el.dataset.id);
+
+            const ini = cursoSelecionado.dataInicio?.toDate ? cursoSelecionado.dataInicio.toDate() : new Date(cursoSelecionado.dataInicio);
+            const fim = cursoSelecionado.dataFim?.toDate   ? cursoSelecionado.dataFim.toDate()   : new Date(cursoSelecionado.dataFim);
+            const modLabel = { presencial: 'Presencial', ead: 'EAD', online: 'Online' }[cursoSelecionado.modalidade || 'presencial'];
+
+            document.getElementById('cursoNome').textContent = cursoSelecionado.titulo;
+            document.getElementById('cursoMeta').textContent = `${ini.toLocaleDateString('pt-BR')} → ${fim.toLocaleDateString('pt-BR')} · ${modLabel}`;
+            document.getElementById('painelCurso').classList.add('visible');
+
+            atualizarMaterial();
+            carregarModulos();
+        }
+
+        // ── Material PDF (mesmo padrão de instrutor/presenca.html) ─────────
+
+        let arquivoSelecionado = null;
+
+        function atualizarMaterial() {
+            const materialDiv = document.getElementById('materialAtual');
+            const labelText   = document.getElementById('materialLabelText');
+            const label       = document.getElementById('materialLabel');
+            const btnEnviar   = document.getElementById('btnEnviarMaterial');
+
+            arquivoSelecionado = null;
+            document.getElementById('materialInput').value = '';
+            label.classList.remove('has-file');
+            labelText.textContent = 'Selecionar PDF';
+            btnEnviar.style.display = 'none';
+
+            const m = cursoSelecionado?.material;
+            if (m?.url) {
+                materialDiv.style.display = 'flex';
+                materialDiv.className = 'material-atual';
+                materialDiv.innerHTML = `
+                    <div class="material-atual-info">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                        </svg>
+                        <a href="${m.url}" target="_blank" style="color:var(--amber);text-decoration:none;overflow:hidden;text-overflow:ellipsis;">${m.nome}</a>
+                    </div>
+                    <button class="btn-remover-material" id="btnRemoverMaterial">Remover</button>
+                `;
+                document.getElementById('btnRemoverMaterial').addEventListener('click', removerMaterial);
+            } else {
+                materialDiv.style.display = 'none';
+            }
+        }
+
+        document.getElementById('materialInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            arquivoSelecionado = file;
+            const label = document.getElementById('materialLabel');
+            label.classList.add('has-file');
+            document.getElementById('materialLabelText').textContent = file.name;
+            document.getElementById('btnEnviarMaterial').style.display = 'block';
+        });
+
+        document.getElementById('btnEnviarMaterial').addEventListener('click', async () => {
+            if (!cursoSelecionado || !arquivoSelecionado) return;
+
+            const btn = document.getElementById('btnEnviarMaterial');
+            const progressWrap = document.getElementById('progressWrap');
+            const progressBar  = document.getElementById('progressBar');
+
+            btn.disabled    = true;
+            btn.textContent = 'Enviando...';
+            progressWrap.style.display = 'block';
+
+            try {
+                const storageRef = ref(storage, `materiais/${cursoSelecionado.id}/${arquivoSelecionado.name}`);
+                const task = uploadBytesResumable(storageRef, arquivoSelecionado);
+
+                task.on('state_changed',
+                    (snap) => {
+                        const pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
+                        progressBar.style.width = pct + '%';
+                    },
+                    (err) => {
+                        console.error(err);
+                        showToast('Erro ao enviar o arquivo', 'error');
+                        btn.disabled = false;
+                        btn.textContent = 'Enviar Material';
+                        progressWrap.style.display = 'none';
+                    },
+                    async () => {
+                        const url = await getDownloadURL(task.snapshot.ref);
+                        const material = { url, nome: arquivoSelecionado.name, uploadedAt: new Date().toISOString() };
+                        await updateDoc(doc(db, 'cursos', cursoSelecionado.id), { material });
+                        cursoSelecionado.material = material;
+                        progressWrap.style.display = 'none';
+                        btn.style.display = 'none';
+                        btn.disabled = false;
+                        btn.textContent = 'Enviar Material';
+                        atualizarMaterial();
+                        showToast('Material enviado com sucesso!', 'success');
+                    }
+                );
+            } catch (err) {
+                console.error(err);
+                showToast('Erro ao enviar material', 'error');
+                btn.disabled = false;
+                btn.textContent = 'Enviar Material';
+                progressWrap.style.display = 'none';
+            }
+        });
+
+        async function removerMaterial() {
+            if (!cursoSelecionado?.material?.url) return;
+            if (!confirm('Remover o material deste curso?')) return;
+            try {
+                const storageRef = ref(storage, `materiais/${cursoSelecionado.id}/${cursoSelecionado.material.nome}`);
+                await deleteObject(storageRef).catch(() => {});
+                await updateDoc(doc(db, 'cursos', cursoSelecionado.id), { material: null });
+                cursoSelecionado.material = null;
+                atualizarMaterial();
+                showToast('Material removido.', 'info');
+            } catch (err) {
+                console.error(err);
+                showToast('Erro ao remover material', 'error');
+            }
+        }
+
+        // ── Módulos da trilha (mesmo padrão de admin/cursos.html) ──────────
+
+        let modulosState = [];
+        let originalModulosCount = 0;
+        let documentosParaRemover = [];
+
+        function gerarId() {
+            return crypto.randomUUID ? crypto.randomUUID() : ('mod_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8));
+        }
+
+        function esc(str) {
+            return String(str ?? '')
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        function carregarModulos() {
+            modulosState = (cursoSelecionado.modulos || []).map(m => ({
+                id: m.id,
+                titulo: m.titulo || '',
+                video: m.video?.url ? { url: m.video.url } : null,
+                documento: m.documento ? { ...m.documento } : null,
+                _file: null
+            }));
+            originalModulosCount = modulosState.length;
+            documentosParaRemover = [];
+            renderModulos();
+        }
+
+        document.getElementById('btnAddModulo').addEventListener('click', () => {
+            modulosState.push({ id: gerarId(), titulo: '', video: null, documento: null, _file: null });
+            renderModulos();
+        });
+
+        function renderModulos() {
+            const container = document.getElementById('modulosList');
+            container.innerHTML = modulosState.map((m, idx) => `
+                <div class="modulo-row">
+                    <div class="modulo-row-header">
+                        <span class="modulo-numero">Módulo ${idx + 1}</span>
+                        <div class="modulo-row-actions">
+                            <button type="button" class="btn-modulo-up" data-idx="${idx}" ${idx === 0 ? 'disabled' : ''}>▲</button>
+                            <button type="button" class="btn-modulo-down" data-idx="${idx}" ${idx === modulosState.length - 1 ? 'disabled' : ''}>▼</button>
+                            <button type="button" class="btn-modulo-remove" data-idx="${idx}">Remover</button>
+                        </div>
+                    </div>
+                    <div class="modulo-field">
+                        <label>Título do módulo *</label>
+                        <input type="text" class="modulo-titulo" data-idx="${idx}" value="${esc(m.titulo || '')}" placeholder="Ex: Introdução à NR-10">
+                    </div>
+                    <div class="modulo-field">
+                        <label>URL do Vídeo (YouTube)</label>
+                        <input type="url" class="modulo-video" data-idx="${idx}" value="${esc(m.video?.url || '')}" placeholder="https://www.youtube.com/watch?v=...">
+                    </div>
+                    <div class="modulo-field">
+                        <label>Documento (PDF)</label>
+                        ${m.documento ? `
+                            <div class="modulo-doc-atual">
+                                <a href="${m.documento.url}" target="_blank">${esc(m.documento.nome)}</a>
+                                <button type="button" class="btn-modulo-doc-remove" data-idx="${idx}">Remover</button>
+                            </div>
+                        ` : `
+                            <input type="file" class="modulo-doc-input" data-idx="${idx}" accept=".pdf">
+                            ${m._file ? `<span class="modulo-doc-pendente">${esc(m._file.name)} (será enviado ao salvar)</span>` : ''}
+                        `}
+                    </div>
+                </div>
+            `).join('');
+
+            container.querySelectorAll('.modulo-titulo').forEach(input =>
+                input.addEventListener('input', e => { modulosState[+e.target.dataset.idx].titulo = e.target.value; })
+            );
+            container.querySelectorAll('.modulo-video').forEach(input =>
+                input.addEventListener('input', e => {
+                    const val = e.target.value.trim();
+                    modulosState[+e.target.dataset.idx].video = val ? { url: val } : null;
+                })
+            );
+            container.querySelectorAll('.modulo-doc-input').forEach(input =>
+                input.addEventListener('change', e => {
+                    modulosState[+e.target.dataset.idx]._file = e.target.files[0] || null;
+                    renderModulos();
+                })
+            );
+            container.querySelectorAll('.btn-modulo-doc-remove').forEach(btn =>
+                btn.addEventListener('click', () => {
+                    const idx = +btn.dataset.idx;
+                    const m = modulosState[idx];
+                    if (m.documento) {
+                        documentosParaRemover.push({ cursoId: cursoSelecionado.id, moduloId: m.id, nome: m.documento.nome });
+                    }
+                    m.documento = null;
+                    renderModulos();
+                })
+            );
+            container.querySelectorAll('.btn-modulo-up').forEach(btn =>
+                btn.addEventListener('click', () => {
+                    const idx = +btn.dataset.idx;
+                    [modulosState[idx - 1], modulosState[idx]] = [modulosState[idx], modulosState[idx - 1]];
+                    renderModulos();
+                })
+            );
+            container.querySelectorAll('.btn-modulo-down').forEach(btn =>
+                btn.addEventListener('click', () => {
+                    const idx = +btn.dataset.idx;
+                    [modulosState[idx + 1], modulosState[idx]] = [modulosState[idx], modulosState[idx + 1]];
+                    renderModulos();
+                })
+            );
+            container.querySelectorAll('.btn-modulo-remove').forEach(btn =>
+                btn.addEventListener('click', () => {
+                    const idx = +btn.dataset.idx;
+                    const m = modulosState[idx];
+                    if (m.documento) {
+                        documentosParaRemover.push({ cursoId: cursoSelecionado.id, moduloId: m.id, nome: m.documento.nome });
+                    }
+                    modulosState.splice(idx, 1);
+                    renderModulos();
+                })
+            );
+        }
+
+        function uploadModuloDocumento(cursoId, moduloId, file) {
+            return new Promise((resolve, reject) => {
+                const storageRef = ref(storage, `materiais/${cursoId}/modulos/${moduloId}/${file.name}`);
+                const task = uploadBytesResumable(storageRef, file);
+                task.on('state_changed', null, reject, async () => {
+                    resolve(await getDownloadURL(task.snapshot.ref));
+                });
+            });
+        }
+
+        document.getElementById('btnSalvarModulos').addEventListener('click', async () => {
+            if (!cursoSelecionado) return;
+
+            for (const m of modulosState) {
+                if (!m.titulo.trim()) { showToast('Todo módulo precisa de um título.', 'error'); return; }
+                if (!m.video?.url && !m.documento && !m._file) {
+                    showToast(`O módulo "${m.titulo || '(sem título)'}" precisa ter vídeo e/ou documento.`, 'error');
+                    return;
+                }
+            }
+
+            if (modulosState.length > 0 && originalModulosCount === 0) {
+                const inscSnap = await getDocs(query(collection(db, 'inscricoes'), where('cursoId', '==', cursoSelecionado.id)));
+                if (!inscSnap.empty) {
+                    const ok = confirm(`Este curso já tem ${inscSnap.size} inscrição(ões). Transformar em trilha com módulos não migra o progresso de vídeo já registrado. Deseja continuar?`);
+                    if (!ok) return;
+                }
+            }
+
+            const btn = document.getElementById('btnSalvarModulos');
+            btn.disabled = true;
+            btn.textContent = 'Salvando...';
+
+            try {
+                for (const m of modulosState) {
+                    if (m._file) {
+                        const url = await uploadModuloDocumento(cursoSelecionado.id, m.id, m._file);
+                        m.documento = { url, nome: m._file.name, uploadedAt: new Date().toISOString() };
+                        m._file = null;
+                    }
+                }
+
+                const modulosFinal = modulosState.map((m, idx) => ({
+                    id: m.id,
+                    titulo: m.titulo.trim(),
+                    ordem: idx,
+                    video: m.video?.url ? { url: m.video.url } : null,
+                    documento: m.documento || null
+                }));
+
+                const payload = { modulos: modulosFinal, updatedAt: serverTimestamp() };
+                if (modulosFinal.length > 0) payload.modalidade = 'ead';
+
+                await setDoc(doc(db, 'cursos', cursoSelecionado.id), payload, { merge: true });
+
+                for (const rem of documentosParaRemover) {
+                    await deleteObject(ref(storage, `materiais/${rem.cursoId}/modulos/${rem.moduloId}/${rem.nome}`)).catch(() => {});
+                }
+                documentosParaRemover = [];
+
+                cursoSelecionado.modulos = modulosFinal;
+                if (payload.modalidade) cursoSelecionado.modalidade = payload.modalidade;
+                originalModulosCount = modulosFinal.length;
+
+                document.getElementById('cursoMeta').textContent =
+                    document.getElementById('cursoMeta').textContent.replace(/·\s*\w+$/, '· ' + ({ presencial: 'Presencial', ead: 'EAD', online: 'Online' }[cursoSelecionado.modalidade || 'presencial']));
+
+                showToast('Módulos salvos com sucesso!', 'success');
+            } catch (err) {
+                console.error(err);
+                showToast('Erro ao salvar módulos: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Salvar Módulos';
+            }
+        });
+
+        function showToast(msg, type = 'info') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className   = `toast toast-${type} show`;
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+    </script>
+</body>
+</html>
