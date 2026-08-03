@@ -115,6 +115,20 @@
             color: var(--text-secondary);
         }
         .no-doc svg { width: 56px; height: 56px; opacity: 0.3; margin-bottom: 1rem; }
+
+        @media (max-width: 600px) {
+            .content { padding: 0.85rem; }
+            .doc-title { font-size: 17px; }
+            .progress-bar-wrap { gap: 1rem; padding: 0.85rem 1rem; }
+            .stat-value { font-size: 16px; }
+            .progress-track { min-width: 140px; }
+            .pdf-container { height: calc(100vh - 280px); min-height: 320px; padding: 0.75rem 0.5rem; }
+            .badge-concluido { font-size: 12px; padding: 0.35rem 0.7rem; }
+        }
+
+        @media (max-width: 380px) {
+            .progress-bar-wrap { flex-direction: column; align-items: stretch; gap: 0.75rem; }
+        }
     </style>
 </head>
 <body>
@@ -357,7 +371,7 @@
             const pct = maxScrollPct;
 
             content.innerHTML = `
-                <a href="${voltarHref}" class="doc-back">
+                <a href="${voltarHref}" class="doc-back" id="btnVoltar">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
                     Voltar para a Trilha
                 </a>
@@ -388,12 +402,23 @@
                 <div class="pdf-container" id="pdfContainer"></div>
             `;
 
+            // Garante que o progresso é salvo antes de sair (o save de scroll é debounced em 1.5s)
+            document.getElementById('btnVoltar')?.addEventListener('click', async (e) => {
+                e.preventDefault();
+                clearTimeout(saveTimeout);
+                await salvarProgresso();
+                window.location.href = voltarHref;
+            });
+
             const pdfContainer = document.getElementById('pdfContainer');
             try {
                 await renderizarPdf(modulo.documento.url, pdfContainer);
             } catch (err) {
                 console.error('[documento] erro ao renderizar PDF:', err);
-                pdfContainer.innerHTML = '<p style="color:var(--text-secondary);padding:2rem">Erro ao carregar o documento.</p>';
+                pdfContainer.innerHTML = `<p style="color:var(--text-secondary);padding:2rem;text-align:center">
+                    Erro ao carregar o documento.<br>
+                    <span style="font-size:11px;opacity:0.7">${(err?.message || String(err)).slice(0, 250)}</span>
+                </p>`;
             }
         }
 
@@ -424,8 +449,10 @@
                 await renderPagina(curso, modulo);
             } catch (err) {
                 console.error(err);
-                document.getElementById('pageContent').innerHTML =
-                    '<p style="color:var(--text-secondary);padding:2rem">Erro ao carregar o documento.</p>';
+                document.getElementById('pageContent').innerHTML = `<p style="color:var(--text-secondary);padding:2rem;text-align:center">
+                    Erro ao carregar o documento.<br>
+                    <span style="font-size:11px;opacity:0.7">${(err?.message || String(err)).slice(0, 250)}</span>
+                </p>`;
             }
         });
     </script>

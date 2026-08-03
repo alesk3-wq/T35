@@ -1,0 +1,8 @@
+[
+  {
+    "origin": ["https://team35-academy.web.app", "https://team35-academy.firebaseapp.com"],
+    "method": ["GET", "HEAD"],
+    "maxAgeSeconds": 3600,
+    "responseHeader": ["Content-Type", "Content-Range", "Content-Length", "Accept-Ranges"]
+  }
+]

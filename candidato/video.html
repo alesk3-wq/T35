@@ -425,7 +425,7 @@
             const pct = progresso.percentualVideo || 0;
 
             content.innerHTML = `
-                <a href="${voltarHref}" class="video-back">
+                <a href="${voltarHref}" class="video-back" id="btnVoltar">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
                     ${voltarLabel}
                 </a>
@@ -476,6 +476,15 @@
             jaConcluido = progresso.concluido || false;
             tempoTela   = progresso.tempoTela || 0;
             maxPct      = progresso.percentualVideo || 0;
+
+            // Garante que o progresso é salvo antes de sair, mesmo se o vídeo ainda estiver tocando
+            // (beforeunload não é confiável para aguardar um updateDoc assíncrono terminar)
+            document.getElementById('btnVoltar')?.addEventListener('click', async (e) => {
+                e.preventDefault();
+                pausarTimer();
+                await salvarProgresso();
+                window.location.href = voltarHref;
+            });
 
             // Se API do YouTube já estava pronta antes do render, inicia o player agora
             if (window.YT?.Player) iniciarPlayer();
