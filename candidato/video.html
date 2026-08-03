@@ -204,6 +204,7 @@
         let tempoTela     = 0;      // segundos reais na página (timer pausa quando aba oculta)
         let timerInterval = null;
         let playerReady   = false;
+        let playerIniciado = false; // trava contra dupla inicialização do YT.Player
         let jaConcluido   = false;
         let progresso     = {};     // dados atuais do Firestore (videoProgresso legado OU modulosProgresso[moduloId].video)
         let modalidadeCurso = 'presencial';
@@ -260,6 +261,17 @@
                 iniciarTimer();
             }
         });
+
+        // Rede de segurança: consulta o estado direto do player em vez de depender
+        // só do evento onStateChange, que pode não chegar dependendo de como a API
+        // do YouTube se conecta ao iframe. Mantém a % viva mesmo nesse caso.
+        setInterval(() => {
+            if (!player?.getPlayerState) return;
+            const tocando = player.getPlayerState() === 1;
+            if (tocando && !document.hidden) iniciarTimer();       // respeita a pausa por aba oculta
+            else if (!tocando && timerInterval) pausarTimer();
+            atualizarUI();
+        }, 1000);
 
         // Salva ao fechar/sair da página
         window.addEventListener('beforeunload', () => salvarProgresso(true));
@@ -373,6 +385,12 @@
         };
 
         function iniciarPlayer() {
+            // Dois caminhos podem chamar esta função (onYouTubeIframeAPIReady e o
+            // fim de renderPagina). Inicializar o mesmo iframe duas vezes faz os
+            // eventos ficarem presos na primeira instância, e a % trava em 0.
+            if (playerIniciado) return;
+            playerIniciado = true;
+
             player = new YT.Player('ytPlayer', {
                 events: {
                     onReady(e) {
