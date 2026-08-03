@@ -22,7 +22,7 @@ export function calcularProgressoTrilha(curso, inscricaoData) {
     const modulos = (curso?.modulos || []).map(m => {
         const prog = modulosProgresso[m.id] || {};
         const partes = [];
-        if (m.video)     partes.push({ pct: prog.video?.percentual || 0, concluido: !!prog.video?.concluido });
+        if (m.video)     partes.push({ pct: prog.video?.percentualVideo || 0, concluido: !!prog.video?.concluido });
         if (m.documento) partes.push({ pct: prog.documento?.percentualScroll || 0, concluido: !!prog.documento?.concluido });
 
         // Módulo sem vídeo nem documento (edge case de edição manual no console) não entra na média
@@ -35,7 +35,7 @@ export function calcularProgressoTrilha(curso, inscricaoData) {
             titulo: m.titulo,
             temVideo:     !!m.video,
             temDocumento: !!m.documento,
-            pctVideo:     m.video     ? (prog.video?.percentual || 0)          : null,
+            pctVideo:     m.video     ? (prog.video?.percentualVideo || 0)     : null,
             pctDocumento: m.documento ? (prog.documento?.percentualScroll || 0) : null,
             pctModulo,
             concluido,
