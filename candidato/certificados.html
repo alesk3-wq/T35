@@ -370,9 +370,12 @@
                 const numCert   = numeroCertificado(insc.id);
                 const dataConcl = dataConclucao(insc);
 
-                // Logo em base64 para evitar CORS no canvas
+                // Logo e selo em base64 para evitar CORS no canvas
                 let logoB64 = '';
                 try { logoB64 = await imgToBase64('../assets/img/t35logo.png'); } catch(_) {}
+
+                let seloB64 = '';
+                try { seloB64 = await imgToBase64('../assets/img/selo-cert.png'); } catch(_) {}
 
                 // Assinatura do instrutor (cadastrada pelo admin), se existir.
                 // Vínculo pela mesma convenção das telas de instrutor: nome ou email.
@@ -389,7 +392,7 @@
                 // Monta o elemento do certificado fora da tela
                 const el = document.createElement('div');
                 el.style.cssText = 'position:absolute;top:0;left:-1200px;width:1122px;height:794px;';
-                el.innerHTML = buildCertHTML(curso, numCert, dataConcl, logoB64, assinaturaB64);
+                el.innerHTML = buildCertHTML(curso, numCert, dataConcl, logoB64, assinaturaB64, seloB64);
                 document.body.appendChild(el);
 
                 // Aguarda fontes e um frame de pintura
@@ -423,7 +426,7 @@
             }
         }
 
-        function buildCertHTML(curso, numCert, dataConcl, logoB64, assinaturaB64) {
+        function buildCertHTML(curso, numCert, dataConcl, logoB64, assinaturaB64, seloB64) {
             const logoSmall = logoB64
                 ? `<img src="${logoB64}" style="width:70px;height:70px;object-fit:contain;border-radius:12px;display:block;">`
                 : '';
@@ -436,6 +439,15 @@
             const assinaturaImg = assinaturaB64
                 ? `<img src="${assinaturaB64}" style="height:48px;max-width:180px;object-fit:contain;display:block;margin-bottom:-6px;">`
                 : '';
+            // Selo: imagem oficial quando disponível; senão desenha o círculo em CSS (fallback)
+            const blocoSelo = seloB64
+                ? `<img src="${seloB64}" style="width:84px;height:84px;object-fit:contain;display:block;flex-shrink:0;">`
+                : `<div style="width:76px;height:76px;border-radius:50%;border:1.5px solid #c9a227;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(201,162,39,0.06);flex-shrink:0;">
+                       <div style="font-size:8px;font-weight:bold;color:#8a6010;letter-spacing:2px;text-transform:uppercase;line-height:1.8;">TEAM</div>
+                       <div style="font-size:19px;font-weight:bold;color:#c9a227;line-height:1;">35</div>
+                       <div style="font-size:7px;font-weight:bold;color:#8a6010;letter-spacing:1.5px;text-transform:uppercase;line-height:1.8;">ACADEMY</div>
+                   </div>`;
+
             const blocoAssinatura = curso.instrutor
                 ? `<div style="display:flex;flex-direction:column;align-items:center;">
                        ${assinaturaImg}
@@ -517,12 +529,8 @@
                             <div style="font-size:11px;color:#777;margin-top:3px;">Emitido em ${dataConcl}</div>
                         </div>
 
-                        <!-- Centro: Selo circular -->
-                        <div style="width:76px;height:76px;border-radius:50%;border:1.5px solid #c9a227;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(201,162,39,0.06);flex-shrink:0;">
-                            <div style="font-size:8px;font-weight:bold;color:#8a6010;letter-spacing:2px;text-transform:uppercase;line-height:1.8;">TEAM</div>
-                            <div style="font-size:19px;font-weight:bold;color:#c9a227;line-height:1;">35</div>
-                            <div style="font-size:7px;font-weight:bold;color:#8a6010;letter-spacing:1.5px;text-transform:uppercase;line-height:1.8;">ACADEMY</div>
-                        </div>
+                        <!-- Centro: Selo oficial -->
+                        ${blocoSelo}
 
                         <!-- Direita: Assinatura do instrutor -->
                         <div style="min-width:230px;display:flex;justify-content:flex-end;text-align:center;">

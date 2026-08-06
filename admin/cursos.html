@@ -914,6 +914,25 @@
                 }
             }
 
+            // Mudança de estrutura da trilha com certificado já emitido: o instrutor fica
+            // bloqueado nesse caso; o admin recebe o aviso e decide se força.
+            if (currentCursoId && modulosState.length !== originalModulosCount) {
+                const conclSnap = await getDocs(query(
+                    collection(db, 'inscricoes'),
+                    where('cursoId', '==', currentCursoId),
+                    where('status', '==', 'concluido')
+                ));
+                if (!conclSnap.empty) {
+                    const ok = confirm(
+                        `ATENÇÃO: ${conclSnap.size} candidato(s) já concluíram este curso e possuem certificado emitido.\n\n` +
+                        `Adicionar ou remover módulos muda retroativamente o que esses certificados atestam. ` +
+                        `Por isso o instrutor está bloqueado de fazer esta alteração.\n\n` +
+                        `Deseja continuar mesmo assim?`
+                    );
+                    if (!ok) return;
+                }
+            }
+
             if (temModulos && originalModulosCount === 0 && currentCursoId) {
                 const inscSnap = await getDocs(query(collection(db, 'inscricoes'), where('cursoId', '==', currentCursoId)));
                 if (!inscSnap.empty) {

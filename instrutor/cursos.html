@@ -173,6 +173,20 @@
         }
         .btn-remover-material:hover { background: rgba(239,68,68,0.1); }
 
+        .modulos-travado {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.6rem;
+            padding: 0.75rem 1rem;
+            background: rgba(245,158,11,0.08);
+            border: 1px solid rgba(245,158,11,0.3);
+            border-radius: 8px;
+            color: var(--amber);
+            font-size: 12.5px;
+            line-height: 1.55;
+            margin-bottom: 1rem;
+        }
+
         /* Módulos */
         .modulo-row {
             background: var(--bg);
@@ -368,8 +382,8 @@
 
                     <!-- Material (curso simples) -->
                     <div class="content-section">
-                        <h3>Material do Curso (PDF)</h3>
-                        <p class="content-section-hint">Um único documento que fica disponível para o aluno baixar durante o curso.</p>
+                        <h3>Materiais do Curso (PDF)</h3>
+                        <p class="content-section-hint">Documentos que o aluno pode baixar durante o curso e por 7 dias após o encerramento. Envie quantos precisar — um de cada vez.</p>
                         <div id="materialAtual" style="display:none"></div>
                         <label class="material-file-label" id="materialLabel" for="materialInput">
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -389,6 +403,7 @@
                     <div class="content-section">
                         <h3>Módulos da Trilha</h3>
                         <p class="content-section-hint">Adicione módulos com vídeo e/ou documento para transformar este curso numa trilha. Ao ter módulos, a conclusão passa a ser automática por progresso (mesmo padrão do EAD).</p>
+                        <div class="modulos-travado" id="modulosTravadoAviso" style="display:none"></div>
                         <div id="modulosList"></div>
                         <button type="button" class="btn-add-modulo" id="btnAddModulo">+ Adicionar Módulo</button>
                         <button type="button" class="btn-salvar-modulos" id="btnSalvarModulos">Salvar Módulos</button>
@@ -468,7 +483,7 @@
             }
         }
 
-        function selecionarCurso(el) {
+        async function selecionarCurso(el) {
             document.querySelectorAll('.turma-item').forEach(i => i.classList.remove('selected'));
             el.classList.add('selected');
 
@@ -483,12 +498,62 @@
             document.getElementById('painelCurso').classList.add('visible');
 
             atualizarMaterial();
+            await carregarConcluidos();
             carregarModulos();
         }
 
-        // ── Material PDF (mesmo padrão de instrutor/presenca.html) ─────────
+        // Quantos candidatos já concluíram este curso (e portanto já têm certificado emitido).
+        // Enquanto houver algum, a estrutura da trilha fica travada: o conteúdo dos módulos
+        // existentes pode ser corrigido, mas adicionar/remover módulo mudaria retroativamente
+        // o que o certificado já atestou.
+        let concluidosNoCurso = 0;
+
+        async function carregarConcluidos() {
+            concluidosNoCurso = 0;
+            try {
+                const snap = await getDocs(query(
+                    collection(db, 'inscricoes'),
+                    where('cursoId', '==', cursoSelecionado.id),
+                    where('status', '==', 'concluido')
+                ));
+                concluidosNoCurso = snap.size;
+            } catch (err) {
+                console.error('[cursos] erro ao verificar conclusões:', err);
+            }
+            atualizarAvisoTrava();
+        }
+
+        function atualizarAvisoTrava() {
+            const aviso = document.getElementById('modulosTravadoAviso');
+            const btnAdd = document.getElementById('btnAddModulo');
+
+            if (concluidosNoCurso > 0) {
+                aviso.style.display = 'flex';
+                aviso.innerHTML = `
+                    <span style="flex-shrink:0">🔒</span>
+                    <span><strong>${concluidosNoCurso} candidato(s) já concluíram este curso</strong> e possuem certificado emitido.
+                    Por isso a estrutura da trilha está travada: não é possível adicionar nem remover módulos.
+                    Você ainda pode corrigir o conteúdo dos módulos existentes (trocar vídeo ou documento)
+                    e enviar materiais em PDF acima.</span>`;
+                btnAdd.style.display = 'none';
+            } else {
+                aviso.style.display = 'none';
+                aviso.innerHTML = '';
+                btnAdd.style.display = '';
+            }
+        }
+
+        // ── Materiais PDF (múltiplos por curso) ────────────────────────────
+        // Modelo novo: cursos/{id}.materiais = [{url, nome, uploadedAt}]
+        // Cursos antigos têm o campo legado `material` (objeto único); a leitura abaixo
+        // dobra o legado na lista, e a primeira gravação consolida tudo em `materiais`.
 
         let arquivoSelecionado = null;
+
+        function listaMateriais(curso) {
+            if (Array.isArray(curso?.materiais) && curso.materiais.length) return curso.materiais;
+            return curso?.material?.url ? [curso.material] : [];
+        }
 
         function atualizarMaterial() {
             const materialDiv = document.getElementById('materialAtual');
@@ -502,24 +567,31 @@
             labelText.textContent = 'Selecionar PDF';
             btnEnviar.style.display = 'none';
 
-            const m = cursoSelecionado?.material;
-            if (m?.url) {
-                materialDiv.style.display = 'flex';
-                materialDiv.className = 'material-atual';
-                materialDiv.innerHTML = `
+            const materiais = listaMateriais(cursoSelecionado);
+            if (materiais.length === 0) {
+                materialDiv.style.display = 'none';
+                materialDiv.innerHTML = '';
+                return;
+            }
+
+            materialDiv.style.display = 'block';
+            materialDiv.className = '';
+            materialDiv.innerHTML = materiais.map((m, idx) => `
+                <div class="material-atual">
                     <div class="material-atual-info">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                             <polyline points="14 2 14 8 20 8"/>
                         </svg>
-                        <a href="${m.url}" target="_blank" style="color:var(--amber);text-decoration:none;overflow:hidden;text-overflow:ellipsis;">${m.nome}</a>
+                        <a href="${m.url}" target="_blank" style="color:var(--amber);text-decoration:none;overflow:hidden;text-overflow:ellipsis;">${esc(m.nome)}</a>
                     </div>
-                    <button class="btn-remover-material" id="btnRemoverMaterial">Remover</button>
-                `;
-                document.getElementById('btnRemoverMaterial').addEventListener('click', removerMaterial);
-            } else {
-                materialDiv.style.display = 'none';
-            }
+                    <button class="btn-remover-material" data-idx="${idx}">Remover</button>
+                </div>
+            `).join('');
+
+            materialDiv.querySelectorAll('.btn-remover-material').forEach(btn =>
+                btn.addEventListener('click', () => removerMaterial(+btn.dataset.idx))
+            );
         }
 
         document.getElementById('materialInput').addEventListener('change', (e) => {
@@ -534,6 +606,14 @@
 
         document.getElementById('btnEnviarMaterial').addEventListener('click', async () => {
             if (!cursoSelecionado || !arquivoSelecionado) return;
+
+            // Mesmo nome = mesmo caminho no Storage, o arquivo antigo seria sobrescrito
+            // silenciosamente e a lista ficaria com duas entradas apontando pro mesmo lugar.
+            const atuais = listaMateriais(cursoSelecionado);
+            if (atuais.some(m => m.nome === arquivoSelecionado.name)) {
+                showToast(`Já existe um material chamado "${arquivoSelecionado.name}". Renomeie o arquivo ou remova o anterior.`, 'error');
+                return;
+            }
 
             const btn = document.getElementById('btnEnviarMaterial');
             const progressWrap = document.getElementById('progressWrap');
@@ -561,10 +641,16 @@
                     },
                     async () => {
                         const url = await getDownloadURL(task.snapshot.ref);
-                        const material = { url, nome: arquivoSelecionado.name, uploadedAt: new Date().toISOString() };
-                        await updateDoc(doc(db, 'cursos', cursoSelecionado.id), { material });
-                        cursoSelecionado.material = material;
+                        const novo = { url, nome: arquivoSelecionado.name, uploadedAt: new Date().toISOString() };
+                        const materiais = [...listaMateriais(cursoSelecionado), novo];
+
+                        // material: null consolida o campo legado dentro de `materiais`
+                        await updateDoc(doc(db, 'cursos', cursoSelecionado.id), { materiais, material: null });
+                        cursoSelecionado.materiais = materiais;
+                        cursoSelecionado.material  = null;
+
                         progressWrap.style.display = 'none';
+                        progressBar.style.width = '0%';
                         btn.style.display = 'none';
                         btn.disabled = false;
                         btn.textContent = 'Enviar Material';
@@ -581,14 +667,17 @@
             }
         });
 
-        async function removerMaterial() {
-            if (!cursoSelecionado?.material?.url) return;
-            if (!confirm('Remover o material deste curso?')) return;
+        async function removerMaterial(idx) {
+            const atuais = listaMateriais(cursoSelecionado);
+            const alvo = atuais[idx];
+            if (!alvo?.url) return;
+            if (!confirm(`Remover o material "${alvo.nome}" deste curso?`)) return;
             try {
-                const storageRef = ref(storage, `materiais/${cursoSelecionado.id}/${cursoSelecionado.material.nome}`);
-                await deleteObject(storageRef).catch(() => {});
-                await updateDoc(doc(db, 'cursos', cursoSelecionado.id), { material: null });
-                cursoSelecionado.material = null;
+                await deleteObject(ref(storage, `materiais/${cursoSelecionado.id}/${alvo.nome}`)).catch(() => {});
+                const materiais = atuais.filter((_, i) => i !== idx);
+                await updateDoc(doc(db, 'cursos', cursoSelecionado.id), { materiais, material: null });
+                cursoSelecionado.materiais = materiais;
+                cursoSelecionado.material  = null;
                 atualizarMaterial();
                 showToast('Material removido.', 'info');
             } catch (err) {
@@ -627,6 +716,10 @@
         }
 
         document.getElementById('btnAddModulo').addEventListener('click', () => {
+            if (concluidosNoCurso > 0) {
+                showToast('Não é possível adicionar módulos: já há candidato concluído com certificado emitido.', 'error');
+                return;
+            }
             modulosState.push({ id: gerarId(), titulo: '', video: null, documento: null, _file: null });
             renderModulos();
         });
@@ -640,7 +733,7 @@
                         <div class="modulo-row-actions">
                             <button type="button" class="btn-modulo-up" data-idx="${idx}" ${idx === 0 ? 'disabled' : ''}>▲</button>
                             <button type="button" class="btn-modulo-down" data-idx="${idx}" ${idx === modulosState.length - 1 ? 'disabled' : ''}>▼</button>
-                            <button type="button" class="btn-modulo-remove" data-idx="${idx}">Remover</button>
+                            ${concluidosNoCurso > 0 ? '' : `<button type="button" class="btn-modulo-remove" data-idx="${idx}">Remover</button>`}
                         </div>
                     </div>
                     <div class="modulo-field">
@@ -738,6 +831,14 @@
                     showToast(`O módulo "${m.titulo || '(sem título)'}" precisa ter vídeo e/ou documento.`, 'error');
                     return;
                 }
+            }
+
+            // Revalida no momento de salvar — alguém pode ter concluído com esta tela aberta
+            await carregarConcluidos();
+            if (concluidosNoCurso > 0 && modulosState.length !== originalModulosCount) {
+                showToast(`Estrutura travada: ${concluidosNoCurso} candidato(s) já concluíram este curso. As alterações de estrutura foram desfeitas.`, 'error');
+                carregarModulos();
+                return;
             }
 
             if (modulosState.length > 0 && originalModulosCount === 0) {
