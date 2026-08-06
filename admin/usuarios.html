@@ -159,6 +159,61 @@
             color: #ef4444;
         }
 
+        .assinatura-atual {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 0.6rem 0.75rem;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 0.6rem;
+        }
+        .assinatura-atual img { max-height: 48px; max-width: 200px; object-fit: contain; }
+
+        .btn-remover-assinatura {
+            padding: 0.35rem 0.8rem;
+            border: 1px solid rgba(239,68,68,0.3);
+            background: transparent;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #ef4444;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .btn-remover-assinatura:hover { background: rgba(239,68,68,0.1); }
+
+        .btn-enviar-assinatura {
+            margin-top: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(59,130,246,0.15);
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #3b82f6;
+            cursor: pointer;
+        }
+        .btn-enviar-assinatura:hover { background: rgba(59,130,246,0.3); }
+        .btn-enviar-assinatura:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .assinatura-progress-wrap {
+            margin-top: 0.5rem;
+            height: 6px;
+            background: var(--border);
+            border-radius: 999px;
+            overflow: hidden;
+            display: none;
+        }
+        .assinatura-progress-bar {
+            height: 100%;
+            width: 0%;
+            background: var(--amber);
+            border-radius: 999px;
+            transition: width 0.2s ease;
+        }
+
         @media (max-width: 768px) {
             .filters { flex-direction: column; }
             .filters input, .filters select { max-width: 100%; }
@@ -356,6 +411,18 @@
                     <label>Empresa</label>
                     <input type="text" id="editEmpresa">
                 </div>
+                <div class="form-group" id="assinaturaSection" style="display:none">
+                    <label>Assinatura do Instrutor (PNG)</label>
+                    <p style="font-size:12px;color:var(--text-secondary);margin:0.3rem 0 0.6rem">
+                        Aparece no certificado dos cursos ministrados por este instrutor.
+                    </p>
+                    <div id="assinaturaAtual" style="display:none"></div>
+                    <input type="file" id="assinaturaInput" accept="image/png">
+                    <div class="assinatura-progress-wrap" id="assinaturaProgressWrap">
+                        <div class="assinatura-progress-bar" id="assinaturaProgressBar"></div>
+                    </div>
+                    <button type="button" class="btn-enviar-assinatura" id="btnEnviarAssinatura" style="display:none">Enviar Assinatura</button>
+                </div>
             </form>
             </div>
             <div class="modal-actions">
@@ -368,12 +435,15 @@
     <script type="module">
         import { handleLogout } from '../assets/js/auth.js';
         import { toggleSidebar } from '../assets/js/ui-shell.js';
-        import { auth, db } from '../firebase-config.js';
+        import { auth, db, storage } from '../firebase-config.js';
         import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js';
         import {
             collection, getDocs, doc, getDoc, updateDoc,
             serverTimestamp, query, where, orderBy
         } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js';
+        import {
+            ref, uploadBytesResumable, getDownloadURL, deleteObject
+        } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-storage.js';
 
         document.getElementById('btnMenu').addEventListener('click', toggleSidebar);
         document.getElementById('btnLogout').addEventListener('click', handleLogout);
@@ -473,12 +543,117 @@
             document.querySelectorAll('.chk-perfil').forEach(chk => {
                 chk.checked = perfisAtivos.includes(chk.value);
             });
+            document.getElementById('assinaturaInput').value = '';
+            document.getElementById('btnEnviarAssinatura').style.display = 'none';
+            atualizarSecaoAssinatura();
+            renderAssinaturaAtual();
             document.getElementById('editModal').classList.add('active');
         }
 
         function closeModal() {
             document.getElementById('editModal').classList.remove('active');
             currentEditId = null;
+        }
+
+        // ── Assinatura do instrutor ────────────────────────────────────────
+
+        function ehInstrutorNoForm() {
+            if (document.getElementById('editRole').value === 'instrutor') return true;
+            return [...document.querySelectorAll('.chk-perfil:checked')].some(c => c.value === 'instrutor');
+        }
+
+        function atualizarSecaoAssinatura() {
+            document.getElementById('assinaturaSection').style.display = ehInstrutorNoForm() ? 'block' : 'none';
+        }
+
+        document.getElementById('editRole').addEventListener('change', atualizarSecaoAssinatura);
+        document.querySelectorAll('.chk-perfil').forEach(chk =>
+            chk.addEventListener('change', atualizarSecaoAssinatura)
+        );
+
+        function renderAssinaturaAtual() {
+            const user = allUsers.find(u => u.id === currentEditId);
+            const box = document.getElementById('assinaturaAtual');
+            if (user?.assinaturaUrl) {
+                box.style.display = 'flex';
+                box.className = 'assinatura-atual';
+                box.innerHTML = `
+                    <img src="${user.assinaturaUrl}" alt="Assinatura">
+                    <button type="button" class="btn-remover-assinatura" id="btnRemoverAssinatura">Remover</button>
+                `;
+                document.getElementById('btnRemoverAssinatura').addEventListener('click', removerAssinatura);
+            } else {
+                box.style.display = 'none';
+                box.innerHTML = '';
+            }
+        }
+
+        document.getElementById('assinaturaInput').addEventListener('change', (e) => {
+            document.getElementById('btnEnviarAssinatura').style.display = e.target.files[0] ? 'inline-block' : 'none';
+        });
+
+        document.getElementById('btnEnviarAssinatura').addEventListener('click', async () => {
+            const user = allUsers.find(u => u.id === currentEditId);
+            const file = document.getElementById('assinaturaInput').files[0];
+            if (!user || !file) return;
+
+            const uid = user.uid || user.id;
+            const btn = document.getElementById('btnEnviarAssinatura');
+            const wrap = document.getElementById('assinaturaProgressWrap');
+            const bar  = document.getElementById('assinaturaProgressBar');
+
+            btn.disabled = true;
+            btn.textContent = 'Enviando...';
+            wrap.style.display = 'block';
+
+            try {
+                const storageRef = ref(storage, `assinaturas/${uid}.png`);
+                const task = uploadBytesResumable(storageRef, file);
+                task.on('state_changed',
+                    (snap) => { bar.style.width = Math.round((snap.bytesTransferred / snap.totalBytes) * 100) + '%'; },
+                    (err) => {
+                        console.error(err);
+                        showError('Erro ao enviar a assinatura: ' + err.message);
+                        btn.disabled = false;
+                        btn.textContent = 'Enviar Assinatura';
+                        wrap.style.display = 'none';
+                    },
+                    async () => {
+                        const assinaturaUrl = await getDownloadURL(task.snapshot.ref);
+                        await updateDoc(doc(db, 'users', currentEditId), { assinaturaUrl, updatedAt: serverTimestamp() });
+                        user.assinaturaUrl = assinaturaUrl;
+                        document.getElementById('assinaturaInput').value = '';
+                        btn.style.display = 'none';
+                        btn.disabled = false;
+                        btn.textContent = 'Enviar Assinatura';
+                        wrap.style.display = 'none';
+                        bar.style.width = '0%';
+                        renderAssinaturaAtual();
+                        showSuccess('Assinatura enviada com sucesso!');
+                    }
+                );
+            } catch (err) {
+                showError('Erro ao enviar a assinatura: ' + err.message);
+                btn.disabled = false;
+                btn.textContent = 'Enviar Assinatura';
+                wrap.style.display = 'none';
+            }
+        });
+
+        async function removerAssinatura() {
+            const user = allUsers.find(u => u.id === currentEditId);
+            if (!user?.assinaturaUrl) return;
+            if (!confirm('Remover a assinatura deste instrutor?')) return;
+            try {
+                const uid = user.uid || user.id;
+                await deleteObject(ref(storage, `assinaturas/${uid}.png`)).catch(() => {});
+                await updateDoc(doc(db, 'users', currentEditId), { assinaturaUrl: null, updatedAt: serverTimestamp() });
+                user.assinaturaUrl = null;
+                renderAssinaturaAtual();
+                showSuccess('Assinatura removida.');
+            } catch (err) {
+                showError('Erro ao remover assinatura: ' + err.message);
+            }
         }
 
         async function saveUser() {
