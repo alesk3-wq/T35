@@ -295,6 +295,7 @@
                 <button class="tab-btn" data-tab="video">Vídeos</button>
                 <button class="tab-btn" data-tab="empresa">Por Empresa</button>
                 <button class="tab-btn" data-tab="compliance">Grupos</button>
+                <button class="tab-btn" data-tab="avaliacoes">Avaliações</button>
             </div>
 
             <!-- Relatório: Inscrições -->
@@ -536,6 +537,50 @@
                     </table>
                 </div>
             </div>
+
+            <!-- Relatório: Avaliações dos cursos -->
+            <div class="report-panel" id="panel-avaliacoes">
+                <div class="export-bar">
+                    <button class="btn-export-pdf" id="btnExportAvaliacoes">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                        Exportar PDF
+                    </button>
+                </div>
+                <div class="summary-grid">
+                    <div class="summary-card">
+                        <div class="summary-num" id="avalMedia">—</div>
+                        <div class="summary-label">Média Geral</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-num" id="avalTotal">—</div>
+                        <div class="summary-label">Avaliações</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-num" id="avalCursos">—</div>
+                        <div class="summary-label">Cursos Avaliados</div>
+                    </div>
+                </div>
+                <p style="font-size:12px;color:var(--text-secondary);margin:0 0 1rem;line-height:1.5">
+                    🔒 As avaliações são anônimas — não há registro de quem enviou cada nota ou comentário.
+                </p>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Curso</th>
+                                <th>Instrutor</th>
+                                <th>Avaliações</th>
+                                <th>Média</th>
+                            </tr>
+                        </thead>
+                        <tbody id="avaliacoesList">
+                            <tr><td colspan="4" style="text-align:center;color:var(--text-secondary)">Carregando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <h3 style="font-size:15px;color:var(--text);margin:1.75rem 0 0.75rem">Comentários</h3>
+                <div id="comentariosList"></div>
+            </div>
         </div>
     </main>
 
@@ -587,9 +632,122 @@
                 loadUsuariosReport(),
                 loadVideoReport(),
                 loadEmpresaReport(),
-                loadComplianceReport()
+                loadComplianceReport(),
+                loadAvaliacoesReport()
             ]);
         }
+
+        // ── Relatório: Avaliações ──────────────────────────────────────────
+
+        let todasAvaliacoes = [];
+
+        function estrelasTexto(media) {
+            const cheias = Math.round(media);
+            return '★'.repeat(cheias) + '☆'.repeat(5 - cheias);
+        }
+
+        function corNota(media) {
+            return media >= 4 ? '#22c55e' : media >= 3 ? '#f59e0b' : '#ef4444';
+        }
+
+        async function loadAvaliacoesReport() {
+            try {
+                const [avalSnap, cursosSnap] = await Promise.all([
+                    getDocs(collection(db, 'avaliacoes')),
+                    getDocs(collection(db, 'cursos'))
+                ]);
+
+                const cursosMap = {};
+                cursosSnap.forEach(d => { cursosMap[d.id] = d.data(); });
+
+                todasAvaliacoes = avalSnap.docs.map(d => {
+                    const a = d.data();
+                    const c = cursosMap[a.cursoId];
+                    return {
+                        ...a,
+                        _curso:     c?.titulo    || '(curso removido)',
+                        _instrutor: c?.instrutor || '—',
+                        _data: a.createdAt?.toDate ? a.createdAt.toDate().toLocaleDateString('pt-BR') : '—'
+                    };
+                });
+
+                // Agrupa por curso
+                const porCurso = {};
+                todasAvaliacoes.forEach(a => {
+                    if (!porCurso[a.cursoId]) {
+                        porCurso[a.cursoId] = { titulo: a._curso, instrutor: a._instrutor, notas: [] };
+                    }
+                    porCurso[a.cursoId].notas.push(a.nota);
+                });
+
+                const linhas = Object.values(porCurso).map(c => ({
+                    ...c,
+                    total: c.notas.length,
+                    media: c.notas.reduce((s, n) => s + n, 0) / c.notas.length
+                })).sort((a, b) => b.media - a.media);
+
+                const totalGeral = todasAvaliacoes.length;
+                const mediaGeral = totalGeral
+                    ? todasAvaliacoes.reduce((s, a) => s + a.nota, 0) / totalGeral
+                    : 0;
+
+                const mediaEl = document.getElementById('avalMedia');
+                mediaEl.textContent  = totalGeral ? mediaGeral.toFixed(1) : '—';
+                mediaEl.style.color  = totalGeral ? corNota(mediaGeral) : '';
+                document.getElementById('avalTotal').textContent  = totalGeral;
+                document.getElementById('avalCursos').textContent = linhas.length;
+
+                const tbody = document.getElementById('avaliacoesList');
+                tbody.innerHTML = linhas.length > 0
+                    ? linhas.map(c => `
+                        <tr>
+                            <td><strong>${c.titulo}</strong></td>
+                            <td>${c.instrutor}</td>
+                            <td>${c.total}</td>
+                            <td style="color:${corNota(c.media)};font-weight:700;white-space:nowrap">
+                                ${c.media.toFixed(1)} <span style="font-size:12px">${estrelasTexto(c.media)}</span>
+                            </td>
+                        </tr>`).join('')
+                    : '<tr><td colspan="4" style="text-align:center;color:var(--text-secondary);padding:2rem">Nenhuma avaliação recebida ainda</td></tr>';
+
+                const comentarios = todasAvaliacoes.filter(a => a.comentario);
+                document.getElementById('comentariosList').innerHTML = comentarios.length > 0
+                    ? comentarios.map(a => `
+                        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:0.9rem 1.1rem;margin-bottom:0.6rem;">
+                            <div style="display:flex;justify-content:space-between;gap:1rem;align-items:center;margin-bottom:0.4rem;flex-wrap:wrap">
+                                <strong style="font-size:13px;color:var(--text)">${a._curso}</strong>
+                                <span style="font-size:12px;color:var(--text-secondary)">
+                                    <span style="color:${corNota(a.nota)}">${estrelasTexto(a.nota)}</span> · ${a._data}
+                                </span>
+                            </div>
+                            <p style="margin:0;font-size:13px;color:var(--text-secondary);line-height:1.55">${a.comentario}</p>
+                        </div>`).join('')
+                    : '<p style="color:var(--text-secondary);font-size:13px">Nenhum comentário escrito ainda.</p>';
+            } catch (err) {
+                console.error('Erro avaliações report:', err);
+            }
+        }
+
+        document.getElementById('btnExportAvaliacoes').addEventListener('click', () => {
+            const btn = document.getElementById('btnExportAvaliacoes');
+            btnLoading(btn, true);
+            try {
+                const total = todasAvaliacoes.length;
+                const media = total ? (todasAvaliacoes.reduce((s, a) => s + a.nota, 0) / total).toFixed(1) : '—';
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+                pdfHeader(pdf, 'Relatório de Avaliações', `Total: ${total}  ·  Média geral: ${media}  ·  Avaliações anônimas`);
+                pdfTable(pdf,
+                    ['#', 'Curso', 'Instrutor', 'Nota', 'Comentário', 'Data'],
+                    todasAvaliacoes.map((a, idx) => [
+                        idx + 1, a._curso, a._instrutor, a.nota + '/5', a.comentario || '—', a._data
+                    ])
+                );
+                pdfFooter(pdf);
+                pdf.save(`avaliacoes_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.pdf`);
+            } catch (e) { console.error(e); }
+            finally { btnLoading(btn, false); }
+        });
 
         const labelStatus = {
             pendente: 'Pendente', apto: 'Apto',

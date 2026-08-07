@@ -160,6 +160,42 @@
         </div>
     </div>
 
+    <!-- Modal de avaliação do curso -->
+    <div class="modal" id="avaliacaoModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:1100; align-items:center; justify-content:center;">
+        <div style="background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:2rem; width:100%; max-width:420px; margin:1rem;">
+            <h3 style="color:var(--text); margin:0 0 0.35rem 0; font-size:17px;">Avaliar curso</h3>
+            <p id="avaliacaoModalCurso" style="color:var(--text-secondary); font-size:13px; margin:0 0 1.25rem 0;"></p>
+
+            <label style="display:block; font-size:12px; font-weight:600; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:0.6rem;">
+                Sua nota
+            </label>
+            <div id="estrelasWrap" style="display:flex; gap:0.35rem; margin-bottom:0.35rem;"></div>
+            <p id="notaLabel" style="font-size:12px; color:var(--text-secondary); min-height:1.2em; margin:0 0 1rem 0;">Toque nas estrelas para dar sua nota</p>
+
+            <label style="display:block; font-size:12px; font-weight:600; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:0.5rem;">
+                Comentário (opcional)
+            </label>
+            <textarea id="comentarioInput" rows="3" maxlength="500" placeholder="Quer comentar algo sobre o curso?"
+                style="width:100%; padding:0.75rem; font-size:14px; font-family:inherit; background:var(--bg); border:1px solid var(--border); border-radius:8px; color:var(--text); outline:none; resize:vertical; box-sizing:border-box; margin-bottom:0.5rem;"></textarea>
+
+            <p style="font-size:11px; color:var(--text-secondary); line-height:1.5; margin:0 0 1.25rem 0;">
+                🔒 Sua avaliação é <strong>anônima</strong> — nem o instrutor nem a administração conseguem
+                saber quem enviou. Ela não pode ser alterada depois de enviada.
+            </p>
+
+            <div style="display:flex; gap:0.75rem;">
+                <button id="btnCancelarAvaliacao"
+                    style="flex:1; padding:0.75rem; background:var(--bg); border:1px solid var(--border); border-radius:8px; color:var(--text-secondary); cursor:pointer; font-size:14px;">
+                    Cancelar
+                </button>
+                <button id="btnEnviarAvaliacao" disabled
+                    style="flex:2; padding:0.75rem; background:var(--amber); border:none; border-radius:8px; color:var(--bg); font-weight:700; cursor:pointer; font-size:14px; opacity:0.5;">
+                    Enviar avaliação
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast -->
     <div id="toastMeusCursos" style="position:fixed; bottom:2rem; right:2rem; padding:0.85rem 1.25rem; border-radius:8px; font-size:14px; font-weight:600; opacity:0; transform:translateY(10px); transition:all 0.3s ease; pointer-events:none; z-index:9999;"></div>
 
@@ -169,7 +205,8 @@
         import { toggleSidebar } from '../assets/js/ui-shell.js';
         import { db } from '../firebase-config.js';
         import {
-            collection, query, where, getDocs, doc, getDoc, updateDoc, arrayUnion
+            collection, query, where, getDocs, doc, getDoc, updateDoc, arrayUnion,
+            addDoc, serverTimestamp
         } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js';
         import { calcularProgressoTrilha } from '../assets/js/trilha-progress.js';
 
@@ -200,6 +237,19 @@
                 loadInscricoes(user.uid);
             }
         });
+
+        // A avaliação libera quando o candidato REALMENTE terminou o conteúdo — e não no
+        // status 'concluido', que só é gravado quando a data fim passa e um admin/instrutor
+        // abre a tela de inscrições. Numa trilha isso levaria dias, ou não aconteceria.
+        function podeAvaliar(inscricao, curso) {
+            if (inscricao.avaliado) return false;
+            if (inscricao.status === 'concluido') return true;              // qualquer modalidade
+            if (curso.modulos?.length > 0)                                   // trilha
+                return calcularProgressoTrilha(curso, inscricao).todosConcluidos;
+            const vp = inscricao.videoProgresso;                             // EAD de vídeo único
+            if (curso.videoUrl && vp) return !!vp.concluido && !vp.suspeito;
+            return false;                                                    // presencial aguarda o concluido
+        }
 
         function formatarData(timestamp) {
             if (!timestamp) return '—';
@@ -352,6 +402,23 @@
                         </div>` : ''}`;
                 }
 
+                // Avaliação do curso — botão quando liberado, selo depois de enviada
+                let avaliacaoHTML = '';
+                if (inscricao.avaliado) {
+                    avaliacaoHTML = `
+                        <div style="display:flex;align-items:center;gap:0.45rem;margin-top:0.5rem;padding:0.55rem 0.9rem;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.25);border-radius:8px;color:rgb(34,197,94);font-size:13px;font-weight:600;width:fit-content;">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                            Curso avaliado
+                        </div>`;
+                } else if (podeAvaliar(inscricao, curso)) {
+                    avaliacaoHTML = `
+                        <button onclick="abrirModalAvaliacao('${inscricao.id}', '${inscricao.cursoId}', '${curso.titulo.replace(/'/g, "\\'")}')"
+                           style="display:flex;align-items:center;gap:0.45rem;margin-top:0.5rem;padding:0.55rem 0.9rem;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);border-radius:8px;color:rgb(245,158,11);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;width:fit-content;transition:background 0.2s;">
+                            <span style="font-size:15px;line-height:1">★</span>
+                            Avaliar curso
+                        </button>`;
+                }
+
                 const card = document.createElement('div');
                 card.className = `curso-card status-card-${inscricao.status}`;
                 card.innerHTML = `
@@ -407,6 +474,7 @@
                         ${videoHTML}
                         ${presencaHTML}
                         ${materialHTML}
+                        ${avaliacaoHTML}
                     </div>
                 `;
                 cursosGrid.appendChild(card);
@@ -535,6 +603,118 @@
             } finally {
                 btnEnviar.disabled    = false;
                 btnEnviar.textContent = 'Confirmar';
+            }
+        });
+
+        // ── Modal de avaliação ─────────────────────────────────────────────
+
+        let avaliacaoInscricaoId = null;
+        let avaliacaoCursoId     = null;
+        let notaSelecionada      = 0;
+
+        const NOTA_LABEL = {
+            1: '★ Muito ruim',
+            2: '★★ Ruim',
+            3: '★★★ Regular',
+            4: '★★★★ Bom',
+            5: '★★★★★ Excelente'
+        };
+
+        // Acende as estrelas de 1 até n (0 apaga todas)
+        function pintarEstrelas(n) {
+            document.querySelectorAll('#estrelasWrap .estrela').forEach((el, i) => {
+                el.style.color = i < n ? '#f59e0b' : '#334155';
+            });
+        }
+
+        function montarEstrelas() {
+            const wrap = document.getElementById('estrelasWrap');
+            wrap.innerHTML = [1, 2, 3, 4, 5].map(n => `
+                <button type="button" class="estrela" data-nota="${n}" aria-label="${n} estrela${n > 1 ? 's' : ''}"
+                    style="background:none;border:none;padding:0;font-size:32px;line-height:1;cursor:pointer;color:#334155;transition:color 0.15s;">★</button>
+            `).join('');
+
+            wrap.querySelectorAll('.estrela').forEach(el => {
+                const n = +el.dataset.nota;
+                el.addEventListener('mouseenter', () => pintarEstrelas(n));
+                el.addEventListener('focus',      () => pintarEstrelas(n));
+                el.addEventListener('click', () => {
+                    notaSelecionada = n;
+                    pintarEstrelas(n);
+                    document.getElementById('notaLabel').textContent = NOTA_LABEL[n];
+                    const btn = document.getElementById('btnEnviarAvaliacao');
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                });
+            });
+
+            // Ao sair do grupo, volta para a nota já escolhida (ou apaga tudo)
+            wrap.addEventListener('mouseleave', () => pintarEstrelas(notaSelecionada));
+        }
+        montarEstrelas();
+
+        window.abrirModalAvaliacao = function(inscricaoId, cursoId, cursoTitulo) {
+            avaliacaoInscricaoId = inscricaoId;
+            avaliacaoCursoId     = cursoId;
+            notaSelecionada      = 0;
+
+            document.getElementById('avaliacaoModalCurso').textContent = cursoTitulo;
+            document.getElementById('comentarioInput').value = '';
+            document.getElementById('notaLabel').textContent = 'Toque nas estrelas para dar sua nota';
+            pintarEstrelas(0);
+
+            const btn = document.getElementById('btnEnviarAvaliacao');
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            btn.textContent = 'Enviar avaliação';
+
+            document.getElementById('avaliacaoModal').style.display = 'flex';
+        };
+
+        function fecharModalAvaliacao() {
+            document.getElementById('avaliacaoModal').style.display = 'none';
+        }
+
+        document.getElementById('btnCancelarAvaliacao').addEventListener('click', fecharModalAvaliacao);
+        document.getElementById('avaliacaoModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('avaliacaoModal')) fecharModalAvaliacao();
+        });
+
+        document.getElementById('btnEnviarAvaliacao').addEventListener('click', async () => {
+            if (!avaliacaoInscricaoId || notaSelecionada < 1) return;
+
+            const btn = document.getElementById('btnEnviarAvaliacao');
+            btn.disabled    = true;
+            btn.textContent = 'Enviando...';
+
+            try {
+                // A avaliação vai primeiro: é o dado que importa. Se a flag abaixo falhar,
+                // o pior caso é o botão reaparecer — a avaliação nunca se perde.
+                // Nenhum campo aqui identifica o candidato, de propósito.
+                await addDoc(collection(db, 'avaliacoes'), {
+                    cursoId:    avaliacaoCursoId,
+                    nota:       notaSelecionada,
+                    comentario: document.getElementById('comentarioInput').value.trim(),
+                    createdAt:  serverTimestamp()
+                });
+
+                await updateDoc(doc(db, 'inscricoes', avaliacaoInscricaoId), {
+                    avaliado:  true,
+                    updatedAt: serverTimestamp()
+                });
+
+                const inscricao = allInscricoes.find(i => i.id === avaliacaoInscricaoId);
+                if (inscricao) inscricao.avaliado = true;
+
+                fecharModalAvaliacao();
+                renderCursos();
+                showToast('Obrigado pela sua avaliação!', 'success');
+            } catch (err) {
+                console.error(err);
+                showToast('Erro ao enviar avaliação. Tente novamente.', 'error');
+            } finally {
+                btn.disabled    = false;
+                btn.textContent = 'Enviar avaliação';
             }
         });
 

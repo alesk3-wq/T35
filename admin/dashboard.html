@@ -577,6 +577,18 @@
                         <div class="stat-value" id="taxaConclusao">—</div>
                     </div>
                 </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="stat-label">Avaliação Média</div>
+                        <div class="stat-value" id="avaliacaoMedia">—</div>
+                    </div>
+                </div>
             </div>
 
             <div class="sections-grid">
@@ -692,11 +704,12 @@
 
         async function loadStats() {
             try {
-                const [usersSnap, cursosSnap, empresasSnap, inscSnap] = await Promise.all([
+                const [usersSnap, cursosSnap, empresasSnap, inscSnap, avalSnap] = await Promise.all([
                     getDocs(collection(db, 'users')),
                     getDocs(query(collection(db, 'cursos'), where('status', '==', 'ativo'))),
                     getDocs(collection(db, 'empresas')),
-                    getDocs(collection(db, 'inscricoes'))
+                    getDocs(collection(db, 'inscricoes')),
+                    getDocs(collection(db, 'avaliacoes'))
                 ]);
 
                 let pendentes = 0, concluidos = 0, faltas = 0, aptos = 0, suspeitos = 0;
@@ -723,6 +736,14 @@
                 const taxaEl = document.getElementById('taxaConclusao');
                 taxaEl.textContent = base > 0 ? taxa + '%' : '—';
                 taxaEl.style.color = taxa >= 80 ? '#22c55e' : taxa >= 50 ? '#f59e0b' : '#ef4444';
+
+                let somaNotas = 0;
+                avalSnap.forEach(d => { somaNotas += d.data().nota || 0; });
+                const mediaAval = avalSnap.size > 0 ? somaNotas / avalSnap.size : 0;
+                const avalEl = document.getElementById('avaliacaoMedia');
+                avalEl.textContent = avalSnap.size > 0 ? mediaAval.toFixed(1) + ' ★' : '—';
+                avalEl.style.color = avalSnap.size === 0 ? ''
+                    : mediaAval >= 4 ? '#22c55e' : mediaAval >= 3 ? '#f59e0b' : '#ef4444';
             } catch (err) {
                 console.error('Erro ao carregar stats:', err);
             }

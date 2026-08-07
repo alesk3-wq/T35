@@ -205,6 +205,7 @@
             <div class="report-tabs">
                 <button class="tab-btn active" data-tab="presenca">Presença</button>
                 <button class="tab-btn" data-tab="video">Vídeos</button>
+                <button class="tab-btn" data-tab="avaliacoes">Avaliações</button>
             </div>
 
             <!-- ── ABA PRESENÇA ─────────────────────────────────────── -->
@@ -315,6 +316,54 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
+
+            <!-- ── ABA AVALIAÇÕES ───────────────────────────────────── -->
+            <div class="report-panel" id="panel-avaliacoes">
+                <div class="summary-grid">
+                    <div class="summary-card">
+                        <div class="summary-num" id="aStatMedia">—</div>
+                        <div class="summary-label">Média Geral</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-num" id="aStatTotal">—</div>
+                        <div class="summary-label">Avaliações</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-num" id="aStatCursos">—</div>
+                        <div class="summary-label">Cursos Avaliados</div>
+                    </div>
+                </div>
+
+                <div class="export-bar">
+                    <button class="btn-export-pdf" id="btnExportAvaliacoes">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                        Exportar PDF
+                    </button>
+                </div>
+
+                <p style="font-size:12px;color:var(--text-secondary);margin:0 0 1rem;line-height:1.5">
+                    🔒 As avaliações são <strong>anônimas</strong>. Não há como saber quem deu cada nota
+                    ou escreveu cada comentário — nem para você, nem para a administração.
+                </p>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Curso</th>
+                                <th>Avaliações</th>
+                                <th>Média</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyAvaliacoes">
+                            <tr><td colspan="3" class="empty-msg">Carregando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 style="font-size:15px;color:var(--text);margin:1.75rem 0 0.75rem">Comentários</h3>
+                <div id="listaComentarios"></div>
             </div>
 
         </div>
@@ -460,10 +509,116 @@
 
                 renderVideo();
 
+                // ── Avaliações (anônimas, escopadas aos cursos do instrutor) ──
+                await carregarAvaliacoes(meusCursos);
+
             } catch (err) {
                 console.error(err);
             }
         }
+
+        // ── AVALIAÇÕES ────────────────────────────────────────────────────
+
+        let registrosAvaliacao = [];
+
+        function estrelasTexto(media) {
+            const cheias = Math.round(media);
+            return '★'.repeat(cheias) + '☆'.repeat(5 - cheias);
+        }
+
+        function corNota(media) {
+            return media >= 4 ? '#22c55e' : media >= 3 ? '#f59e0b' : '#ef4444';
+        }
+
+        async function carregarAvaliacoes(meusCursos) {
+            try {
+                const snap = await getDocs(collection(db, 'avaliacoes'));
+                const cursosIds = meusCursos.map(c => c.id);
+
+                registrosAvaliacao = snap.docs
+                    .map(d => d.data())
+                    .filter(a => cursosIds.includes(a.cursoId))
+                    .map(a => ({
+                        ...a,
+                        _curso: meusCursos.find(c => c.id === a.cursoId)?.titulo || '—',
+                        _data:  a.createdAt?.toDate ? a.createdAt.toDate().toLocaleDateString('pt-BR') : '—'
+                    }));
+
+                const porCurso = {};
+                registrosAvaliacao.forEach(a => {
+                    if (!porCurso[a.cursoId]) porCurso[a.cursoId] = { titulo: a._curso, notas: [] };
+                    porCurso[a.cursoId].notas.push(a.nota);
+                });
+
+                const linhas = Object.values(porCurso).map(c => ({
+                    titulo: c.titulo,
+                    total:  c.notas.length,
+                    media:  c.notas.reduce((s, n) => s + n, 0) / c.notas.length
+                })).sort((a, b) => b.media - a.media);
+
+                const total = registrosAvaliacao.length;
+                const media = total ? registrosAvaliacao.reduce((s, a) => s + a.nota, 0) / total : 0;
+
+                const mediaEl = document.getElementById('aStatMedia');
+                mediaEl.textContent = total ? media.toFixed(1) : '—';
+                mediaEl.style.color = total ? corNota(media) : '';
+                document.getElementById('aStatTotal').textContent  = total;
+                document.getElementById('aStatCursos').textContent = linhas.length;
+
+                const tbody = document.getElementById('tbodyAvaliacoes');
+                tbody.innerHTML = linhas.length > 0
+                    ? linhas.map(c => `
+                        <tr>
+                            <td><strong>${c.titulo}</strong></td>
+                            <td>${c.total}</td>
+                            <td style="color:${corNota(c.media)};font-weight:700;white-space:nowrap">
+                                ${c.media.toFixed(1)} <span style="font-size:12px">${estrelasTexto(c.media)}</span>
+                            </td>
+                        </tr>`).join('')
+                    : '<tr><td colspan="3" class="empty-msg">Nenhuma avaliação recebida ainda</td></tr>';
+
+                const comentarios = registrosAvaliacao.filter(a => a.comentario);
+                document.getElementById('listaComentarios').innerHTML = comentarios.length > 0
+                    ? comentarios.map(a => `
+                        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:0.9rem 1.1rem;margin-bottom:0.6rem;">
+                            <div style="display:flex;justify-content:space-between;gap:1rem;align-items:center;margin-bottom:0.4rem;flex-wrap:wrap">
+                                <strong style="font-size:13px;color:var(--text)">${a._curso}</strong>
+                                <span style="font-size:12px;color:var(--text-secondary)">
+                                    <span style="color:${corNota(a.nota)}">${estrelasTexto(a.nota)}</span> · ${a._data}
+                                </span>
+                            </div>
+                            <p style="margin:0;font-size:13px;color:var(--text-secondary);line-height:1.55">${a.comentario}</p>
+                        </div>`).join('')
+                    : '<p style="color:var(--text-secondary);font-size:13px">Nenhum comentário escrito ainda.</p>';
+            } catch (err) {
+                console.error('Erro ao carregar avaliações:', err);
+            }
+        }
+
+        document.getElementById('btnExportAvaliacoes').addEventListener('click', () => {
+            const btn = document.getElementById('btnExportAvaliacoes');
+            btn.disabled = true;
+            try {
+                const total = registrosAvaliacao.length;
+                const media = total ? (registrosAvaliacao.reduce((s, a) => s + a.nota, 0) / total).toFixed(1) : '—';
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+                pdfCabecalho(pdf, 'Avaliações dos Meus Cursos', `Total: ${total}  ·  Média: ${media}  ·  Avaliações anônimas`);
+                pdf.autoTable({
+                    startY: 42,
+                    head: [['#', 'Curso', 'Nota', 'Comentário', 'Data']],
+                    body: registrosAvaliacao.map((a, i) => [
+                        i + 1, a._curso, a.nota + '/5', a.comentario || '—', a._data
+                    ]),
+                    styles: { fontSize: 8, cellPadding: 3, textColor: [230, 230, 235] },
+                    headStyles: { fillColor: [245, 158, 11], textColor: [15, 15, 20], fontStyle: 'bold' },
+                    alternateRowStyles: { fillColor: [22, 22, 30] },
+                    margin: { left: 14, right: 14 }
+                });
+                pdf.save('avaliacoes-meus-cursos.pdf');
+            } catch (e) { console.error(e); }
+            finally { btn.disabled = false; }
+        });
 
         // ── RENDER PRESENÇA ───────────────────────────────────────────────
         function renderPresenca() {

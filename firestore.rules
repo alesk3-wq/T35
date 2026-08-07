@@ -58,7 +58,7 @@ service cloud.firestore {
           // Admin/instrutor atualizando inscrição alheia (status, etc.)
           resource.data.candidatoId != request.auth.uid
           // Candidato atualizando apenas presencas/progresso de vídeo na própria inscrição
-          || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['presencas', 'updatedAt', 'videoProgresso', 'modulosProgresso'])
+          || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['presencas', 'updatedAt', 'videoProgresso', 'modulosProgresso', 'avaliado'])
       );
 
       allow delete: if false;
@@ -86,6 +86,22 @@ service cloud.firestore {
     match /notificacoes/{id} {
       allow read: if isAuth();
       allow create: if isAuth();
+      allow update, delete: if false;
+    }
+
+    // ── avaliacoes ───────────────────────────────────────────────────────────
+    // Avaliação anônima de curso: o documento NÃO guarda candidatoId de propósito,
+    // para que nem no banco seja possível saber quem escreveu. A trava contra
+    // avaliação duplicada é a flag `avaliado` na inscrição, do lado do candidato.
+    // Imutável após criada (mesmo padrão de notificacoes).
+    // NOTA: por não haver vínculo com a inscrição, a regra não consegue impedir
+    // criação fora do fluxo da tela — é o preço do anonimato real.
+    match /avaliacoes/{id} {
+      allow read: if isAuth();
+      allow create: if isAuth()
+                    && request.resource.data.nota is int
+                    && request.resource.data.nota >= 1
+                    && request.resource.data.nota <= 5;
       allow update, delete: if false;
     }
   }
