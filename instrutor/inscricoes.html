@@ -644,7 +644,10 @@
             const pendentes = todasInscricoes.filter(i => {
                 const isEad = (i._curso?.modalidade || 'presencial') === 'ead';
                 const dataFim = getDataFimStr(i._curso);
-                return isEad && i.status === 'apto' && dataFim && dataFim < hoje;
+                // Curso cancelado não encerra sozinho: o candidato não pode ser penalizado
+                // com falta por uma aula que não aconteceu.
+                const cancelado = i._curso?.status === 'cancelado';
+                return isEad && !cancelado && i.status === 'apto' && dataFim && dataFim < hoje;
             });
             if (pendentes.length === 0) return;
 

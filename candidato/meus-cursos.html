@@ -258,9 +258,20 @@
                 const curso = inscricao.curso;
                 const jaConfirmouHoje = (inscricao.presencas || []).includes(hoje);
 
-                // Botão de presença só para inscrições aprovadas
+                // Curso suspenso pelo admin sem data de retorno definida.
+                // A inscrição continua válida — quando houver nova data, o curso é reativado.
+                const cursoCancelado = curso.status === 'cancelado';
+                const canceladoHTML = cursoCancelado ? `
+                    <div style="display:flex;align-items:flex-start;gap:0.5rem;margin-bottom:0.85rem;padding:0.7rem 0.9rem;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.35);border-radius:8px;color:#ef4444;font-size:12.5px;line-height:1.5;">
+                        <span style="flex-shrink:0">⚠</span>
+                        <span><strong>Curso cancelado — sem data prevista de retorno.</strong><br>
+                        Sua inscrição está mantida e você será avisado assim que houver nova data.</span>
+                    </div>` : '';
+
+                // Botão de presença só para inscrições aprovadas — e nunca em curso cancelado,
+                // já que não há aula acontecendo para registrar presença.
                 let presencaHTML = '';
-                if (inscricao.status === 'apto' || inscricao.status === 'aprovada') {
+                if (!cursoCancelado && (inscricao.status === 'apto' || inscricao.status === 'aprovada')) {
                     const isEad = (curso.modalidade || 'presencial') === 'ead';
                     if (jaConfirmouHoje) {
                         presencaHTML = `<button class="btn-inscrever btn-inscrito" disabled style="margin-top:0.75rem;">
@@ -348,6 +359,7 @@
                         <div class="curso-header-top">
                             <h3 class="curso-title">${curso.titulo}</h3>
                             <div style="display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap">
+                                ${cursoCancelado ? `<span style="font-size:10px;background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.35);border-radius:999px;padding:0.15rem 0.55rem;font-weight:700;white-space:nowrap">Cancelado</span>` : ''}
                                 ${inscricao.obrigatorio ? `<span style="font-size:10px;background:rgba(245,158,11,0.15);color:var(--amber);border:1px solid rgba(245,158,11,0.3);border-radius:999px;padding:0.15rem 0.55rem;font-weight:700;white-space:nowrap">⚡ Obrigatório</span>` : ''}
                                 <span class="status-badge status-${inscricao.status}">
                                     ${statusLabel[inscricao.status] ?? inscricao.status}
@@ -358,6 +370,7 @@
                     </div>
 
                     <div class="curso-body">
+                        ${canceladoHTML}
                         <p class="curso-description">${curso.descricao ?? ''}</p>
 
                         <div class="curso-meta">

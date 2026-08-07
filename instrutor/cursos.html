@@ -173,6 +173,20 @@
         }
         .btn-remover-material:hover { background: rgba(239,68,68,0.1); }
 
+        .curso-cancelado-aviso {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.6rem;
+            padding: 0.8rem 1rem;
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.35);
+            border-radius: 8px;
+            color: #ef4444;
+            font-size: 12.5px;
+            line-height: 1.55;
+            margin-bottom: 1.25rem;
+        }
+
         .modulos-travado {
             display: flex;
             align-items: flex-start;
@@ -380,6 +394,12 @@
                         <div class="curso-selecionado-meta" id="cursoMeta"></div>
                     </div>
 
+                    <div class="curso-cancelado-aviso" id="cursoCanceladoAviso" style="display:none">
+                        <span style="flex-shrink:0">⚠</span>
+                        <span><strong>Curso cancelado pela administração, sem data prevista de retorno.</strong><br>
+                        Não há chamada a fazer enquanto estiver assim, mas você pode seguir preparando o material e os módulos — eles ficam salvos caso o curso volte.</span>
+                    </div>
+
                     <!-- Material (curso simples) -->
                     <div class="content-section">
                         <h3>Materiais do Curso (PDF)</h3>
@@ -469,6 +489,7 @@
                             <div class="turma-nome">
                                 ${c.titulo}
                                 ${isEad ? '<span style="display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:999px;margin-left:6px;background:rgba(239,68,68,0.12);color:#ef4444;">🎬 EAD</span>' : ''}
+                                ${c.status === 'cancelado' ? '<span style="display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:999px;margin-left:6px;background:rgba(239,68,68,0.2);color:#ef4444;">Cancelado</span>' : ''}
                             </div>
                             <div class="turma-info">${ini.toLocaleDateString('pt-BR')} → ${fim.toLocaleDateString('pt-BR')}</div>
                         </div>`;
@@ -495,6 +516,8 @@
 
             document.getElementById('cursoNome').textContent = cursoSelecionado.titulo;
             document.getElementById('cursoMeta').textContent = `${ini.toLocaleDateString('pt-BR')} → ${fim.toLocaleDateString('pt-BR')} · ${modLabel}`;
+            document.getElementById('cursoCanceladoAviso').style.display =
+                cursoSelecionado.status === 'cancelado' ? 'flex' : 'none';
             document.getElementById('painelCurso').classList.add('visible');
 
             atualizarMaterial();

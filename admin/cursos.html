@@ -62,6 +62,7 @@
         .status-ativo { background: rgba(34,197,94,0.15); color: #22c55e; }
         .status-inativo { background: rgba(239,68,68,0.15); color: #ef4444; }
         .status-concluido { background: rgba(148,163,184,0.15); color: var(--text-secondary); }
+        .status-cancelado { background: rgba(239,68,68,0.2); color: #ef4444; font-weight: 700; }
 
         .formato-badge {
             padding: 0.25rem 0.6rem;
@@ -404,6 +405,7 @@
                     <option value="">Todos os status</option>
                     <option value="ativo">Ativo</option>
                     <option value="inativo">Inativo</option>
+                    <option value="cancelado">Cancelado</option>
                     <option value="concluido">Concluído</option>
                 </select>
                 <select id="modalidadeFilter">
@@ -520,6 +522,7 @@
                         <select id="cursoStatus">
                             <option value="ativo">Ativo</option>
                             <option value="inativo">Inativo</option>
+                            <option value="cancelado">Cancelado (sem data de retorno)</option>
                         </select>
                     </div>
                 </div>
@@ -770,7 +773,7 @@
                         <div class="actions">
                             <button class="btn-edit" data-id="${c.id}">Editar</button>
                             <button class="btn-toggle" data-id="${c.id}" data-status="${c.status}">
-                                ${c.status === 'ativo' ? 'Inativar' : 'Ativar'}
+                                ${c.status === 'ativo' ? 'Inativar' : c.status === 'cancelado' ? 'Reativar' : 'Ativar'}
                             </button>
                             <button class="btn-delete" data-id="${c.id}">Excluir</button>
                         </div>
