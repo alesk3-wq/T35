@@ -148,6 +148,40 @@
 
         .status-falta { background: rgba(168,85,247,0.12); color: #a855f7; border: 1px solid rgba(168,85,247,0.3); }
 
+        /* ── Ações em massa ── */
+        .bulk-bar {
+            display: none;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+            background: rgba(245,158,11,0.08);
+            border: 1px solid rgba(245,158,11,0.3);
+            border-radius: 8px;
+        }
+        .bulk-bar.visible { display: flex; }
+        .bulk-count {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--amber);
+            margin-right: 0.25rem;
+        }
+        .btn-limpar-selecao {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 12px;
+            cursor: pointer;
+            text-decoration: underline;
+            padding: 0.35rem 0.4rem;
+        }
+        .btn-limpar-selecao:hover { color: var(--text); }
+        .bulk-bar button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        #inscricoesList input[type="checkbox"],
+        thead input[type="checkbox"] { cursor: pointer; width: 16px; height: 16px; accent-color: #22c55e; }
+
         @media (max-width: 768px) {
             .filters { flex-direction: column; }
             .filters input, .filters select { min-width: auto; }
@@ -352,11 +386,20 @@
                 </select>
             </div>
 
+            <!-- Barra de ações em massa (aparece só com seleção) -->
+            <div class="bulk-bar" id="bulkBar">
+                <span class="bulk-count" id="bulkCount">0 selecionada(s)</span>
+                <button class="btn-action btn-aprovar"  id="btnAprovarMassa">Aprovar selecionadas</button>
+                <button class="btn-action btn-rejeitar" id="btnRejeitarMassa">Rejeitar selecionadas</button>
+                <button class="btn-limpar-selecao" id="btnLimparSelecao">Limpar seleção</button>
+            </div>
+
             <!-- Tabela -->
             <div class="table-container">
                 <table>
                     <thead>
                         <tr>
+                            <th style="width:36px"><input type="checkbox" id="chkTodos" title="Selecionar todos os pendentes visíveis"></th>
                             <th>Candidato</th>
                             <th>Empresa</th>
                             <th>Curso</th>
@@ -367,7 +410,7 @@
                         </tr>
                     </thead>
                     <tbody id="inscricoesList">
-                        <tr><td colspan="7" style="text-align:center;color:var(--text-secondary)">Carregando...</td></tr>
+                        <tr><td colspan="8" style="text-align:center;color:var(--text-secondary)">Carregando...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -411,6 +454,7 @@
 
         let todasInscricoes = [];
         let pendingFaltaId = null;
+        let selecionadas = new Set(); // ids de inscrição marcados para ação em massa
 
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = '../login.html'; return; }
@@ -476,12 +520,12 @@
             document.getElementById('cntRejeitada').textContent = cnt.rejeitada;
         }
 
-        function renderTabela() {
+        function getFiltradas() {
             const busca       = document.getElementById('searchInput').value.toLowerCase();
             const statusFiltro = document.getElementById('statusFilter').value;
             const cursoFiltro  = document.getElementById('cursoFilter').value;
 
-            const filtradas = todasInscricoes.filter(i => {
+            return todasInscricoes.filter(i => {
                 const nomeCandidato = i._candidato?.fullName?.toLowerCase() ?? '';
                 const nomeCurso     = i._curso?.titulo?.toLowerCase() ?? '';
                 const buscaOk  = !busca  || nomeCandidato.includes(busca) || nomeCurso.includes(busca);
@@ -489,11 +533,19 @@
                 const cursoOk  = !cursoFiltro  || i.cursoId === cursoFiltro;
                 return buscaOk && statusOk && cursoOk;
             });
+        }
 
+        function renderTabela() {
+            const filtradas = getFiltradas();
             const tbody = document.getElementById('inscricoesList');
 
+            // Seleção nunca inclui id que sumiu da lista (excluído, etc.)
+            const idsAtuais = new Set(todasInscricoes.map(i => i.id));
+            selecionadas.forEach(id => { if (!idsAtuais.has(id)) selecionadas.delete(id); });
+
             if (filtradas.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-secondary);padding:2rem">Nenhuma inscrição encontrada</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-secondary);padding:2rem">Nenhuma inscrição encontrada</td></tr>';
+                atualizarBarraSelecao();
                 return;
             }
 
@@ -503,9 +555,13 @@
                     : '—';
 
                 const acoes = gerarBotoesAcao(i);
+                const chk = i.status === 'pendente'
+                    ? `<input type="checkbox" class="chk-linha" data-id="${i.id}" ${selecionadas.has(i.id) ? 'checked' : ''}>`
+                    : '';
 
                 return `
                     <tr>
+                        <td>${chk}</td>
                         <td>
                             <strong>${i._candidato?.fullName ?? '—'}</strong>
                             <div style="font-size:11px;color:var(--text-secondary)">${i._candidato?.email ?? ''}</div>
@@ -525,6 +581,103 @@
                     alterarStatus(btn.dataset.id, btn.dataset.acao)
                 );
             });
+
+            // Bind checkboxes de linha
+            tbody.querySelectorAll('.chk-linha').forEach(chk => {
+                chk.addEventListener('change', () => {
+                    if (chk.checked) selecionadas.add(chk.dataset.id);
+                    else selecionadas.delete(chk.dataset.id);
+                    atualizarBarraSelecao();
+                });
+            });
+
+            atualizarCheckboxMestre();
+            atualizarBarraSelecao();
+        }
+
+        // ── Seleção e ações em massa ────────────────────────────────────────
+
+        function atualizarCheckboxMestre() {
+            const linhas = [...document.querySelectorAll('.chk-linha')];
+            const chkTodos = document.getElementById('chkTodos');
+            if (linhas.length === 0) {
+                chkTodos.checked = false;
+                chkTodos.indeterminate = false;
+                return;
+            }
+            const marcadas = linhas.filter(c => c.checked).length;
+            chkTodos.checked = marcadas === linhas.length;
+            chkTodos.indeterminate = marcadas > 0 && marcadas < linhas.length;
+        }
+
+        document.getElementById('chkTodos').addEventListener('change', (e) => {
+            document.querySelectorAll('.chk-linha').forEach(chk => {
+                chk.checked = e.target.checked;
+                if (e.target.checked) selecionadas.add(chk.dataset.id);
+                else selecionadas.delete(chk.dataset.id);
+            });
+            atualizarBarraSelecao();
+        });
+
+        function atualizarBarraSelecao() {
+            // Só conta o que está selecionado E visível no filtro atual — nada invisível é alterado
+            const visiveisIds = new Set(getFiltradas().filter(i => i.status === 'pendente').map(i => i.id));
+            const ativas = [...selecionadas].filter(id => visiveisIds.has(id));
+
+            const bar = document.getElementById('bulkBar');
+            bar.classList.toggle('visible', ativas.length > 0);
+            document.getElementById('bulkCount').textContent = `${ativas.length} selecionada(s)`;
+        }
+
+        document.getElementById('btnLimparSelecao').addEventListener('click', () => {
+            selecionadas.clear();
+            renderTabela();
+        });
+
+        document.getElementById('btnAprovarMassa').addEventListener('click', () => executarEmMassa('apto'));
+        document.getElementById('btnRejeitarMassa').addEventListener('click', () => executarEmMassa('rejeitada'));
+
+        async function executarEmMassa(novoStatus) {
+            const visiveisIds = new Set(getFiltradas().filter(i => i.status === 'pendente').map(i => i.id));
+            const alvo = [...selecionadas].filter(id => visiveisIds.has(id));
+            if (alvo.length === 0) return;
+
+            const acaoLabel = novoStatus === 'apto' ? 'aprovar' : 'rejeitar';
+            if (!confirm(`Deseja ${acaoLabel} ${alvo.length} inscrição(ões) selecionada(s)?`)) return;
+
+            const btnAprovar  = document.getElementById('btnAprovarMassa');
+            const btnRejeitar = document.getElementById('btnRejeitarMassa');
+            btnAprovar.disabled = true;
+            btnRejeitar.disabled = true;
+
+            let sucesso = 0, falhas = 0;
+            for (const id of alvo) {
+                try {
+                    await updateDoc(doc(db, 'inscricoes', id), {
+                        status: novoStatus,
+                        updatedAt: serverTimestamp()
+                    });
+                    const insc = todasInscricoes.find(i => i.id === id);
+                    if (insc) insc.status = novoStatus;
+                    sucesso++;
+                } catch (err) {
+                    console.error('Erro ao processar em massa:', id, err);
+                    falhas++;
+                }
+            }
+
+            selecionadas.clear();
+            atualizarResumo();
+            renderTabela();
+
+            const acaoTexto = novoStatus === 'apto' ? 'aprovada(s)' : 'rejeitada(s)';
+            const msg = falhas > 0
+                ? `${sucesso} inscrição(ões) ${acaoTexto}, ${falhas} falharam.`
+                : `${sucesso} inscrição(ões) ${acaoTexto} com sucesso!`;
+            showAlert(msg, falhas > 0 ? 'error' : 'success');
+
+            btnAprovar.disabled = false;
+            btnRejeitar.disabled = false;
         }
 
         function gerarBotoesAcao(i) {
