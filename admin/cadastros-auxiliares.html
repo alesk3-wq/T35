@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <link rel="icon" type="image/png" href="../assets/img/favi-t35.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Equipes e Atuações - T35 Academy Admin</title>
+    <title>Cadastros Auxiliares - T35 Academy Admin</title>
     <link rel="stylesheet" href="../assets/css/design-system.css">
     <link rel="stylesheet" href="../assets/css/layout.css">
     <link rel="stylesheet" href="../assets/css/responsive.css">
@@ -232,22 +232,12 @@
                 </svg>
                 <span>Grupos</span>
             </a>
-            <a href="empresas.html" class="nav-item">
+            <a href="cadastros-auxiliares.html" class="nav-item active">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
                     <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
                 </svg>
-                <span>Empresas</span>
-            </a>
-            <a href="equipes-atuacoes.html" class="nav-item active">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="9" cy="7" r="4"></circle>
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                    <line x1="12" y1="11" x2="12" y2="11.01"></line>
-                </svg>
-                <span>Equipes e Atuações</span>
+                <span>Cadastros Auxiliares</span>
             </a>
             <a href="relatorios.html" class="nav-item">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -282,7 +272,7 @@
                 <line x1="3" y1="18" x2="21" y2="18"></line>
             </svg>
         </button>
-        <h1 class="page-title">Equipes e Atuações</h1>
+        <h1 class="page-title">Cadastros Auxiliares</h1>
     </div>
 
     <main class="main">
@@ -291,16 +281,40 @@
             <div id="errorMessage" class="error-message"></div>
 
             <div class="page-header">
-                <h1>Equipes e Atuações</h1>
+                <h1>Cadastros Auxiliares</h1>
             </div>
 
             <div class="report-tabs">
-                <button class="tab-btn active" data-tab="equipes">Equipes</button>
+                <button class="tab-btn active" data-tab="empresas">Empresas</button>
+                <button class="tab-btn" data-tab="equipes">Equipes</button>
                 <button class="tab-btn" data-tab="atuacoes">Atuações</button>
             </div>
 
+            <!-- Aba: Empresas -->
+            <div class="report-panel active" id="panel-empresas">
+                <div class="panel-header">
+                    <button class="btn-new" data-colecao="empresas" data-label="Empresa">+ Nova Empresa</button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr><th>Empresa</th><th>Ações</th></tr>
+                        </thead>
+                        <tbody id="empresasTableBody"></tbody>
+                    </table>
+                    <div id="emptyStateEmpresas" class="empty-state" style="display:none">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v4"></path>
+                        </svg>
+                        <h3>Nenhuma empresa cadastrada</h3>
+                        <p>Clique em "Nova Empresa" para criar uma</p>
+                    </div>
+                </div>
+            </div>
+
             <!-- Aba: Equipes -->
-            <div class="report-panel active" id="panel-equipes">
+            <div class="report-panel" id="panel-equipes">
                 <div class="panel-header">
                     <button class="btn-new" data-colecao="equipes" data-label="Equipe">+ Nova Equipe</button>
                 </div>
@@ -347,7 +361,7 @@
         </div>
     </main>
 
-    <!-- Modal compartilhado (Equipe ou Atuação, conforme a aba de origem) -->
+    <!-- Modal compartilhado (Empresa, Equipe ou Atuação, conforme a aba de origem) -->
     <div class="modal" id="itemModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -378,6 +392,13 @@
 
         document.getElementById('btnMenu').addEventListener('click', toggleSidebar);
         document.getElementById('btnLogout').addEventListener('click', handleLogout);
+
+        // Config por coleção: id do tbody, id do empty-state, rótulo singular
+        const CONFIG = {
+            empresas: { tbody: 'empresasTableBody', empty: 'emptyStateEmpresas', label: 'Empresa' },
+            equipes:  { tbody: 'equipesTableBody',  empty: 'emptyStateEquipes',  label: 'Equipe' },
+            atuacoes: { tbody: 'atuacoesTableBody',  empty: 'emptyStateAtuacoes', label: 'Atuação' }
+        };
 
         // Tabs
         document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -412,14 +433,15 @@
                 return;
             }
 
+            loadItems('empresas');
             loadItems('equipes');
             loadItems('atuacoes');
         });
 
         async function loadItems(colecao) {
-            const tbody = document.getElementById(colecao === 'equipes' ? 'equipesTableBody' : 'atuacoesTableBody');
-            const empty = document.getElementById(colecao === 'equipes' ? 'emptyStateEquipes' : 'emptyStateAtuacoes');
-            const label = colecao === 'equipes' ? 'Equipe' : 'Atuação';
+            const cfg = CONFIG[colecao];
+            const tbody = document.getElementById(cfg.tbody);
+            const empty = document.getElementById(cfg.empty);
 
             try {
                 const snap = await getDocs(query(collection(db, colecao), orderBy('nome', 'asc')));
@@ -443,13 +465,13 @@
                             </div>
                         </td>
                     `;
-                    row.querySelector('.btn-edit').addEventListener('click', () => openModal(colecao, label, d.id, item.nome));
-                    row.querySelector('.btn-delete').addEventListener('click', () => deleteItem(colecao, d.id, label));
+                    row.querySelector('.btn-edit').addEventListener('click', () => openModal(colecao, cfg.label, d.id, item.nome));
+                    row.querySelector('.btn-delete').addEventListener('click', () => deleteItem(colecao, d.id, cfg.label));
                     tbody.appendChild(row);
                 });
             } catch (err) {
                 console.error(`Erro ao carregar ${colecao}:`, err);
-                showError(`Erro ao carregar ${label.toLowerCase()}s`);
+                showError(`Erro ao carregar ${cfg.label.toLowerCase()}s`);
             }
         }
 
