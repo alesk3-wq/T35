@@ -29,7 +29,7 @@ const googleProvider = new GoogleAuthProvider();
  * @param {object} userData - Dados do usuário
  */
 export async function handleRegister(userData) {
-    const { email, password, fullName, cpf, phone, matricula, empresa, localAtuacao } = userData;
+    const { email, password, fullName, cpf, phone, matricula, empresa, equipe, atuacao } = userData;
 
     try {
         // ✅ 1. Cria usuário no Firebase Auth
@@ -48,7 +48,8 @@ export async function handleRegister(userData) {
             phone,         // Sem formatação (só números)
             matricula: matricula || null,
             empresa,
-            localAtuacao,
+            equipe: equipe || null,
+            atuacao: atuacao || null,
             role: 'candidato', // Role padrão
             createdAt: new Date(),
             updatedAt: new Date(),
@@ -145,7 +146,8 @@ export async function handleGoogleLogin() {
                 phone: null,
                 matricula: null,
                 empresa: null,
-                localAtuacao: null,
+                equipe: null,
+                atuacao: null,
                 role: 'candidato',
                 createdAt: new Date(),
                 updatedAt: new Date(),

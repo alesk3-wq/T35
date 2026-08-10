@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="../assets/img/favi-t35.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equipes e Atuações - T35 Academy Admin</title>
+    <link rel="stylesheet" href="../assets/css/design-system.css">
+    <link rel="stylesheet" href="../assets/css/layout.css">
+    <link rel="stylesheet" href="../assets/css/responsive.css">
+    <style>
+        .content { padding: 2rem; }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .page-header h1 { color: var(--text); font-size: 28px; margin: 0; }
+
+        .report-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .tab-btn {
+            padding: 0.75rem 1.25rem;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: -1px;
+        }
+        .tab-btn:hover { color: var(--amber); }
+        .tab-btn.active { color: var(--amber); border-bottom-color: var(--amber); }
+
+        .report-panel { display: none; }
+        .report-panel.active { display: block; }
+
+        .panel-header {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 1rem;
+        }
+
+        .btn-new {
+            padding: 0.75rem 1.5rem;
+            background: var(--amber);
+            color: var(--bg);
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-new:hover { background: #f08a00; transform: translateY(-2px); }
+
+        .table-container {
+            background: var(--bg2);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        table { width: 100%; border-collapse: collapse; }
+        thead { background: var(--bg); border-bottom: 2px solid var(--border); }
+        th {
+            padding: 1rem;
+            text-align: left;
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+            font-size: 14px;
+        }
+        tbody tr:hover { background: rgba(245, 158, 11, 0.05); }
+
+        .actions { display: flex; gap: 0.75rem; }
+        .btn-edit, .btn-delete {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-edit { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+        .btn-edit:hover { background: rgba(59, 130, 246, 0.3); }
+        .btn-delete { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .btn-delete:hover { background: rgba(239, 68, 68, 0.3); }
+
+        .empty-state { text-align: center; padding: 3rem 2rem; color: var(--text-secondary); }
+        .empty-state svg { width: 64px; height: 64px; margin-bottom: 1rem; opacity: 0.5; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: var(--bg2);
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        .modal-header { margin-bottom: 1.5rem; }
+        .modal-header h2 { color: var(--text); font-size: 20px; margin: 0; }
+
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label {
+            display: block;
+            color: var(--text);
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--amber);
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+        }
+
+        .modal-actions { display: flex; gap: 1rem; justify-content: flex-end; }
+        .btn-cancel, .btn-save {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-cancel { background: var(--border); color: var(--text); }
+        .btn-cancel:hover { background: rgba(255, 255, 255, 0.1); }
+        .btn-save { background: var(--amber); color: var(--bg); }
+        .btn-save:hover { background: #f08a00; }
+
+        .error-message, .success-message {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        .error-message { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; }
+        .success-message { background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); color: #22c55e; }
+
+        @media (max-width: 768px) {
+            .page-header { flex-direction: column; gap: 1rem; align-items: flex-start; }
+            .btn-new { width: 100%; }
+            table { font-size: 12px; }
+            th, td { padding: 0.75rem 0.5rem; }
+            .actions { flex-direction: column; }
+            .report-tabs { overflow-x: auto; }
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img src="../assets/img/t35logo.png" alt="T35 Academy" class="logo">
+            <h2>T35 Academy</h2>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="dashboard.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                <span>Dashboard</span>
+            </a>
+            <a href="usuarios.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                <span>Usuários</span>
+            </a>
+            <a href="cursos.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
+                <span>Cursos</span>
+            </a>
+            <a href="inscricoes.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"></path>
+                    <rect x="9" y="3" width="6" height="4" rx="1"></rect>
+                    <line x1="9" y1="12" x2="15" y2="12"></line>
+                    <line x1="9" y1="16" x2="13" y2="16"></line>
+                </svg>
+                <span>Inscrições</span>
+            </a>
+            <a href="grupos.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"></path>
+                    <line x1="19" y1="8" x2="19" y2="14"></line>
+                    <line x1="22" y1="11" x2="16" y2="11"></line>
+                </svg>
+                <span>Grupos</span>
+            </a>
+            <a href="empresas.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                </svg>
+                <span>Empresas</span>
+            </a>
+            <a href="equipes-atuacoes.html" class="nav-item active">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    <line x1="12" y1="11" x2="12" y2="11.01"></line>
+                </svg>
+                <span>Equipes e Atuações</span>
+            </a>
+            <a href="relatorios.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="2" x2="12" y2="22"></line>
+                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                </svg>
+                <span>Relatórios</span>
+            </a>
+            <a href="condecorados.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>
+                <span>Condecorados</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="btn-logout" id="btnLogout">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                <span>Logout</span>
+            </button>
+        </div>
+    </aside>
+
+    <div class="topbar">
+        <button class="btn-menu" id="btnMenu">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
+        <h1 class="page-title">Equipes e Atuações</h1>
+    </div>
+
+    <main class="main">
+        <div class="content">
+            <div id="successMessage" class="success-message"></div>
+            <div id="errorMessage" class="error-message"></div>
+
+            <div class="page-header">
+                <h1>Equipes e Atuações</h1>
+            </div>
+
+            <div class="report-tabs">
+                <button class="tab-btn active" data-tab="equipes">Equipes</button>
+                <button class="tab-btn" data-tab="atuacoes">Atuações</button>
+            </div>
+
+            <!-- Aba: Equipes -->
+            <div class="report-panel active" id="panel-equipes">
+                <div class="panel-header">
+                    <button class="btn-new" data-colecao="equipes" data-label="Equipe">+ Nova Equipe</button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr><th>Equipe</th><th>Ações</th></tr>
+                        </thead>
+                        <tbody id="equipesTableBody"></tbody>
+                    </table>
+                    <div id="emptyStateEquipes" class="empty-state" style="display:none">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                        </svg>
+                        <h3>Nenhuma equipe cadastrada</h3>
+                        <p>Clique em "Nova Equipe" para criar uma</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aba: Atuações -->
+            <div class="report-panel" id="panel-atuacoes">
+                <div class="panel-header">
+                    <button class="btn-new" data-colecao="atuacoes" data-label="Atuação">+ Nova Atuação</button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr><th>Atuação</th><th>Ações</th></tr>
+                        </thead>
+                        <tbody id="atuacoesTableBody"></tbody>
+                    </table>
+                    <div id="emptyStateAtuacoes" class="empty-state" style="display:none">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+                        <h3>Nenhuma atuação cadastrada</h3>
+                        <p>Clique em "Nova Atuação" para criar uma</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal compartilhado (Equipe ou Atuação, conforme a aba de origem) -->
+    <div class="modal" id="itemModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Novo Item</h2>
+            </div>
+            <form id="itemForm">
+                <div class="form-group">
+                    <label for="itemNome" id="itemNomeLabel">Nome *</label>
+                    <input type="text" id="itemNome" placeholder="Digite o nome" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" id="btnCancel">Cancelar</button>
+                    <button type="submit" class="btn-save">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+        import { handleLogout } from '../assets/js/auth.js';
+        import { toggleSidebar } from '../assets/js/ui-shell.js';
+        import { auth, db } from '../firebase-config.js';
+        import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js';
+        import {
+            collection, addDoc, getDocs, updateDoc, deleteDoc, doc,
+            query, orderBy, where
+        } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js';
+
+        document.getElementById('btnMenu').addEventListener('click', toggleSidebar);
+        document.getElementById('btnLogout').addEventListener('click', handleLogout);
+
+        // Tabs
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.report-panel').forEach(p => p.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+            });
+        });
+
+        const itemModal  = document.getElementById('itemModal');
+        const itemForm   = document.getElementById('itemForm');
+        let currentColecao = null;
+        let currentLabel   = null;
+        let currentItemId  = null;
+
+        document.querySelectorAll('.btn-new').forEach(btn => {
+            btn.addEventListener('click', () => openModal(btn.dataset.colecao, btn.dataset.label));
+        });
+        document.getElementById('btnCancel').addEventListener('click', closeModal);
+        itemForm.addEventListener('submit', saveItem);
+        itemModal.addEventListener('click', (e) => { if (e.target === itemModal) closeModal(); });
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) { window.location.href = '../login.html'; return; }
+
+            const snap = await getDocs(query(collection(db, 'users'), where('uid', '==', user.uid)));
+            if (snap.docs[0]?.data()?.role !== 'admin') {
+                alert('Acesso negado! Apenas administradores.');
+                window.location.href = '../login.html';
+                return;
+            }
+
+            loadItems('equipes');
+            loadItems('atuacoes');
+        });
+
+        async function loadItems(colecao) {
+            const tbody = document.getElementById(colecao === 'equipes' ? 'equipesTableBody' : 'atuacoesTableBody');
+            const empty = document.getElementById(colecao === 'equipes' ? 'emptyStateEquipes' : 'emptyStateAtuacoes');
+            const label = colecao === 'equipes' ? 'Equipe' : 'Atuação';
+
+            try {
+                const snap = await getDocs(query(collection(db, colecao), orderBy('nome', 'asc')));
+                tbody.innerHTML = '';
+
+                if (snap.empty) {
+                    empty.style.display = 'block';
+                    return;
+                }
+                empty.style.display = 'none';
+
+                snap.forEach(d => {
+                    const item = d.data();
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${item.nome}</td>
+                        <td>
+                            <div class="actions">
+                                <button type="button" class="btn-edit">Editar</button>
+                                <button type="button" class="btn-delete">Deletar</button>
+                            </div>
+                        </td>
+                    `;
+                    row.querySelector('.btn-edit').addEventListener('click', () => openModal(colecao, label, d.id, item.nome));
+                    row.querySelector('.btn-delete').addEventListener('click', () => deleteItem(colecao, d.id, label));
+                    tbody.appendChild(row);
+                });
+            } catch (err) {
+                console.error(`Erro ao carregar ${colecao}:`, err);
+                showError(`Erro ao carregar ${label.toLowerCase()}s`);
+            }
+        }
+
+        function openModal(colecao, label, id = null, nome = '') {
+            currentColecao = colecao;
+            currentLabel   = label;
+            currentItemId  = id;
+
+            document.getElementById('modalTitle').textContent = id ? `Editar ${label}` : `Nova ${label}`;
+            document.getElementById('itemNomeLabel').textContent = `Nome da ${label} *`;
+            document.getElementById('itemNome').placeholder = `Digite o nome da ${label.toLowerCase()}`;
+            document.getElementById('itemNome').value = nome;
+            itemModal.classList.add('active');
+        }
+
+        function closeModal() {
+            itemModal.classList.remove('active');
+            currentColecao = null;
+            currentItemId  = null;
+        }
+
+        async function saveItem(e) {
+            e.preventDefault();
+            const nome = document.getElementById('itemNome').value.trim();
+            if (!nome) { showError('Digite o nome'); return; }
+
+            try {
+                if (currentItemId) {
+                    await updateDoc(doc(db, currentColecao, currentItemId), { nome, updatedAt: new Date() });
+                    showSuccess(`${currentLabel} atualizada com sucesso!`);
+                } else {
+                    await addDoc(collection(db, currentColecao), { nome, createdAt: new Date(), updatedAt: new Date() });
+                    showSuccess(`${currentLabel} criada com sucesso!`);
+                }
+                const colecao = currentColecao;
+                closeModal();
+                loadItems(colecao);
+            } catch (err) {
+                console.error('Erro ao salvar:', err);
+                showError('Erro ao salvar: ' + err.message);
+            }
+        }
+
+        async function deleteItem(colecao, id, label) {
+            if (!confirm(`Tem certeza que deseja deletar esta ${label.toLowerCase()}?`)) return;
+            try {
+                await deleteDoc(doc(db, colecao, id));
+                showSuccess(`${label} deletada com sucesso!`);
+                loadItems(colecao);
+            } catch (err) {
+                console.error('Erro ao deletar:', err);
+                showError('Erro ao deletar: ' + err.message);
+            }
+        }
+
+        function showSuccess(msg) {
+            const el = document.getElementById('successMessage');
+            el.textContent = msg;
+            el.style.display = 'block';
+            setTimeout(() => el.style.display = 'none', 3000);
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('errorMessage');
+            el.textContent = msg;
+            el.style.display = 'block';
+            setTimeout(() => el.style.display = 'none', 5000);
+        }
+    </script>
+</body>
+</html>

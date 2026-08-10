@@ -278,8 +278,17 @@
             </div>
 
             <div class="form-group">
-                <label for="localAtuacao">Local de Atuação *</label>
-                <input type="text" id="localAtuacao" placeholder="Cidade/Estado" required>
+                <label for="equipe">Equipe</label>
+                <select id="equipe">
+                    <option value="">Carregando equipes...</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="atuacao">Atuação</label>
+                <select id="atuacao">
+                    <option value="">Carregando atuações...</option>
+                </select>
             </div>
 
             <button type="submit" class="btn-register" id="btnRegister">Criar Conta</button>
@@ -301,12 +310,16 @@
         const cpfInput = document.getElementById('cpf');
         const phoneInput = document.getElementById('phone');
         const empresaSelect = document.getElementById('empresa');
+        const equipeSelect = document.getElementById('equipe');
+        const atuacaoSelect = document.getElementById('atuacao');
         const errorMessage = document.getElementById('errorMessage');
         const successMessage = document.getElementById('successMessage');
         const btnRegister = document.getElementById('btnRegister');
 
-        // ✅ Carrega empresas ao iniciar a página
+        // ✅ Carrega empresas, equipes e atuações ao iniciar a página
         loadEmpresas();
+        loadEquipes();
+        loadAtuacoes();
 
         // ✅ Máscara automática para CPF
         cpfInput.addEventListener('input', (e) => {
@@ -368,6 +381,62 @@
             }
         }
 
+        // ✅ Carrega lista de equipes do Firestore (campo opcional)
+        async function loadEquipes() {
+            try {
+                let querySnapshot;
+                try {
+                    querySnapshot = await getDocs(query(collection(db, 'equipes'), orderBy('nome', 'asc')));
+                } catch (indexError) {
+                    querySnapshot = await getDocs(collection(db, 'equipes'));
+                }
+
+                equipeSelect.innerHTML = '<option value="">Selecione uma equipe</option>';
+                if (querySnapshot.empty) return;
+
+                const opcoes = [];
+                querySnapshot.forEach((doc) => { if (doc.data().nome) opcoes.push(doc.data().nome); });
+                opcoes.sort((a, b) => a.localeCompare(b, 'pt-BR'));
+                opcoes.forEach((nome) => {
+                    const option = document.createElement('option');
+                    option.value = nome;
+                    option.textContent = nome;
+                    equipeSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Erro ao carregar equipes:', error.code, error.message);
+                equipeSelect.innerHTML = '<option value="">Selecione uma equipe</option>';
+            }
+        }
+
+        // ✅ Carrega lista de atuações do Firestore (campo opcional)
+        async function loadAtuacoes() {
+            try {
+                let querySnapshot;
+                try {
+                    querySnapshot = await getDocs(query(collection(db, 'atuacoes'), orderBy('nome', 'asc')));
+                } catch (indexError) {
+                    querySnapshot = await getDocs(collection(db, 'atuacoes'));
+                }
+
+                atuacaoSelect.innerHTML = '<option value="">Selecione uma atuação</option>';
+                if (querySnapshot.empty) return;
+
+                const opcoes = [];
+                querySnapshot.forEach((doc) => { if (doc.data().nome) opcoes.push(doc.data().nome); });
+                opcoes.sort((a, b) => a.localeCompare(b, 'pt-BR'));
+                opcoes.forEach((nome) => {
+                    const option = document.createElement('option');
+                    option.value = nome;
+                    option.textContent = nome;
+                    atuacaoSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Erro ao carregar atuações:', error.code, error.message);
+                atuacaoSelect.innerHTML = '<option value="">Selecione uma atuação</option>';
+            }
+        }
+
         // ✅ Validação e envio do formulário
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -380,7 +449,8 @@
             const phone = document.getElementById('phone').value;
             const matricula = document.getElementById('matricula').value.trim();
             const empresa = document.getElementById('empresa').value;
-            const localAtuacao = document.getElementById('localAtuacao').value.trim();
+            const equipe = document.getElementById('equipe').value;
+            const atuacao = document.getElementById('atuacao').value;
 
             // Limpar mensagens
             errorMessage.style.display = 'none';
@@ -418,10 +488,7 @@
                 return;
             }
 
-            if (!localAtuacao) {
-                showError('Digite o local de atuação');
-                return;
-            }
+            // Equipe e Atuação são opcionais no cadastro — quem já tem conta completa depois no perfil.
 
             btnRegister.classList.add('loading');
             btnRegister.textContent = 'Criando conta...';
@@ -435,7 +502,8 @@
                     phone: cleanPhone,
                     matricula: matricula || null,
                     empresa,
-                    localAtuacao
+                    equipe: equipe || null,
+                    atuacao: atuacao || null
                 });
 
                 showSuccess('Conta criada com sucesso! Redirecionando...');

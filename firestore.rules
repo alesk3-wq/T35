@@ -76,6 +76,17 @@ service cloud.firestore {
       allow write: if isAuth();
     }
 
+    // ── equipes / atuacoes ──────────────────────────────────────────────────
+    // Mesmo motivo de empresas: selects em register.html, página sem auth.
+    match /equipes/{id} {
+      allow read: if true;
+      allow write: if isAuth();
+    }
+    match /atuacoes/{id} {
+      allow read: if true;
+      allow write: if isAuth();
+    }
+
     // ── condecorados ─────────────────────────────────────────────────────────
     match /condecorados/{id} {
       allow read, write: if isAuth();

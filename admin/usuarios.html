@@ -279,6 +279,16 @@
                 </svg>
                 <span>Empresas</span>
             </a>
+            <a href="equipes-atuacoes.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    <line x1="12" y1="11" x2="12" y2="11.01"></line>
+                </svg>
+                <span>Equipes e Atuações</span>
+            </a>
             <a href="relatorios.html" class="nav-item">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="18" y1="20" x2="18" y2="10"></line>
@@ -411,6 +421,18 @@
                     <label>Empresa</label>
                     <input type="text" id="editEmpresa">
                 </div>
+                <div class="form-group">
+                    <label>Equipe</label>
+                    <select id="editEquipe">
+                        <option value="">Carregando...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Atuação</label>
+                    <select id="editAtuacao">
+                        <option value="">Carregando...</option>
+                    </select>
+                </div>
                 <div class="form-group" id="assinaturaSection" style="display:none">
                     <label>Assinatura do Instrutor (PNG)</label>
                     <p style="font-size:12px;color:var(--text-secondary);margin:0.3rem 0 0.6rem">
@@ -529,6 +551,34 @@
             renderUsers(filtered);
         }
 
+        async function carregarSelectAuxiliar(colecao, selectId, valorAtual) {
+            const select = document.getElementById(selectId);
+            try {
+                let snap;
+                try {
+                    snap = await getDocs(query(collection(db, colecao), orderBy('nome', 'asc')));
+                } catch {
+                    snap = await getDocs(collection(db, colecao));
+                }
+
+                const nomes = [];
+                snap.forEach(d => { if (d.data().nome) nomes.push(d.data().nome); });
+                nomes.sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+                select.innerHTML = '<option value="">—</option>';
+                nomes.forEach(nome => {
+                    const opt = document.createElement('option');
+                    opt.value = nome;
+                    opt.textContent = nome;
+                    if (nome === valorAtual) opt.selected = true;
+                    select.appendChild(opt);
+                });
+            } catch (err) {
+                select.innerHTML = '<option value="">Erro ao carregar</option>';
+                console.error(`Erro ao carregar ${colecao}:`, err);
+            }
+        }
+
         function openModal(userId) {
             const user = allUsers.find(u => u.id === userId);
             if (!user) return;
@@ -539,6 +589,8 @@
             document.getElementById('editCpf').value = user.cpf || '';
             document.getElementById('editPhone').value = user.phone || '';
             document.getElementById('editEmpresa').value = user.empresa || '';
+            carregarSelectAuxiliar('equipes', 'editEquipe', user.equipe || '');
+            carregarSelectAuxiliar('atuacoes', 'editAtuacao', user.atuacao || '');
             const perfisAtivos = user.perfis || [user.role || 'candidato'];
             document.querySelectorAll('.chk-perfil').forEach(chk => {
                 chk.checked = perfisAtivos.includes(chk.value);
@@ -671,6 +723,8 @@
                     cpf: document.getElementById('editCpf').value,
                     phone: document.getElementById('editPhone').value,
                     empresa: document.getElementById('editEmpresa').value,
+                    equipe: document.getElementById('editEquipe').value,
+                    atuacao: document.getElementById('editAtuacao').value,
                     updatedAt: serverTimestamp()
                 });
 
