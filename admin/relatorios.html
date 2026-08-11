@@ -183,6 +183,23 @@
         .btn-export-pdf:hover { background: rgba(59,130,246,0.2); }
         .btn-export-pdf:disabled { opacity: 0.6; cursor: not-allowed; }
 
+        .btn-export-xlsx {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 1rem;
+            background: rgba(34,197,94,0.1);
+            border: 1px solid rgba(34,197,94,0.25);
+            border-radius: 8px;
+            color: #22c55e;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-export-xlsx:hover { background: rgba(34,197,94,0.2); }
+        .btn-export-xlsx:disabled { opacity: 0.6; cursor: not-allowed; }
+
         @media (max-width: 600px) {
             .page-header h1 { font-size: 22px; }
             .report-tabs { overflow-x: auto; }
@@ -343,6 +360,10 @@
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
                         Exportar PDF
                     </button>
+                    <button class="btn-export-xlsx" id="btnExportInscricoesExcel">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+                        Exportar Excel
+                    </button>
                 </div>
 
                 <div class="table-container">
@@ -377,6 +398,10 @@
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
                         Exportar PDF
                     </button>
+                    <button class="btn-export-xlsx" id="btnExportCursosExcel">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+                        Exportar Excel
+                    </button>
                 </div>
 
                 <div class="table-container">
@@ -407,6 +432,10 @@
                     <button class="btn-export-pdf" id="btnExportUsuarios">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
                         Exportar PDF
+                    </button>
+                    <button class="btn-export-xlsx" id="btnExportUsuariosExcel">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+                        Exportar Excel
                     </button>
                 </div>
                 <div class="summary-grid">
@@ -447,6 +476,10 @@
                     <button class="btn-export-pdf" id="btnExportVideo">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
                         Exportar PDF
+                    </button>
+                    <button class="btn-export-xlsx" id="btnExportVideoExcel">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+                        Exportar Excel
                     </button>
                 </div>
                 <div class="summary-grid">
@@ -489,6 +522,10 @@
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
                         Exportar PDF
                     </button>
+                    <button class="btn-export-xlsx" id="btnExportEmpresaExcel">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+                        Exportar Excel
+                    </button>
                 </div>
                 <div class="table-container">
                     <table>
@@ -517,6 +554,10 @@
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
                         Exportar PDF
                     </button>
+                    <button class="btn-export-xlsx" id="btnExportComplianceExcel">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+                        Exportar Excel
+                    </button>
                 </div>
                 <div class="table-container">
                     <table>
@@ -544,6 +585,10 @@
                     <button class="btn-export-pdf" id="btnExportAvaliacoes">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
                         Exportar PDF
+                    </button>
+                    <button class="btn-export-xlsx" id="btnExportAvaliacoesExcel">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+                        Exportar Excel
                     </button>
                 </div>
                 <div class="summary-grid">
@@ -586,6 +631,7 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <script type="module">
         import { handleLogout } from '../assets/js/auth.js';
@@ -749,6 +795,22 @@
             finally { btnLoading(btn, false); }
         });
 
+        document.getElementById('btnExportAvaliacoesExcel').addEventListener('click', () => {
+            const btn = document.getElementById('btnExportAvaliacoesExcel');
+            btnLoadingXlsx(btn, true);
+            try {
+                exportarExcel(
+                    `avaliacoes_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.xlsx`,
+                    'Avaliações',
+                    ['#', 'Curso', 'Instrutor', 'Nota', 'Comentário', 'Data'],
+                    todasAvaliacoes.map((a, idx) => [
+                        idx + 1, a._curso, a._instrutor, a.nota + '/5', a.comentario || '—', a._data
+                    ])
+                );
+            } catch (e) { console.error(e); }
+            finally { btnLoadingXlsx(btn, false); }
+        });
+
         const labelStatus = {
             pendente: 'Pendente', apto: 'Apto',
                 aprovada: 'Apto',
@@ -813,6 +875,10 @@
                         // versões com capitalização original para exibir
                         _nomeExib:  usersMap[insc.candidatoId]?.fullName || '—',
                         _cursoExib: cursosMap[insc.cursoId]?.titulo || '—',
+                        // cadastro auxiliar do candidato, só usado nos exports (PDF/Excel)
+                        _empresa: usersMap[insc.candidatoId]?.empresa || '—',
+                        _equipe:  usersMap[insc.candidatoId]?.equipe  || '—',
+                        _atuacao: usersMap[insc.candidatoId]?.atuacao || '—',
                     });
                 });
 
@@ -950,6 +1016,21 @@
             btn.childNodes[btn.childNodes.length - 1].textContent = loading ? ' Gerando...' : ' Exportar PDF';
         }
 
+        // ── Helper Excel ─────────────────────────────────────────────────
+
+        function exportarExcel(nomeArquivo, sheetName, head, rows) {
+            const ws = XLSX.utils.aoa_to_sheet([head, ...rows]);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, sheetName);
+            XLSX.writeFile(wb, nomeArquivo);
+        }
+
+        function btnLoadingXlsx(btn, loading) {
+            btn.disabled = loading;
+            btn.querySelector('svg').style.display = loading ? 'none' : '';
+            btn.childNodes[btn.childNodes.length - 1].textContent = loading ? ' Gerando...' : ' Exportar Excel';
+        }
+
         // ── Export: Inscrições ────────────────────────────────────────────
 
         document.getElementById('btnExportInscricoes').addEventListener('click', () => {
@@ -969,13 +1050,34 @@
                 const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
                 pdfHeader(pdf, 'Relatório de Inscrições', sub);
                 pdfTable(pdf,
-                    ['#', 'Candidato', 'Curso', 'Status', 'Data'],
-                    filtradas.map((i, idx) => [idx + 1, i._nomeExib, i._cursoExib, statusLabel2[i.status] ?? i.status, i._data])
+                    ['#', 'Candidato', 'Curso', 'Empresa', 'Equipe', 'Atuação', 'Status', 'Data'],
+                    filtradas.map((i, idx) => [idx + 1, i._nomeExib, i._cursoExib, i._empresa, i._equipe, i._atuacao, statusLabel2[i.status] ?? i.status, i._data])
                 );
                 pdfFooter(pdf);
                 pdf.save(`inscricoes_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.pdf`);
             } catch (e) { console.error(e); }
             finally { btnLoading(btn, false); }
+        });
+
+        document.getElementById('btnExportInscricoesExcel').addEventListener('click', () => {
+            const btn = document.getElementById('btnExportInscricoesExcel');
+            btnLoadingXlsx(btn, true);
+            try {
+                const busca  = document.getElementById('inscBusca').value.toLowerCase();
+                const status = document.getElementById('inscStatusFiltro').value;
+                const filtradas = todasInscricoes.filter(i => {
+                    return (!busca  || i._nome.includes(busca) || i._curso.includes(busca))
+                        && (!status || i.status === status);
+                });
+                const statusLabel2 = { pendente:'Pendente', apto:'Apto', concluido:'Concluída', falta:'Falta', rejeitada:'Rejeitada' };
+                exportarExcel(
+                    `inscricoes_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.xlsx`,
+                    'Inscrições',
+                    ['#', 'Candidato', 'Curso', 'Empresa', 'Equipe', 'Atuação', 'Status', 'Data'],
+                    filtradas.map((i, idx) => [idx + 1, i._nomeExib, i._cursoExib, i._empresa, i._equipe, i._atuacao, statusLabel2[i.status] ?? i.status, i._data])
+                );
+            } catch (e) { console.error(e); }
+            finally { btnLoadingXlsx(btn, false); }
         });
 
         // ── Export: Cursos ────────────────────────────────────────────────
@@ -1009,9 +1111,51 @@
             finally { btnLoading(btn, false); }
         });
 
+        document.getElementById('btnExportCursosExcel').addEventListener('click', () => {
+            const btn = document.getElementById('btnExportCursosExcel');
+            btnLoadingXlsx(btn, true);
+            try {
+                const busca  = document.getElementById('cursosBusca').value.toLowerCase();
+                const status = document.getElementById('cursosStatusFiltro').value;
+                const filtrados = todosCursosReport.filter(c =>
+                    (!busca  || c._titulo.includes(busca) || c._instrutor.includes(busca))
+                    && (!status || c.status === status)
+                );
+                exportarExcel(
+                    `cursos_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.xlsx`,
+                    'Cursos',
+                    ['#', 'Curso', 'Instrutor', 'Vagas', 'Inscritos', 'Concluídos', 'Faltas', 'Ocup. %', 'Taxa Concl.', 'Status'],
+                    filtrados.map((c, idx) => [
+                        idx + 1, c.titulo, c.instrutor,
+                        c.vagas ?? '—', c._dados.total, c._dados.concluidos, c._dados.faltas,
+                        c._pct + '%', c._dados.total > 0 ? c._taxa + '%' : '—', c.status
+                    ])
+                );
+            } catch (e) { console.error(e); }
+            finally { btnLoadingXlsx(btn, false); }
+        });
+
         // ── Export: Usuários ──────────────────────────────────────────────
 
         let todosUsuariosReport = [];
+
+        function linhaUsuarioCompleta(u, idx) {
+            return [
+                idx + 1,
+                u.fullName || '—',
+                u.email || '—',
+                u.cpf || '—',
+                u.phone || '—',
+                u.matricula || '—',
+                u.empresa || '—',
+                u.equipe || '—',
+                u.atuacao || '—',
+                u.role || '—',
+                u.status || '—',
+                u._data
+            ];
+        }
+        const COLUNAS_USUARIOS = ['#', 'Nome', 'Email', 'CPF', 'Telefone', 'Matrícula', 'Empresa', 'Equipe', 'Atuação', 'Perfil', 'Status', 'Cadastro'];
 
         document.getElementById('btnExportUsuarios').addEventListener('click', () => {
             const btn = document.getElementById('btnExportUsuarios');
@@ -1020,14 +1164,25 @@
                 const { jsPDF } = window.jspdf;
                 const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
                 pdfHeader(pdf, 'Relatório de Usuários', 'Todos os perfis');
-                pdfTable(pdf,
-                    ['#', 'Nome', 'Email', 'Empresa', 'Perfil', 'Cadastro'],
-                    todosUsuariosReport.map((u, idx) => [idx + 1, u.fullName || '—', u.email, u.empresa || '—', u.role || '—', u._data])
-                );
+                pdfTable(pdf, COLUNAS_USUARIOS, todosUsuariosReport.map(linhaUsuarioCompleta));
                 pdfFooter(pdf);
                 pdf.save(`usuarios_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.pdf`);
             } catch (e) { console.error(e); }
             finally { btnLoading(btn, false); }
+        });
+
+        document.getElementById('btnExportUsuariosExcel').addEventListener('click', () => {
+            const btn = document.getElementById('btnExportUsuariosExcel');
+            btnLoadingXlsx(btn, true);
+            try {
+                exportarExcel(
+                    `usuarios_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.xlsx`,
+                    'Usuários',
+                    COLUNAS_USUARIOS,
+                    todosUsuariosReport.map(linhaUsuarioCompleta)
+                );
+            } catch (e) { console.error(e); }
+            finally { btnLoadingXlsx(btn, false); }
         });
 
         function fmtTempo(seg) {
@@ -1054,7 +1209,8 @@
                         getDocs(query(collection(db, 'users'), where('uid', '==', insc.candidatoId))),
                         getDocs(query(collection(db, 'cursos'), where('__name__', '==', insc.cursoId)))
                     ]);
-                    const nome  = userSnap.docs[0]?.data()?.fullName || '—';
+                    const userData = userSnap.docs[0]?.data();
+                    const nome  = userData?.fullName || '—';
                     const curso = cursoSnap.docs[0]?.data()?.titulo  || '—';
                     const p = insc.videoProgresso;
                     if (p.concluido) concluidos++;
@@ -1066,6 +1222,9 @@
                             : `<span class="status-badge" style="background:rgba(148,163,184,0.15);color:var(--text-secondary)">Em andamento</span>`;
                     rows.push({
                         nome, curso,
+                        empresa: userData?.empresa || '—',
+                        equipe:  userData?.equipe  || '—',
+                        atuacao: userData?.atuacao || '—',
                         pct:   p.percentualVideo || 0,
                         tela:  p.tempoTela || 0,
                         dur:   p.videoDuracao || 0,
@@ -1106,14 +1265,28 @@
                 const { jsPDF } = window.jspdf;
                 const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
                 pdfHeader(pdf, 'Relatório de Engajamento de Vídeo', `Total: ${todosVideoReport.length} | Concluídos: ${todosVideoReport.filter(r=>r.concluido).length} | Suspeitos: ${todosVideoReport.filter(r=>r.suspeito).length}`);
-                pdfTable(pdf, ['Candidato','Curso','% Vídeo','Tempo na Tela','Duração','Status'],
-                    todosVideoReport.map(r => [r.nome, r.curso, r.pct+'%', fmtTempo(r.tela), fmtTempo(r.dur), r.suspeito ? '⚠ Suspeito' : r.concluido ? '✓ OK' : 'Em andamento'])
+                pdfTable(pdf, ['Candidato','Curso','Empresa','Equipe','Atuação','% Vídeo','Tempo na Tela','Duração','Status'],
+                    todosVideoReport.map(r => [r.nome, r.curso, r.empresa, r.equipe, r.atuacao, r.pct+'%', fmtTempo(r.tela), fmtTempo(r.dur), r.suspeito ? '⚠ Suspeito' : r.concluido ? '✓ OK' : 'Em andamento'])
                 );
                 pdfFooter(pdf);
                 pdf.save('relatorio-videos.pdf');
             } finally {
                 btnLoading(btn, false);
             }
+        });
+
+        document.getElementById('btnExportVideoExcel').addEventListener('click', () => {
+            const btn = document.getElementById('btnExportVideoExcel');
+            btnLoadingXlsx(btn, true);
+            try {
+                exportarExcel(
+                    'relatorio-videos.xlsx',
+                    'Vídeos',
+                    ['Candidato','Curso','Empresa','Equipe','Atuação','% Vídeo','Tempo na Tela','Duração','Status'],
+                    todosVideoReport.map(r => [r.nome, r.curso, r.empresa, r.equipe, r.atuacao, r.pct+'%', fmtTempo(r.tela), fmtTempo(r.dur), r.suspeito ? 'Suspeito' : r.concluido ? 'OK' : 'Em andamento'])
+                );
+            } catch (e) { console.error(e); }
+            finally { btnLoadingXlsx(btn, false); }
         });
 
         // ── Relatório: Por Empresa ────────────────────────────────────────
@@ -1205,6 +1378,24 @@
             finally { btnLoading(btn, false); }
         });
 
+        document.getElementById('btnExportEmpresaExcel').addEventListener('click', () => {
+            const btn = document.getElementById('btnExportEmpresaExcel');
+            btnLoadingXlsx(btn, true);
+            try {
+                exportarExcel(
+                    `empresas_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.xlsx`,
+                    'Por Empresa',
+                    ['#', 'Empresa', 'Candidatos', 'Inscrições', 'Concluídas', 'Faltas', 'Pendentes', 'Taxa %'],
+                    todosEmpresaReport.map((e, idx) => [
+                        idx + 1, e.empresa, e.candidatos, e.inscritos,
+                        e.concluidos, e.faltas, e.pendentes,
+                        e.inscritos > 0 ? e.taxa + '%' : '—'
+                    ])
+                );
+            } catch (e) { console.error(e); }
+            finally { btnLoadingXlsx(btn, false); }
+        });
+
         // ── Relatório: Compliance de Grupos ───────────────────────────────
 
         let todosComplianceReport = [];
@@ -1287,6 +1478,23 @@
                 pdf.save(`compliance_grupos_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.pdf`);
             } catch (e) { console.error(e); }
             finally { btnLoading(btn, false); }
+        });
+
+        document.getElementById('btnExportComplianceExcel').addEventListener('click', () => {
+            const btn = document.getElementById('btnExportComplianceExcel');
+            btnLoadingXlsx(btn, true);
+            try {
+                exportarExcel(
+                    `compliance_grupos_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.xlsx`,
+                    'Grupos',
+                    ['#', 'Grupo', 'Curso', 'Membros', 'Concluíram', 'Pendentes', 'Faltas', 'Compliance %'],
+                    todosComplianceReport.map((r, idx) => [
+                        idx + 1, r.grupo, r.curso, r.membros,
+                        r.concluidos, r.pendentes, r.faltas, r.taxa + '%'
+                    ])
+                );
+            } catch (e) { console.error(e); }
+            finally { btnLoadingXlsx(btn, false); }
         });
 
         async function loadUsuariosReport() {
