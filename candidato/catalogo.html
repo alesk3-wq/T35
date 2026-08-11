@@ -175,6 +175,7 @@
 
         let todosOsCursos = [];
         let inscricoesSet = new Set();
+        let userData = null;
 
         btnMenu.addEventListener('click', toggleSidebar);
         btnLogout.addEventListener('click', handleLogout);
@@ -196,18 +197,28 @@
 
         async function loadDados(user) {
             try {
-                const [cursosSnap, inscricoesSnap] = await Promise.all([
+                const [cursosSnap, inscricoesSnap, userSnap] = await Promise.all([
                     getDocs(query(collection(db, 'cursos'), where('status', '==', 'ativo'))),
-                    getDocs(query(collection(db, 'inscricoes'), where('candidatoId', '==', user.uid)))
+                    getDocs(query(collection(db, 'inscricoes'), where('candidatoId', '==', user.uid))),
+                    getDocs(query(collection(db, 'users'), where('uid', '==', user.uid)))
                 ]);
 
                 inscricoesSet = new Set(inscricoesSnap.docs.map(d => d.data().cursoId));
                 todosOsCursos = cursosSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+                userData = userSnap.docs[0]?.data() || null;
                 renderizarCursos(todosOsCursos);
             } catch (error) {
                 console.error('Erro ao carregar cursos:', error);
                 emptyState.style.display = 'block';
             }
+        }
+
+        function camposFaltando(userData) {
+            const faltando = [];
+            if (!userData?.cpf)     faltando.push('CPF');
+            if (!userData?.phone)   faltando.push('Telefone');
+            if (!userData?.empresa) faltando.push('Empresa');
+            return faltando;
         }
 
         function cursoEncerrado(curso) {
@@ -316,6 +327,16 @@
             const user = auth.currentUser;
             if (!user) {
                 alert('Você precisa estar logado para se inscrever');
+                return;
+            }
+
+            const faltando = camposFaltando(userData);
+            if (faltando.length > 0) {
+                const ir = confirm(
+                    `Complete seu perfil antes de se inscrever. Está faltando: ${faltando.join(', ')}.\n\n` +
+                    `Deseja ir para o seu perfil agora?`
+                );
+                if (ir) window.location.href = 'perfil.html';
                 return;
             }
 
