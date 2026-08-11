@@ -354,6 +354,15 @@
                         <option value="pendente">Pendente</option>
                         <option value="rejeitada">Rejeitada</option>
                     </select>
+                    <select id="inscEmpresaFiltro">
+                        <option value="">Todas as Empresas</option>
+                    </select>
+                    <select id="inscEquipeFiltro">
+                        <option value="">Todas as Equipes</option>
+                    </select>
+                    <select id="inscAtuacaoFiltro">
+                        <option value="">Todas as Atuações</option>
+                    </select>
                 </div>
                 <div class="export-bar">
                     <button class="btn-export-pdf" id="btnExportInscricoes">
@@ -451,6 +460,18 @@
                         <div class="summary-num" id="userAdmins">—</div>
                         <div class="summary-label">Admins</div>
                     </div>
+                </div>
+
+                <div class="insc-filters">
+                    <select id="userEmpresaFiltro">
+                        <option value="">Todas as Empresas</option>
+                    </select>
+                    <select id="userEquipeFiltro">
+                        <option value="">Todas as Equipes</option>
+                    </select>
+                    <select id="userAtuacaoFiltro">
+                        <option value="">Todas as Atuações</option>
+                    </select>
                 </div>
 
                 <div class="table-container">
@@ -679,8 +700,49 @@
                 loadVideoReport(),
                 loadEmpresaReport(),
                 loadComplianceReport(),
-                loadAvaliacoesReport()
+                loadAvaliacoesReport(),
+                carregarFiltrosAuxiliares()
             ]);
+        }
+
+        // ── Filtros de cadastro auxiliar (Empresa/Equipe/Atuação) ──────────
+        // Usado nas abas Inscrições e Usuários. Mesmas 3 coleções que alimentam
+        // os selects de admin/cadastros-auxiliares.html, register.html e candidato/perfil.html.
+        async function carregarFiltrosAuxiliares() {
+            async function nomesDe(colecao) {
+                try {
+                    const snap = await getDocs(query(collection(db, colecao), orderBy('nome', 'asc')));
+                    return snap.docs.map(d => d.data().nome).filter(Boolean);
+                } catch {
+                    const snap = await getDocs(collection(db, colecao));
+                    return snap.docs.map(d => d.data().nome).filter(Boolean).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+                }
+            }
+
+            function popular(selectIds, nomes) {
+                selectIds.forEach(id => {
+                    const select = document.getElementById(id);
+                    nomes.forEach(nome => {
+                        const opt = document.createElement('option');
+                        opt.value = nome;
+                        opt.textContent = nome;
+                        select.appendChild(opt);
+                    });
+                });
+            }
+
+            try {
+                const [empresas, equipes, atuacoes] = await Promise.all([
+                    nomesDe('empresas'),
+                    nomesDe('equipes'),
+                    nomesDe('atuacoes')
+                ]);
+                popular(['inscEmpresaFiltro', 'userEmpresaFiltro'], empresas);
+                popular(['inscEquipeFiltro',  'userEquipeFiltro'],  equipes);
+                popular(['inscAtuacaoFiltro', 'userAtuacaoFiltro'], atuacoes);
+            } catch (err) {
+                console.error('Erro ao carregar filtros auxiliares:', err);
+            }
         }
 
         // ── Relatório: Avaliações ──────────────────────────────────────────
@@ -819,16 +881,25 @@
 
         let todasInscricoes = [];
 
-        function renderInscricoes() {
-            const busca  = document.getElementById('inscBusca').value.toLowerCase();
-            const status = document.getElementById('inscStatusFiltro').value;
+        function getInscricoesFiltradas() {
+            const busca   = document.getElementById('inscBusca').value.toLowerCase();
+            const status  = document.getElementById('inscStatusFiltro').value;
+            const empresa = document.getElementById('inscEmpresaFiltro').value;
+            const equipe  = document.getElementById('inscEquipeFiltro').value;
+            const atuacao = document.getElementById('inscAtuacaoFiltro').value;
 
-            const filtradas = todasInscricoes.filter(i => {
-                const nomeOk   = !busca  || i._nome.includes(busca) || i._curso.includes(busca);
-                const statusOk = !status || i.status === status;
-                return nomeOk && statusOk;
+            return todasInscricoes.filter(i => {
+                const nomeOk    = !busca   || i._nome.includes(busca) || i._curso.includes(busca);
+                const statusOk  = !status  || i.status === status;
+                const empresaOk = !empresa || i._empresa === empresa;
+                const equipeOk  = !equipe  || i._equipe === equipe;
+                const atuacaoOk = !atuacao || i._atuacao === atuacao;
+                return nomeOk && statusOk && empresaOk && equipeOk && atuacaoOk;
             });
+        }
 
+        function renderInscricoes() {
+            const filtradas = getInscricoesFiltradas();
             const tbody = document.getElementById('inscricoesList');
             tbody.innerHTML = filtradas.length > 0
                 ? filtradas.map(i => `
@@ -892,6 +963,9 @@
                 // Registra os filtros e renderiza
                 document.getElementById('inscBusca').addEventListener('input', renderInscricoes);
                 document.getElementById('inscStatusFiltro').addEventListener('change', renderInscricoes);
+                document.getElementById('inscEmpresaFiltro').addEventListener('change', renderInscricoes);
+                document.getElementById('inscEquipeFiltro').addEventListener('change', renderInscricoes);
+                document.getElementById('inscAtuacaoFiltro').addEventListener('change', renderInscricoes);
                 renderInscricoes();
             } catch (err) {
                 console.error('Erro inscrições:', err);
@@ -1037,12 +1111,8 @@
             const btn = document.getElementById('btnExportInscricoes');
             btnLoading(btn, true);
             try {
-                const busca  = document.getElementById('inscBusca').value.toLowerCase();
                 const status = document.getElementById('inscStatusFiltro').value;
-                const filtradas = todasInscricoes.filter(i => {
-                    return (!busca  || i._nome.includes(busca) || i._curso.includes(busca))
-                        && (!status || i.status === status);
-                });
+                const filtradas = getInscricoesFiltradas();
 
                 const statusLabel2 = { pendente:'Pendente', apto:'Apto', concluido:'Concluída', falta:'Falta', rejeitada:'Rejeitada' };
                 const sub = status ? `Filtro: ${statusLabel2[status]}` : 'Todos os status';
@@ -1063,12 +1133,7 @@
             const btn = document.getElementById('btnExportInscricoesExcel');
             btnLoadingXlsx(btn, true);
             try {
-                const busca  = document.getElementById('inscBusca').value.toLowerCase();
-                const status = document.getElementById('inscStatusFiltro').value;
-                const filtradas = todasInscricoes.filter(i => {
-                    return (!busca  || i._nome.includes(busca) || i._curso.includes(busca))
-                        && (!status || i.status === status);
-                });
+                const filtradas = getInscricoesFiltradas();
                 const statusLabel2 = { pendente:'Pendente', apto:'Apto', concluido:'Concluída', falta:'Falta', rejeitada:'Rejeitada' };
                 exportarExcel(
                     `inscricoes_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.xlsx`,
@@ -1161,10 +1226,11 @@
             const btn = document.getElementById('btnExportUsuarios');
             btnLoading(btn, true);
             try {
+                const filtrados = getUsuariosFiltrados();
                 const { jsPDF } = window.jspdf;
                 const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
                 pdfHeader(pdf, 'Relatório de Usuários', 'Todos os perfis');
-                pdfTable(pdf, COLUNAS_USUARIOS, todosUsuariosReport.map(linhaUsuarioCompleta));
+                pdfTable(pdf, COLUNAS_USUARIOS, filtrados.map(linhaUsuarioCompleta));
                 pdfFooter(pdf);
                 pdf.save(`usuarios_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.pdf`);
             } catch (e) { console.error(e); }
@@ -1179,7 +1245,7 @@
                     `usuarios_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.xlsx`,
                     'Usuários',
                     COLUNAS_USUARIOS,
-                    todosUsuariosReport.map(linhaUsuarioCompleta)
+                    getUsuariosFiltrados().map(linhaUsuarioCompleta)
                 );
             } catch (e) { console.error(e); }
             finally { btnLoadingXlsx(btn, false); }
@@ -1497,12 +1563,40 @@
             finally { btnLoadingXlsx(btn, false); }
         });
 
+        function getUsuariosFiltrados() {
+            const empresa = document.getElementById('userEmpresaFiltro').value;
+            const equipe  = document.getElementById('userEquipeFiltro').value;
+            const atuacao = document.getElementById('userAtuacaoFiltro').value;
+
+            return todosUsuariosReport.filter(u => {
+                const empresaOk = !empresa || u.empresa === empresa;
+                const equipeOk  = !equipe  || u.equipe === equipe;
+                const atuacaoOk = !atuacao || u.atuacao === atuacao;
+                return empresaOk && equipeOk && atuacaoOk;
+            });
+        }
+
+        function renderUsuarios() {
+            const filtrados = getUsuariosFiltrados();
+            const tbody = document.getElementById('usuariosList');
+            tbody.innerHTML = filtrados.length > 0
+                ? filtrados.map(u => `
+                    <tr>
+                        <td>${u.fullName || '—'}</td>
+                        <td>${u.email}</td>
+                        <td>${u.empresa || '—'}</td>
+                        <td><span class="status-badge" style="background:rgba(59,130,246,0.15);color:#3b82f6">${u.role || '—'}</span></td>
+                        <td>${u._data}</td>
+                    </tr>`).join('')
+                : '<tr><td colspan="5" style="text-align:center;color:var(--text-secondary);padding:2rem">Nenhum usuário encontrado</td></tr>';
+        }
+
         async function loadUsuariosReport() {
             try {
                 const snap = await getDocs(query(collection(db, 'users'), orderBy('fullName', 'asc')));
 
                 let candidatos = 0, instrutores = 0, admins = 0;
-                const rows = [];
+                todosUsuariosReport = [];
 
                 snap.forEach(d => {
                     const u = d.data();
@@ -1512,25 +1606,16 @@
 
                     const data = u.createdAt?.toDate ? u.createdAt.toDate().toLocaleDateString('pt-BR') : '—';
                     todosUsuariosReport.push({ ...u, _data: data });
-                    rows.push(`
-                        <tr>
-                            <td>${u.fullName || '—'}</td>
-                            <td>${u.email}</td>
-                            <td>${u.empresa || '—'}</td>
-                            <td><span class="status-badge" style="background:rgba(59,130,246,0.15);color:#3b82f6">${u.role || '—'}</span></td>
-                            <td>${data}</td>
-                        </tr>
-                    `);
                 });
 
                 document.getElementById('userCandidatos').textContent = candidatos;
                 document.getElementById('userInstrutores').textContent = instrutores;
                 document.getElementById('userAdmins').textContent = admins;
 
-                const tbody = document.getElementById('usuariosList');
-                tbody.innerHTML = rows.length > 0
-                    ? rows.join('')
-                    : '<tr><td colspan="5" style="text-align:center;color:var(--text-secondary)">Nenhum usuário encontrado</td></tr>';
+                document.getElementById('userEmpresaFiltro').addEventListener('change', renderUsuarios);
+                document.getElementById('userEquipeFiltro').addEventListener('change', renderUsuarios);
+                document.getElementById('userAtuacaoFiltro').addEventListener('change', renderUsuarios);
+                renderUsuarios();
             } catch (err) {
                 console.error('Erro usuários report:', err);
             }
