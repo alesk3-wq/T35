@@ -6,6 +6,13 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // ⚠️ DESATIVADA TEMPORARIAMENTE em 2026-08-12 a pedido do admin — treinamento no dia
+    // seguinte, cadastro liberado por hoje. Trocar pra `true` religa a trava de CPF
+    // autorizado (não esquecer — combinado pra reativar amanhã).
+    function whitelistCpfAtiva() {
+      return false;
+    }
+
     // ── users ────────────────────────────────────────────────────────────────
     // Qualquer autenticado lê (admin/grupos precisam buscar candidatos).
     // Criação: apenas o próprio usuário, sempre com role 'candidato'.
@@ -23,7 +30,8 @@ service cloud.firestore {
                     // completo) — a checagem de verdade pro caso Google acontece no update, quando
                     // ele preenche o CPF de fato no perfil.
                     && (
-                         request.resource.data.cpf == null
+                         !whitelistCpfAtiva()
+                         || request.resource.data.cpf == null
                          || (
                               exists(/databases/$(database)/documents/funcionariosAutorizados/$(request.resource.data.cpf))
                               && get(/databases/$(database)/documents/funcionariosAutorizados/$(request.resource.data.cpf)).data.ativo == true
@@ -36,7 +44,8 @@ service cloud.firestore {
           (resource.data.uid == request.auth.uid
            && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'uid'])
            && (
-                request.resource.data.cpf == resource.data.cpf
+                !whitelistCpfAtiva()
+                || request.resource.data.cpf == resource.data.cpf
                 || request.resource.data.cpf == null
                 || (
                      exists(/databases/$(database)/documents/funcionariosAutorizados/$(request.resource.data.cpf))

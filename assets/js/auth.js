@@ -85,6 +85,11 @@ export async function handleRegister(userData) {
     }
 }
 
+// ⚠️ DESATIVADA TEMPORARIAMENTE em 2026-08-12 a pedido do admin — treinamento no dia
+// seguinte, cadastro liberado por hoje. Trocar pra `true` religa a trava de CPF autorizado
+// (não esquecer — combinado pra reativar amanhã, junto com o firestore.rules).
+const WHITELIST_CPF_ATIVA = false;
+
 /**
  * Verifica se o candidato (perfil único, sem outros papéis) ainda está autorizado a
  * acessar o sistema — desloga e bloqueia se o CPF não estiver mais ativo na lista de
@@ -92,6 +97,8 @@ export async function handleRegister(userData) {
  * @param {object} userData - Dados do usuário vindos do Firestore
  */
 async function verificarAutorizacaoCpf(userData) {
+    if (!WHITELIST_CPF_ATIVA) return;
+
     const perfis = Array.isArray(userData.perfis) ? userData.perfis : [userData.role];
     const somenteCandidato = perfis.length === 1 && perfis[0] === 'candidato';
     if (!somenteCandidato || !userData.cpf) return;
