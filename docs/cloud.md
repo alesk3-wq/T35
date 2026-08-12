@@ -89,6 +89,29 @@ pendente → apto → concluido
 
 ---
 
+## PWA / Instalação no Android
+
+**Não existe app Android nativo neste projeto** — sem `.apk`/`.aab`, sem pasta `android/`, sem
+`AndroidManifest.xml`/`build.gradle`, sem TWA/Bubblewrap/Capacitor/Cordova, em nenhum ponto do
+histórico do git (confirmado por busca completa em 2026-08-12). "Instalar Aplicativo" é só o fluxo
+padrão de PWA do Chrome: `instalar.html` é a única página do site com `<link rel="manifest">`, e o
+botão escuta o evento `beforeinstallprompt`. No Android, o próprio Chrome gera um WebAPK a partir
+disso — não há `targetSdkVersion`/certificado que o código deste projeto controle.
+
+Desde 2026-08-12 há um `sw.js` (raiz do projeto, registrado em `instalar.html`) como reforço de
+instalabilidade PWA — critério que o Chrome usa para gerar a instalação completa em vez de um atalho
+degradado. Ele cacheia **só** as imagens estáticas do app shell (`assets/img/t35logo.png`,
+`t35-android.png`, `t35-ios.png`, `favi-t35.png`); todo o resto (HTML, JS, chamadas ao Firebase) vai
+sempre direto pra rede, de propósito — cache de conteúdo dinâmico arriscaria mostrar curso/status
+desatualizado.
+
+**Contexto:** adicionado depois de um usuário relatar, ao instalar em um Samsung com Android mais
+novo, um aviso do tipo "o app não tem os requisitos mínimos de segurança que o sistema exige". Essa
+mensagem é característica de proteção do próprio Android/Chrome/Samsung, fora do alcance do código do
+site — o service worker é uma medida defensiva plausível, não uma correção garantida.
+
+---
+
 ## Deploy
 
 ```bash
