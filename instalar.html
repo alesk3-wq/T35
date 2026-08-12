@@ -403,6 +403,10 @@
 </div>
 
 <script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').catch((err) => console.error('Erro ao registrar service worker:', err));
+    }
+
     const isIOS        = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     const isAndroid    = /Android/.test(navigator.userAgent);
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches
