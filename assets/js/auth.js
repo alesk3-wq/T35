@@ -187,7 +187,8 @@ export function redirectByRole(role) {
     const roleMap = {
         'candidato': 'candidato/dashboard.html',
         'instrutor': 'instrutor/dashboard.html',
-        'admin': 'admin/dashboard.html'
+        'admin': 'admin/dashboard.html',
+        'gestor': 'gestor/dashboard.html'
     };
 
     const redirectUrl = roleMap[role] || 'candidato/dashboard.html';

@@ -77,6 +77,7 @@
         .role-admin { background: rgba(245,158,11,0.15); color: var(--amber); }
         .role-instrutor { background: rgba(59,130,246,0.15); color: #3b82f6; }
         .role-candidato { background: rgba(34,197,94,0.15); color: #22c55e; }
+        .role-gestor { background: rgba(168,85,247,0.15); color: #a855f7; }
 
         .modal {
             display: none;
@@ -332,6 +333,7 @@
                     <option value="candidato">Candidato</option>
                     <option value="instrutor">Instrutor</option>
                     <option value="admin">Admin</option>
+                    <option value="gestor">Gestor</option>
                 </select>
             </div>
 
@@ -380,6 +382,7 @@
                         <option value="candidato">Candidato</option>
                         <option value="instrutor">Instrutor</option>
                         <option value="admin">Admin</option>
+                        <option value="gestor">Gestor</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -394,9 +397,19 @@
                         <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;font-size:14px">
                             <input type="checkbox" class="chk-perfil" value="admin"> Admin
                         </label>
+                        <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;font-size:14px">
+                            <input type="checkbox" class="chk-perfil" value="gestor"> Gestor
+                        </label>
                     </div>
                     <p style="font-size:12px;color:var(--text-secondary);margin:0.4rem 0 0">
                         Marque mais de um para o usuário escolher o perfil ao logar.
+                    </p>
+                </div>
+                <div class="form-group" id="gestorEquipesSection" style="display:none">
+                    <label>Equipes que gerencia</label>
+                    <div id="gestorEquipesList" style="display:flex;gap:1.25rem;margin-top:0.4rem;flex-wrap:wrap"></div>
+                    <p style="font-size:12px;color:var(--text-secondary);margin:0.4rem 0 0">
+                        O gestor verá o relatório apenas dos candidatos vinculados a estas equipes.
                     </p>
                 </div>
                 <div class="form-group">
@@ -589,6 +602,8 @@
             document.getElementById('btnEnviarAssinatura').style.display = 'none';
             atualizarSecaoAssinatura();
             renderAssinaturaAtual();
+            carregarCheckboxesEquipes(user.gestorEquipes || []);
+            atualizarSecaoGestor();
             document.getElementById('editModal').classList.add('active');
         }
 
@@ -612,6 +627,45 @@
         document.querySelectorAll('.chk-perfil').forEach(chk =>
             chk.addEventListener('change', atualizarSecaoAssinatura)
         );
+
+        // ── Equipes que o gestor gerencia ──────────────────────────────────
+
+        function ehGestorNoForm() {
+            if (document.getElementById('editRole').value === 'gestor') return true;
+            return [...document.querySelectorAll('.chk-perfil:checked')].some(c => c.value === 'gestor');
+        }
+
+        function atualizarSecaoGestor() {
+            document.getElementById('gestorEquipesSection').style.display = ehGestorNoForm() ? 'block' : 'none';
+        }
+
+        document.getElementById('editRole').addEventListener('change', atualizarSecaoGestor);
+        document.querySelectorAll('.chk-perfil').forEach(chk =>
+            chk.addEventListener('change', atualizarSecaoGestor)
+        );
+
+        async function carregarCheckboxesEquipes(selecionadas) {
+            const box = document.getElementById('gestorEquipesList');
+            box.innerHTML = 'Carregando...';
+            try {
+                let snap;
+                try {
+                    snap = await getDocs(query(collection(db, 'equipes'), orderBy('nome', 'asc')));
+                } catch {
+                    snap = await getDocs(collection(db, 'equipes'));
+                }
+                const nomes = snap.docs.map(d => d.data().nome).filter(Boolean).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+                box.innerHTML = nomes.length > 0
+                    ? nomes.map(nome => `
+                        <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;font-size:14px">
+                            <input type="checkbox" class="chk-gestor-equipe" value="${nome}" ${selecionadas.includes(nome) ? 'checked' : ''}> ${nome}
+                        </label>`).join('')
+                    : '<span style="color:var(--text-secondary);font-size:13px">Nenhuma equipe cadastrada</span>';
+            } catch (err) {
+                box.innerHTML = '<span style="color:var(--text-secondary);font-size:13px">Erro ao carregar equipes</span>';
+                console.error('Erro ao carregar equipes:', err);
+            }
+        }
 
         function renderAssinaturaAtual() {
             const user = allUsers.find(u => u.id === currentEditId);
@@ -706,6 +760,7 @@
 
             try {
                 const perfis = [...document.querySelectorAll('.chk-perfil:checked')].map(c => c.value);
+                const gestorEquipes = [...document.querySelectorAll('.chk-gestor-equipe:checked')].map(c => c.value);
                 await updateDoc(doc(db, 'users', currentEditId), {
                     fullName: document.getElementById('editName').value,
                     role: newRole,
@@ -715,6 +770,7 @@
                     empresa: document.getElementById('editEmpresa').value,
                     equipe: document.getElementById('editEquipe').value,
                     atuacao: document.getElementById('editAtuacao').value,
+                    gestorEquipes,
                     updatedAt: serverTimestamp()
                 });
 
