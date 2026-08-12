@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="../assets/img/favi-t35.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Funcionários Autorizados - T35 Academy</title>
+    <link rel="stylesheet" href="../assets/css/design-system.css">
+    <link rel="stylesheet" href="../assets/css/layout.css">
+    <link rel="stylesheet" href="../assets/css/responsive.css">
+    <style>
+        .content { padding: 2rem; }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .page-header h1 { color: var(--text); font-size: 28px; margin: 0; }
+
+        .filters {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+        .filters input, .filters select {
+            padding: 0.65rem 1rem;
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 13px;
+        }
+        .filters input { flex: 1; min-width: 220px; }
+        .filters select { min-width: 160px; }
+        .filters input:focus, .filters select:focus { outline: none; border-color: var(--amber); }
+
+        .table-container {
+            background: var(--bg2);
+            border-radius: 12px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        table { width: 100%; border-collapse: collapse; min-width: 560px; }
+        thead { background: var(--bg); border-bottom: 2px solid var(--border); }
+        th {
+            padding: 1rem;
+            text-align: left;
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+            font-size: 14px;
+        }
+        tbody tr:hover { background: rgba(245, 158, 11, 0.05); }
+
+        .status-badge {
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .status-ativo       { background: rgba(34,197,94,0.15);  color: #22c55e; }
+        .status-inativo     { background: rgba(239,68,68,0.15);  color: #ef4444; }
+        .status-cadastrado  { background: rgba(59,130,246,0.15); color: #3b82f6; }
+        .status-aguardando  { background: rgba(148,163,184,0.15); color: #94a3b8; }
+
+        .empty-state { text-align: center; padding: 3rem 2rem; color: var(--text-secondary); }
+
+        .aviso-sem-equipe {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2.5rem 2rem;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 600px) {
+            .page-header h1 { font-size: 22px; }
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img src="../assets/img/t35logo.png" alt="T35 Academy" class="logo">
+            <h2>T35 Academy</h2>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="dashboard.html" class="nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="20" x2="18" y2="10"></line>
+                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                    <line x1="6" y1="20" x2="6" y2="14"></line>
+                </svg>
+                <span>Relatório da Equipe</span>
+            </a>
+            <a href="funcionarios-autorizados.html" class="nav-item active">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    <polyline points="9 12 11 14 15 10"></polyline>
+                </svg>
+                <span>Funcionários Autorizados</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="btn-logout" id="btnLogout">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                <span>Logout</span>
+            </button>
+        </div>
+    </aside>
+
+    <div class="topbar">
+        <button class="btn-menu" id="btnMenu">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
+        <h1 class="page-title">Funcionários Autorizados</h1>
+    </div>
+
+    <main class="main">
+        <div class="content">
+            <div class="page-header">
+                <h1>Funcionários Autorizados</h1>
+            </div>
+
+            <div id="semEquipeAviso" class="aviso-sem-equipe" style="display:none">
+                Você ainda não tem nenhuma equipe vinculada ao seu perfil de Gestor.
+                Fale com o administrador para vincular a(s) equipe(s) que você deve acompanhar.
+            </div>
+
+            <div id="conteudoLista">
+                <div class="filters">
+                    <input type="text" id="busca" placeholder="Buscar por nome ou CPF...">
+                    <select id="statusFiltro">
+                        <option value="">Todos os status</option>
+                        <option value="ativo">Ativo</option>
+                        <option value="inativo">Inativo</option>
+                    </select>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>CPF</th>
+                                <th>Equipe</th>
+                                <th>Atuação</th>
+                                <th>Cadastro</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="listaBody">
+                            <tr><td colspan="6" style="text-align:center;color:var(--text-secondary)">Carregando...</td></tr>
+                        </tbody>
+                    </table>
+                    <div id="emptyState" class="empty-state" style="display:none">
+                        <p>Nenhum funcionário autorizado encontrado pra sua(s) equipe(s).</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script type="module">
+        import { handleLogout } from '../assets/js/auth.js';
+        import { toggleSidebar } from '../assets/js/ui-shell.js';
+        import { auth, db } from '../firebase-config.js';
+        import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js';
+        import {
+            collection, getDocs, query, where
+        } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js';
+        import { formatCPF } from '../assets/js/utils.js';
+
+        document.getElementById('btnMenu').addEventListener('click', toggleSidebar);
+        document.getElementById('btnLogout').addEventListener('click', handleLogout);
+
+        let minhasEquipes = [];
+        let listaCompleta = [];
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) { window.location.href = '../login.html'; return; }
+
+            const q = query(collection(db, 'users'), where('uid', '==', user.uid));
+            const snap = await getDocs(q);
+            const userData = snap.docs[0]?.data();
+
+            const perfis = userData?.perfis || [userData?.role];
+            if (!perfis.includes('gestor')) {
+                alert('Acesso negado!');
+                window.location.href = '../login.html';
+                return;
+            }
+
+            minhasEquipes = userData.gestorEquipes || [];
+            if (minhasEquipes.length === 0) {
+                document.getElementById('semEquipeAviso').style.display = 'block';
+                document.getElementById('conteudoLista').style.display = 'none';
+                return;
+            }
+
+            loadData();
+        });
+
+        async function loadData() {
+            try {
+                const [autSnap, usersSnap] = await Promise.all([
+                    getDocs(collection(db, 'funcionariosAutorizados')),
+                    getDocs(collection(db, 'users'))
+                ]);
+
+                const usersByCpf = new Map();
+                usersSnap.forEach(d => {
+                    const u = d.data();
+                    if (u.cpf) usersByCpf.set(u.cpf, u);
+                });
+
+                listaCompleta = [];
+                autSnap.forEach(d => {
+                    const item = d.data();
+                    const userVinculado = usersByCpf.get(d.id);
+                    const equipe = userVinculado?.equipe || null;
+                    // Só entra na lista do gestor quem já se cadastrou E cuja equipe bate
+                    // com alguma das equipes atribuídas a ele — quem ainda não se cadastrou
+                    // não tem equipe definida e não há como atribuir ainda.
+                    if (!equipe || !minhasEquipes.includes(equipe)) return;
+
+                    listaCompleta.push({
+                        cpf: d.id,
+                        nome: item.nome || '—',
+                        ativo: item.ativo !== false,
+                        equipe,
+                        atuacao: userVinculado?.atuacao || null,
+                        cadastrado: true
+                    });
+                });
+
+                listaCompleta.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+
+                document.getElementById('busca').addEventListener('input', render);
+                document.getElementById('statusFiltro').addEventListener('change', render);
+                render();
+            } catch (err) {
+                console.error('Erro ao carregar lista:', err);
+            }
+        }
+
+        function getFiltrados() {
+            const busca = document.getElementById('busca').value.toLowerCase();
+            const buscaDigitos = busca.replace(/\D/g, '');
+            const status = document.getElementById('statusFiltro').value;
+
+            return listaCompleta.filter(item => {
+                const buscaOk = !busca
+                    || item.nome.toLowerCase().includes(busca)
+                    || (buscaDigitos && item.cpf.includes(buscaDigitos));
+                const statusOk = !status || (status === 'ativo' ? item.ativo : !item.ativo);
+                return buscaOk && statusOk;
+            });
+        }
+
+        function render() {
+            const filtrados = getFiltrados();
+            const tbody = document.getElementById('listaBody');
+            const empty = document.getElementById('emptyState');
+
+            if (filtrados.length === 0) {
+                tbody.innerHTML = '';
+                empty.style.display = 'block';
+                return;
+            }
+            empty.style.display = 'none';
+
+            tbody.innerHTML = filtrados.map(item => `
+                <tr>
+                    <td>${item.nome}</td>
+                    <td>${formatCPF(item.cpf)}</td>
+                    <td>${item.equipe || '—'}</td>
+                    <td>${item.atuacao || '—'}</td>
+                    <td><span class="status-badge status-cadastrado">Cadastrado</span></td>
+                    <td><span class="status-badge status-${item.ativo ? 'ativo' : 'inativo'}">${item.ativo ? 'Ativo' : 'Inativo'}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        console.log('✅ Funcionários Autorizados (Gestor) carregado!');
+    </script>
+</body>
+</html>

@@ -10,7 +10,8 @@ import {
     GoogleAuthProvider,
     signOut,
     onAuthStateChanged,
-    sendEmailVerification
+    sendEmailVerification,
+    deleteUser
 } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js';
 import { 
     collection, 
@@ -31,15 +32,14 @@ const googleProvider = new GoogleAuthProvider();
 export async function handleRegister(userData) {
     const { email, password, fullName, cpf, phone, matricula, empresa, equipe, atuacao } = userData;
 
+    let userCredential;
     try {
         // ✅ 1. Cria usuário no Firebase Auth
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const uid = userCredential.user.uid;
 
-        // ✅ 2. Envia email de verificação
-        await sendEmailVerification(userCredential.user);
-
-        // ✅ 3. Salva dados completos no Firestore
+        // ✅ 2. Salva dados completos no Firestore (a regra do Firestore valida o CPF
+        // contra a lista de funcionários autorizados antes de aceitar a gravação)
         await addDoc(collection(db, 'users'), {
             uid,
             fullName,
@@ -56,12 +56,22 @@ export async function handleRegister(userData) {
             status: 'ativo'
         });
 
+        // ✅ 3. Envia email de verificação (só depois de confirmar que o cadastro foi aceito)
+        await sendEmailVerification(userCredential.user);
+
         console.log('✅ Usuário registrado com sucesso!');
         return { uid, message: 'Cadastro realizado com sucesso!' };
 
     } catch (error) {
         console.error('❌ Erro no registro:', error);
-        
+
+        // CPF não autorizado: a conta de Auth já foi criada, mas o doc em `users` foi
+        // recusado pela regra do Firestore — desfaz a conta pra não deixar órfã.
+        if (userCredential?.user && error.code === 'permission-denied') {
+            await deleteUser(userCredential.user).catch(() => {});
+            throw new Error('CPF não autorizado. Fale com o RH/administrador da sua empresa.');
+        }
+
         // Mensagens amigáveis
         if (error.code === 'auth/email-already-in-use') {
             throw new Error('Este email já está cadastrado');
@@ -72,6 +82,24 @@ export async function handleRegister(userData) {
         } else {
             throw new Error(error.message || 'Erro ao criar conta');
         }
+    }
+}
+
+/**
+ * Verifica se o candidato (perfil único, sem outros papéis) ainda está autorizado a
+ * acessar o sistema — desloga e bloqueia se o CPF não estiver mais ativo na lista de
+ * funcionários autorizados. Não afeta admin/instrutor/gestor.
+ * @param {object} userData - Dados do usuário vindos do Firestore
+ */
+async function verificarAutorizacaoCpf(userData) {
+    const perfis = Array.isArray(userData.perfis) ? userData.perfis : [userData.role];
+    const somenteCandidato = perfis.length === 1 && perfis[0] === 'candidato';
+    if (!somenteCandidato || !userData.cpf) return;
+
+    const autDoc = await getDoc(doc(db, 'funcionariosAutorizados', userData.cpf));
+    if (!autDoc.exists() || autDoc.data().ativo === false) {
+        await signOut(auth);
+        throw new Error('Seu acesso foi desativado. Entre em contato com o RH/administrador.');
     }
 }
 
@@ -96,9 +124,12 @@ export async function handleLogin(email, password) {
 
         const userData = querySnapshot.docs[0].data();
 
+        // ✅ 3. Bloqueia se o CPF não estiver mais autorizado (candidato puro só)
+        await verificarAutorizacaoCpf(userData);
+
         console.log('✅ Login realizado com sucesso!');
 
-        // ✅ 3. Redireciona conforme perfis disponíveis
+        // ✅ 4. Redireciona conforme perfis disponíveis
         const perfis = userData.perfis;
         if (Array.isArray(perfis) && perfis.length > 1) {
             return { needsRoleSelection: true, perfis };
@@ -164,6 +195,9 @@ export async function handleGoogleLogin() {
         // ✅ 3. Usuário já existe - faz login normal
         const userData = querySnapshot.docs[0].data();
 
+        // ✅ 3.1 Bloqueia se o CPF não estiver mais autorizado (candidato puro só)
+        await verificarAutorizacaoCpf(userData);
+
         console.log('✅ Login Google realizado com sucesso!');
 
         const perfis = userData.perfis;
@@ -175,6 +209,9 @@ export async function handleGoogleLogin() {
 
     } catch (error) {
         console.error('❌ Erro no Google Login:', error);
+        // Erros nossos (ex.: bloqueio por CPF desativado) não têm `.code` — repassa a
+        // mensagem original em vez de esconder atrás do genérico abaixo.
+        if (!error.code) throw error;
         throw new Error('Erro ao conectar com Google');
     }
 }

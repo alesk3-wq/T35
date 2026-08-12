@@ -587,7 +587,11 @@
 
                 showSuccess();
             } catch (err) {
-                showError('Erro ao salvar: ' + err.message);
+                if (err.code === 'permission-denied') {
+                    showError('CPF não autorizado. Fale com o RH/administrador da sua empresa.');
+                } else {
+                    showError('Erro ao salvar: ' + err.message);
+                }
             } finally {
                 btn.disabled = false;
                 btn.textContent = 'Salvar Alterações';

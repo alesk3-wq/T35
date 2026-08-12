@@ -17,12 +17,32 @@ service cloud.firestore {
 
       allow create: if isAuth()
                     && request.resource.data.uid == request.auth.uid
-                    && request.resource.data.role == 'candidato';
+                    && request.resource.data.role == 'candidato'
+                    // CPF precisa estar na lista de funcionários autorizados e ativo.
+                    // cpf == null é o doc-stub criado no primeiro login Google (ainda sem perfil
+                    // completo) — a checagem de verdade pro caso Google acontece no update, quando
+                    // ele preenche o CPF de fato no perfil.
+                    && (
+                         request.resource.data.cpf == null
+                         || (
+                              exists(/databases/$(database)/documents/funcionariosAutorizados/$(request.resource.data.cpf))
+                              && get(/databases/$(database)/documents/funcionariosAutorizados/$(request.resource.data.cpf)).data.ativo == true
+                            )
+                       );
 
       allow update: if isAuth() && (
-          // Atualizando o próprio perfil: não pode mudar role nem uid
+          // Atualizando o próprio perfil: não pode mudar role nem uid, e se o cpf estiver
+          // mudando (inclusive sendo definido pela primeira vez), precisa estar autorizado.
           (resource.data.uid == request.auth.uid
-           && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'uid']))
+           && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'uid'])
+           && (
+                request.resource.data.cpf == resource.data.cpf
+                || request.resource.data.cpf == null
+                || (
+                     exists(/databases/$(database)/documents/funcionariosAutorizados/$(request.resource.data.cpf))
+                     && get(/databases/$(database)/documents/funcionariosAutorizados/$(request.resource.data.cpf)).data.ativo == true
+                   )
+              ))
           // Atualizando perfil alheio (admin/usuarios.html)
           || resource.data.uid != request.auth.uid
       );
@@ -89,6 +109,15 @@ service cloud.firestore {
 
     // ── condecorados ─────────────────────────────────────────────────────────
     match /condecorados/{id} {
+      allow read, write: if isAuth();
+    }
+
+    // ── funcionariosAutorizados ─────────────────────────────────────────────
+    // Lista de CPFs autorizados a se cadastrar, mantida pelo admin. Doc ID = CPF (só dígitos).
+    // Sem leitura pública de propósito (CPF é dado sensível, diferente de empresas/equipes/atuacoes)
+    // — a validação no cadastro usa exists()/get() dentro das rules de `users`, que ignora a regra
+    // de leitura desta coleção (acesso privilegiado interno à avaliação da rule).
+    match /funcionariosAutorizados/{cpf} {
       allow read, write: if isAuth();
     }
 
