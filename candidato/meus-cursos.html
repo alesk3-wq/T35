@@ -148,6 +148,15 @@
                 Ler QR Code
             </button>
 
+            <!-- Guia de como liberar a câmera, quando o navegador já negou antes -->
+            <div id="permissaoNegadaCard" style="display:none; background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:0.85rem; margin:-0.25rem 0 1rem;">
+                <p style="font-size:13px; color:var(--text); font-weight:600; margin:0 0 0.5rem;">Câmera bloqueada pra este app</p>
+                <ol id="permissaoNegadaPassos" style="font-size:12px; color:var(--text-secondary); margin:0 0 0.75rem; padding-left:1.1rem; line-height:1.5;"></ol>
+                <button type="button" id="btnAbrirConfigCamera" style="width:100%; padding:0.6rem; background:var(--bg2); border:1px solid var(--border); border-radius:8px; color:var(--text); font-weight:600; font-size:12px; cursor:pointer;">
+                    Tentar abrir Configurações
+                </button>
+            </div>
+
             <div style="display:flex; gap:0.75rem;">
                 <button id="btnCancelarPresenca"
                     style="flex:1; padding:0.75rem; background:var(--bg); border:1px solid var(--border); border-radius:8px; color:var(--text-secondary); cursor:pointer; font-size:14px;">
@@ -505,17 +514,56 @@
             document.getElementById('presencaModalCurso').textContent = cursoTitulo;
             document.getElementById('codigoInput').value = '';
             document.getElementById('presencaModalErro').textContent = '';
+            document.getElementById('permissaoNegadaCard').style.display = 'none';
             pararScanner();
             const modal = document.getElementById('presencaModal');
             modal.style.display = 'flex';
             setTimeout(() => document.getElementById('codigoInput').focus(), 50);
         };
 
+        const isAndroidQR = /Android/.test(navigator.userAgent);
+
+        // Uma vez que o navegador/Android nega a câmera pra este app, não tem como
+        // reabrir o card nativo de permissão via código — é uma trava de segurança da
+        // plataforma. O que dá pra fazer é guiar a pessoa até a tela certa.
+        function exibirGuiaPermissaoNegada() {
+            document.getElementById('presencaModalErro').textContent = '';
+
+            const passos = isAndroidQR
+                ? [
+                    'Abra as <strong>Configurações</strong> do celular',
+                    'Toque em <strong>Apps</strong> (ou "Aplicativos")',
+                    'Procure e toque em <strong>T35 Academy</strong>',
+                    'Toque em <strong>Permissões</strong> → <strong>Câmera</strong> → <strong>Permitir</strong>',
+                    'Volte aqui e toque em "Ler QR Code" de novo'
+                  ]
+                : [
+                    'Abra os <strong>Ajustes</strong> do iPhone',
+                    'Role até encontrar <strong>T35 Academy</strong> (ou Safari, se estiver pelo navegador)',
+                    'Toque em <strong>Câmera</strong> e libere o acesso',
+                    'Volte aqui e toque em "Ler QR Code" de novo'
+                  ];
+
+            document.getElementById('permissaoNegadaPassos').innerHTML =
+                passos.map(p => `<li>${p}</li>`).join('');
+
+            const btnConfig = document.getElementById('btnAbrirConfigCamera');
+            btnConfig.style.display = isAndroidQR ? '' : 'none';
+
+            document.getElementById('permissaoNegadaCard').style.display = 'block';
+        }
+
+        document.getElementById('btnAbrirConfigCamera').addEventListener('click', () => {
+            // Melhor esforço: abre a tela de apps do Android. Não garante cair
+            // exatamente em T35 Academy (o navegador não expõe o pacote do app pra
+            // página), mas já poupa alguns toques — o passo a passo cobre o resto.
+            try {
+                window.location.href = 'intent://settings#Intent;action=android.settings.APPLICATION_SETTINGS;end';
+            } catch (e) {}
+        });
+
         function mensagemErroCamera(err) {
             const nome = err?.name || '';
-            if (nome === 'NotAllowedError' || nome === 'PermissionDeniedError') {
-                return 'Permissão da câmera negada. Habilite o acesso à câmera nas configurações do navegador e tente de novo.';
-            }
             if (nome === 'NotFoundError' || nome === 'DevicesNotFoundError') {
                 return 'Nenhuma câmera foi encontrada neste aparelho.';
             }
@@ -535,6 +583,9 @@
         document.getElementById('btnLerQR').addEventListener('click', () => {
             if (scannerAtivo) { pararScanner(); return; }
 
+            document.getElementById('permissaoNegadaCard').style.display = 'none';
+            document.getElementById('presencaModalErro').textContent = '';
+
             const wrap = document.getElementById('qrScannerWrap');
             wrap.style.display = 'block';
             document.getElementById('btnLerQR').innerHTML = `
@@ -552,8 +603,15 @@
                 () => {}
             ).then(() => { scannerAtivo = true; })
              .catch(async (err1) => {
-                // Câmera traseira "ideal" não disponível/permitida — tenta de novo listando
-                // as câmeras reais do aparelho, em vez de desistir na primeira falha.
+                if (err1?.name === 'NotAllowedError' || err1?.name === 'PermissionDeniedError') {
+                    // Permissão já negada antes — tentar de novo não adianta, o navegador
+                    // nem chega a pedir câmera outra vez. Vai direto pro guia.
+                    exibirGuiaPermissaoNegada();
+                    pararScanner();
+                    return;
+                }
+                // Câmera traseira "ideal" não disponível — tenta de novo listando as
+                // câmeras reais do aparelho, em vez de desistir na primeira falha.
                 try {
                     const cameras = await Html5Qrcode.getCameras();
                     if (!cameras || cameras.length === 0) throw err1;
@@ -566,7 +624,11 @@
                     );
                     scannerAtivo = true;
                 } catch (err2) {
-                    document.getElementById('presencaModalErro').textContent = mensagemErroCamera(err2 || err1);
+                    if (err2?.name === 'NotAllowedError' || err2?.name === 'PermissionDeniedError') {
+                        exibirGuiaPermissaoNegada();
+                    } else {
+                        document.getElementById('presencaModalErro').textContent = mensagemErroCamera(err2 || err1);
+                    }
                     pararScanner();
                 }
              });
