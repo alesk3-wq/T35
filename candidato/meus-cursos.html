@@ -142,7 +142,8 @@
             </div>
 
             <button id="btnLerQR"
-                style="width:100%; padding:0.65rem; background:rgba(255,34,51,0.08); border:1px solid rgba(255,34,51,0.25); border-radius:8px; color:var(--amber); font-weight:600; font-size:13px; cursor:pointer; margin-bottom:1rem; display:flex; align-items:center; justify-content:center; gap:0.5rem; transition:background 0.2s;">
+                style="width:100%; padding:0.65rem; background:var(--warning); border:none; border-radius:8px; color:var(--bg); font-weight:700; font-size:13px; cursor:pointer; margin-bottom:1rem; display:flex; align-items:center; justify-content:center; gap:0.5rem; transition:filter 0.2s;"
+                onmouseover="this.style.filter='brightness(1.08)'" onmouseout="this.style.filter='none'">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h.01M14 17h.01M17 14h.01M17 17h.01M20 14h.01M20 17h.01M20 20h.01M17 20h.01M14 20h.01"/></svg>
                 Ler QR Code
             </button>
@@ -510,6 +511,27 @@
             setTimeout(() => document.getElementById('codigoInput').focus(), 50);
         };
 
+        function mensagemErroCamera(err) {
+            const nome = err?.name || '';
+            if (nome === 'NotAllowedError' || nome === 'PermissionDeniedError') {
+                return 'Permissão da câmera negada. Habilite o acesso à câmera nas configurações do navegador e tente de novo.';
+            }
+            if (nome === 'NotFoundError' || nome === 'DevicesNotFoundError') {
+                return 'Nenhuma câmera foi encontrada neste aparelho.';
+            }
+            if (nome === 'NotReadableError' || nome === 'TrackStartError') {
+                return 'A câmera está sendo usada por outro aplicativo. Feche outros apps que usam a câmera e tente de novo.';
+            }
+            return 'Não foi possível acessar a câmera. Verifique as permissões do navegador e tente de novo.';
+        }
+
+        function onQrLido(decodedText) {
+            // QR lido — preenche o campo e confirma automaticamente
+            document.getElementById('codigoInput').value = decodedText.trim().toUpperCase();
+            pararScanner();
+            document.getElementById('btnEnviarCodigo').click();
+        }
+
         document.getElementById('btnLerQR').addEventListener('click', () => {
             if (scannerAtivo) { pararScanner(); return; }
 
@@ -526,17 +548,27 @@
             html5QrScanner.start(
                 { facingMode: 'environment' },
                 { fps: 10, qrbox: { width: 220, height: 220 } },
-                (decodedText) => {
-                    // QR lido — preenche o campo e confirma automaticamente
-                    document.getElementById('codigoInput').value = decodedText.trim().toUpperCase();
-                    pararScanner();
-                    document.getElementById('btnEnviarCodigo').click();
-                },
+                onQrLido,
                 () => {}
             ).then(() => { scannerAtivo = true; })
-             .catch(() => {
-                document.getElementById('presencaModalErro').textContent = 'Não foi possível acessar a câmera.';
-                pararScanner();
+             .catch(async (err1) => {
+                // Câmera traseira "ideal" não disponível/permitida — tenta de novo listando
+                // as câmeras reais do aparelho, em vez de desistir na primeira falha.
+                try {
+                    const cameras = await Html5Qrcode.getCameras();
+                    if (!cameras || cameras.length === 0) throw err1;
+                    const traseira = cameras.find(c => /back|traseira|rear|environment/i.test(c.label)) || cameras[cameras.length - 1];
+                    await html5QrScanner.start(
+                        traseira.id,
+                        { fps: 10, qrbox: { width: 220, height: 220 } },
+                        onQrLido,
+                        () => {}
+                    );
+                    scannerAtivo = true;
+                } catch (err2) {
+                    document.getElementById('presencaModalErro').textContent = mensagemErroCamera(err2 || err1);
+                    pararScanner();
+                }
              });
         });
 
