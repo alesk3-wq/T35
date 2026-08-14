@@ -436,6 +436,10 @@
                                 </svg>
                                 Exportar PDF
                             </button>
+                            <button class="btn-relatorio" id="btnRelatorioExcel" style="background:rgba(34,197,94,0.1); border-color:rgba(34,197,94,0.25); color:#22c55e;">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+                                Exportar Excel
+                            </button>
                         </div>
                         <div id="alunosList">
                             <p class="alunos-empty">Selecione um curso para ver as confirmações.</p>
@@ -451,6 +455,7 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <script type="module">
         import { handleLogout } from '../assets/js/auth.js';
@@ -700,9 +705,35 @@
 
         // ── Relatório de Presença ─────────────────────────────────────────
 
-        document.getElementById('btnRelatorio').addEventListener('click', gerarRelatorio);
+        document.getElementById('btnRelatorio').addEventListener('click', gerarRelatorioPDF);
+        document.getElementById('btnRelatorioExcel').addEventListener('click', gerarRelatorioExcel);
 
-        async function gerarRelatorio() {
+        async function buscarDadosRelatorio(filtro) {
+            const constraints = [where('cursoId', '==', cursoSelecionado.id)];
+            if (filtro) constraints.push(where('status', '==', filtro));
+            const inscSnap = await getDocs(query(collection(db, 'inscricoes'), ...constraints));
+
+            return Promise.all(inscSnap.docs.map(async d => {
+                const insc = d.data();
+                const uSnap = await getDocs(query(collection(db, 'users'), where('uid', '==', insc.candidatoId)));
+                const u = uSnap.docs[0]?.data();
+                const presencas = (insc.presencas || []).sort();
+                return {
+                    nome:    u?.fullName || 'Desconhecido',
+                    email:   u?.email || '—',
+                    cpf:     u?.cpf || '—',
+                    equipe:  u?.equipe || '—',
+                    atuacao: u?.atuacao || '—',
+                    total:   presencas.length,
+                    datas:   presencas.map(d => {
+                        const [y,m,day] = d.split('-');
+                        return `${day}/${m}/${y}`;
+                    }).join(', ') || '—'
+                };
+            }));
+        }
+
+        async function gerarRelatorioPDF() {
             if (!cursoSelecionado) return;
             const btn = document.getElementById('btnRelatorio');
             const filtro = document.getElementById('filtroRelatorio').value;
@@ -710,26 +741,7 @@
             btn.disabled = true;
 
             try {
-                const constraints = [where('cursoId', '==', cursoSelecionado.id)];
-                if (filtro) constraints.push(where('status', '==', filtro));
-                const inscSnap = await getDocs(query(collection(db, 'inscricoes'), ...constraints));
-
-                const alunos = await Promise.all(inscSnap.docs.map(async d => {
-                    const insc = d.data();
-                    const uSnap = await getDocs(query(collection(db, 'users'), where('uid', '==', insc.candidatoId)));
-                    const u = uSnap.docs[0]?.data();
-                    const presencas = (insc.presencas || []).sort();
-                    return {
-                        nome:      u?.fullName || 'Desconhecido',
-                        email:     u?.email || '—',
-                        status:    insc.status,
-                        total:     presencas.length,
-                        datas:     presencas.map(d => {
-                            const [y,m,day] = d.split('-');
-                            return `${day}/${m}/${y}`;
-                        }).join(', ') || '—'
-                    };
-                }));
+                const alunos = await buscarDadosRelatorio(filtro);
 
                 const { jsPDF } = window.jspdf;
                 const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
@@ -766,30 +778,29 @@
                 pdf.setDrawColor(226, 232, 240);
                 pdf.line(14, 49, 283, 49);
 
-                const statusLabel = { pendente: 'Pendente', apto: 'Apto',
-                aprovada: 'Apto', concluido: 'Concluído', falta: 'Falta', rejeitada: 'Rejeitado' };
-
                 pdf.autoTable({
                     startY: 53,
-                    head: [['#', 'Aluno', 'E-mail', 'Status', 'Presenças', 'Datas']],
+                    head: [['#', 'Aluno', 'E-mail', 'Presenças', 'Datas', 'Atuação', 'Equipe']],
                     body: alunos.map((a, i) => [
                         i + 1,
                         a.nome,
                         a.email,
-                        statusLabel[a.status] ?? a.status,
                         a.total,
-                        a.datas
+                        a.datas,
+                        a.atuacao,
+                        a.equipe
                     ]),
                     styles: { fontSize: 8, cellPadding: 3, textColor: [30, 41, 59] },
                     headStyles: { fillColor: [15, 23, 42], textColor: [245, 158, 11], fontStyle: 'bold' },
                     alternateRowStyles: { fillColor: [248, 250, 252] },
                     columnStyles: {
                         0: { cellWidth: 8,  halign: 'center' },
-                        1: { cellWidth: 55 },
-                        2: { cellWidth: 65 },
-                        3: { cellWidth: 22, halign: 'center' },
-                        4: { cellWidth: 18, halign: 'center' },
-                        5: { cellWidth: 'auto' }
+                        1: { cellWidth: 48 },
+                        2: { cellWidth: 58 },
+                        3: { cellWidth: 20, halign: 'center' },
+                        4: { cellWidth: 60 },
+                        5: { cellWidth: 30 },
+                        6: { cellWidth: 'auto' }
                     },
                     margin: { left: 14, right: 14 }
                 });
@@ -809,7 +820,44 @@
                 console.error(err);
                 showToast('Erro ao gerar relatório', 'error');
             } finally {
-                btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> Exportar Relatório PDF`;
+                btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> Exportar PDF`;
+                btn.disabled = false;
+            }
+        }
+
+        function exportarExcel(nomeArquivo, sheetName, head, rows) {
+            const ws = XLSX.utils.aoa_to_sheet([head, ...rows]);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, sheetName);
+            XLSX.writeFile(wb, nomeArquivo);
+        }
+
+        async function gerarRelatorioExcel() {
+            if (!cursoSelecionado) return;
+            const btn = document.getElementById('btnRelatorioExcel');
+            const filtro = document.getElementById('filtroRelatorio').value;
+            btn.textContent = 'Gerando...';
+            btn.disabled = true;
+
+            try {
+                const alunos = await buscarDadosRelatorio(filtro);
+
+                const ini = cursoSelecionado.dataInicio?.toDate
+                    ? cursoSelecionado.dataInicio.toDate()
+                    : new Date(cursoSelecionado.dataInicio);
+                const fmt = d => d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' }).replace(/\//g,'-');
+
+                exportarExcel(
+                    `presenca_${cursoSelecionado.titulo.replace(/\s+/g,'_')}_${fmt(ini)}.xlsx`,
+                    'Presença',
+                    ['#', 'Aluno', 'E-mail', 'CPF', 'Presenças', 'Datas', 'Atuação', 'Equipe'],
+                    alunos.map((a, i) => [i + 1, a.nome, a.email, a.cpf, a.total, a.datas, a.atuacao, a.equipe])
+                );
+            } catch (err) {
+                console.error(err);
+                showToast('Erro ao gerar relatório', 'error');
+            } finally {
+                btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg> Exportar Excel`;
                 btn.disabled = false;
             }
         }

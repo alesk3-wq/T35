@@ -322,6 +322,7 @@
             <div class="report-tabs">
                 <button class="tab-btn active" data-tab="inscricoes">Inscrições</button>
                 <button class="tab-btn" data-tab="cursos">Cursos</button>
+                <button class="tab-btn" data-tab="presenca">Presença</button>
                 <button class="tab-btn" data-tab="usuarios">Usuários</button>
                 <button class="tab-btn" data-tab="video">Vídeos</button>
                 <button class="tab-btn" data-tab="empresa">Por Empresa</button>
@@ -444,6 +445,51 @@
                         </thead>
                         <tbody id="cursosList">
                             <tr><td colspan="9" style="text-align:center;color:var(--text-secondary)">Carregando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Relatório: Presença -->
+            <div class="report-panel" id="panel-presenca">
+                <div class="insc-filters">
+                    <select id="presencaCursoFiltro">
+                        <option value="">Selecione um curso...</option>
+                    </select>
+                    <select id="presencaStatusFiltro">
+                        <option value="">Todos os status</option>
+                        <option value="apto">Apto</option>
+                        <option value="concluido">Concluída</option>
+                        <option value="falta">Falta</option>
+                        <option value="pendente">Pendente</option>
+                        <option value="rejeitada">Rejeitada</option>
+                    </select>
+                </div>
+                <div class="export-bar">
+                    <button class="btn-export-pdf" id="btnExportPresenca">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                        Exportar PDF
+                    </button>
+                    <button class="btn-export-xlsx" id="btnExportPresencaExcel">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+                        Exportar Excel
+                    </button>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Aluno</th>
+                                <th>E-mail</th>
+                                <th>Presenças</th>
+                                <th>Datas</th>
+                                <th>Atuação</th>
+                                <th>Equipe</th>
+                            </tr>
+                        </thead>
+                        <tbody id="presencaList">
+                            <tr><td colspan="6" style="text-align:center;color:var(--text-secondary)">Selecione um curso</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -717,6 +763,7 @@
                 loadAvaliacoesReport(),
                 carregarFiltrosAuxiliares()
             ]);
+            popularCursoFiltroPresenca();
         }
 
         // ── Filtros de cadastro auxiliar (Empresa/Equipe/Atuação) ──────────
@@ -964,6 +1011,9 @@
                         _empresa: usersMap[insc.candidatoId]?.empresa || '—',
                         _equipe:  usersMap[insc.candidatoId]?.equipe  || '—',
                         _atuacao: usersMap[insc.candidatoId]?.atuacao || '—',
+                        // usados só na aba Presença
+                        _email: usersMap[insc.candidatoId]?.email || '—',
+                        _cpf:   usersMap[insc.candidatoId]?.cpf   || '—',
                     });
                 });
 
@@ -1045,6 +1095,7 @@
                     const dados = inscPorCurso[d.id] || { total: 0, concluidos: 0, faltas: 0 };
                     return {
                         ...c,
+                        id: d.id,
                         _titulo:    (c.titulo    || '').toLowerCase(),
                         _instrutor: (c.instrutor || '').toLowerCase(),
                         _dados: dados,
@@ -1209,6 +1260,109 @@
                         c.vagas ?? '—', c._dados.total, c._dados.concluidos, c._dados.faltas,
                         c._pct + '%', c._dados.total > 0 ? c._taxa + '%' : '—', c.status
                     ])
+                );
+            } catch (e) { console.error(e); }
+            finally { btnLoadingXlsx(btn, false); }
+        });
+
+        // ── Presença (por curso) ────────────────────────────────────────────
+
+        function popularCursoFiltroPresenca() {
+            const sel = document.getElementById('presencaCursoFiltro');
+            todosCursosReport
+                .slice()
+                .sort((a, b) => (a.titulo || '').localeCompare(b.titulo || '', 'pt-BR'))
+                .forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.id;
+                    opt.textContent = c.titulo;
+                    sel.appendChild(opt);
+                });
+            document.getElementById('presencaCursoFiltro').addEventListener('change', renderPresenca);
+            document.getElementById('presencaStatusFiltro').addEventListener('change', renderPresenca);
+        }
+
+        function getPresencaFiltrada() {
+            const cursoId = document.getElementById('presencaCursoFiltro').value;
+            const status  = document.getElementById('presencaStatusFiltro').value;
+            if (!cursoId) return [];
+
+            return todasInscricoes
+                .filter(i => i.cursoId === cursoId && (!status || i.status === status))
+                .map(i => {
+                    const presencas = (i.presencas || []).slice().sort();
+                    return {
+                        nome:    i._nomeExib,
+                        email:   i._email,
+                        cpf:     i._cpf,
+                        equipe:  i._equipe,
+                        atuacao: i._atuacao,
+                        total:   presencas.length,
+                        datas:   presencas.map(d => {
+                            const [y, m, day] = d.split('-');
+                            return `${day}/${m}/${y}`;
+                        }).join(', ') || '—'
+                    };
+                });
+        }
+
+        function renderPresenca() {
+            const cursoId = document.getElementById('presencaCursoFiltro').value;
+            const tbody = document.getElementById('presencaList');
+
+            if (!cursoId) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-secondary)">Selecione um curso</td></tr>';
+                return;
+            }
+
+            const linhas = getPresencaFiltrada();
+            tbody.innerHTML = linhas.length > 0
+                ? linhas.map(l => `
+                    <tr>
+                        <td>${l.nome}</td>
+                        <td>${l.email}</td>
+                        <td>${l.total}</td>
+                        <td>${l.datas}</td>
+                        <td>${l.atuacao}</td>
+                        <td>${l.equipe}</td>
+                    </tr>`).join('')
+                : '<tr><td colspan="6" style="text-align:center;color:var(--text-secondary);padding:2rem">Nenhuma inscrição encontrada</td></tr>';
+        }
+
+        document.getElementById('btnExportPresenca').addEventListener('click', () => {
+            const btn = document.getElementById('btnExportPresenca');
+            const cursoId = document.getElementById('presencaCursoFiltro').value;
+            if (!cursoId) return;
+            btnLoading(btn, true);
+            try {
+                const linhas = getPresencaFiltrada();
+                const cursoNome = todosCursosReport.find(c => c.id === cursoId)?.titulo || '';
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+                pdfHeader(pdf, 'Relatório de Presença', cursoNome);
+                pdfTable(pdf,
+                    ['#', 'Aluno', 'E-mail', 'Presenças', 'Datas', 'Atuação', 'Equipe'],
+                    linhas.map((l, idx) => [idx + 1, l.nome, l.email, l.total, l.datas, l.atuacao, l.equipe])
+                );
+                pdfFooter(pdf);
+                pdf.save(`presenca_${cursoNome.replace(/\s+/g,'_')}.pdf`);
+            } catch (e) { console.error(e); }
+            finally { btnLoading(btn, false); }
+        });
+
+        document.getElementById('btnExportPresencaExcel').addEventListener('click', () => {
+            const btn = document.getElementById('btnExportPresencaExcel');
+            const cursoId = document.getElementById('presencaCursoFiltro').value;
+            if (!cursoId) return;
+            btnLoadingXlsx(btn, true);
+            try {
+                const linhas = getPresencaFiltrada();
+                const cursoNome = todosCursosReport.find(c => c.id === cursoId)?.titulo || '';
+                exportarExcel(
+                    `presenca_${cursoNome.replace(/\s+/g,'_')}.xlsx`,
+                    'Presença',
+                    ['#', 'Aluno', 'E-mail', 'CPF', 'Presenças', 'Datas', 'Atuação', 'Equipe'],
+                    linhas.map((l, idx) => [idx + 1, l.nome, l.email, l.cpf, l.total, l.datas, l.atuacao, l.equipe])
                 );
             } catch (e) { console.error(e); }
             finally { btnLoadingXlsx(btn, false); }
