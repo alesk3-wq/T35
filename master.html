@@ -217,6 +217,13 @@
             setTimeout(() => el.style.display = 'none', 5000);
         }
 
+        // Compara ignorando maiúscula/minúscula, espaços extras e diferenças
+        // "invisíveis" de acentuação (mesma letra acentuada codificada de formas
+        // Unicode distintas) — evita falso negativo ao digitar o nome pra confirmar.
+        function normalizarTexto(s) {
+            return (s || '').normalize('NFC').trim().replace(/\s+/g, ' ').toLowerCase();
+        }
+
         // ── Bloco 1: Excluir curso de teste ─────────────────────────────────
 
         let cursosCache = [];
@@ -269,7 +276,7 @@
 
         document.getElementById('cursoExcluirConfirmInput').addEventListener('input', (e) => {
             document.getElementById('btnExcluirCurso').disabled =
-                !cursoSelecionadoExcluir || e.target.value.trim() !== cursoSelecionadoExcluir.titulo;
+                !cursoSelecionadoExcluir || normalizarTexto(e.target.value) !== normalizarTexto(cursoSelecionadoExcluir.titulo);
         });
 
         document.getElementById('btnExcluirCurso').addEventListener('click', async () => {

@@ -1068,6 +1068,13 @@
             }
         }
 
+        // Compara ignorando maiúscula/minúscula, espaços extras e diferenças
+        // "invisíveis" de acentuação (mesma letra acentuada codificada de formas
+        // Unicode distintas) — evita falso negativo ao digitar o nome pra confirmar.
+        function normalizarTexto(s) {
+            return (s || '').normalize('NFC').trim().replace(/\s+/g, ' ').toLowerCase();
+        }
+
         let cursoParaExcluir = null;
 
         function excluirCurso(cursoId) {
@@ -1092,7 +1099,7 @@
 
         document.getElementById('deleteCursoConfirmInput').addEventListener('input', (e) => {
             document.getElementById('btnConfirmarExclusaoCurso').disabled =
-                !cursoParaExcluir || e.target.value.trim() !== cursoParaExcluir.titulo;
+                !cursoParaExcluir || normalizarTexto(e.target.value) !== normalizarTexto(cursoParaExcluir.titulo);
         });
 
         document.getElementById('btnConfirmarExclusaoCurso').addEventListener('click', async () => {
