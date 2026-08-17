@@ -90,7 +90,10 @@ service cloud.firestore {
           || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['presencas', 'updatedAt', 'videoProgresso', 'modulosProgresso', 'avaliado'])
       );
 
-      allow delete: if false;
+      // Exclusão: só usada pela ferramenta em master.html (cascata ao apagar curso de
+      // teste), gate de verdade é client-side (acessoTotal no user), mesmo padrão de
+      // proteção que o resto do admin já usa neste arquivo (isAuth() + trava na tela).
+      allow delete: if isAuth();
     }
 
     // ── grupos ───────────────────────────────────────────────────────────────

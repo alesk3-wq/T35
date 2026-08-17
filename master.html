@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="assets/img/favi-t35.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>T35 Academy</title>
+    <link rel="stylesheet" href="assets/css/design-system.css">
+    <link rel="stylesheet" href="assets/css/responsive.css">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--bg) 0%, var(--bg2) 100%);
+            font-family: var(--font-family);
+            padding: 2rem 1rem;
+        }
+
+        .wrap { width: 100%; max-width: 640px; }
+
+        .topo {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .topo h1 { color: var(--text); font-size: 20px; margin: 0; }
+        .topo a { color: var(--text-secondary); font-size: 13px; text-decoration: none; }
+        .topo a:hover { color: var(--amber); }
+
+        .card {
+            background: var(--bg2);
+            border-radius: 12px;
+            padding: 1.75rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            margin-bottom: 1.5rem;
+        }
+        .card h2 { color: var(--text); font-size: 16px; margin: 0 0 0.4rem; }
+        .hint { color: var(--text-secondary); font-size: 12px; line-height: 1.5; margin: 0 0 1rem; }
+
+        select, input[type="text"], input[type="date"] {
+            width: 100%;
+            padding: 0.7rem 0.9rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 13px;
+            box-sizing: border-box;
+            margin-bottom: 0.75rem;
+        }
+        select:disabled { opacity: 0.5; }
+
+        .btn-perigo, .btn-acao {
+            width: 100%;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-perigo { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+        .btn-perigo:hover:not(:disabled) { background: rgba(239,68,68,0.28); }
+        .btn-perigo:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .btn-acao { background: var(--amber); color: var(--bg); }
+        .btn-acao:hover:not(:disabled) { background: var(--amber-dark); }
+        .btn-acao:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .linha { display: flex; gap: 0.75rem; align-items: flex-start; }
+        .linha input { flex: 1; }
+        .linha button { width: auto; padding: 0.7rem 1.25rem; white-space: nowrap; }
+
+        .datas-atuais { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1rem; }
+        .data-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 0.25rem 0.5rem 0.25rem 0.75rem;
+            font-size: 12px;
+            color: var(--text);
+        }
+        .btn-remover-data {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 14px;
+            line-height: 1;
+            padding: 0 0.2rem;
+        }
+        .btn-remover-data:hover { color: #ef4444; }
+
+        .msg {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        .msg-success { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); color: #22c55e; }
+        .msg-error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #ef4444; }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="topo">
+            <h1>Ferramentas</h1>
+            <a href="login.html" id="btnSair">Sair</a>
+        </div>
+
+        <div id="msgBox" class="msg"></div>
+
+        <div class="card">
+            <h2>Excluir Curso de Teste</h2>
+            <p class="hint">Apaga o curso e todas as inscrições vinculadas a ele. Não pode ser desfeito.</p>
+            <select id="cursoExcluirSelect">
+                <option value="">Carregando cursos...</option>
+            </select>
+            <p class="hint" id="cursoExcluirInfo"></p>
+            <input type="text" id="cursoExcluirConfirmInput" style="display:none">
+            <button class="btn-perigo" id="btnExcluirCurso" disabled>Excluir curso e todas as inscrições</button>
+        </div>
+
+        <div class="card">
+            <h2>Registrar Presença Manual</h2>
+            <p class="hint">Pra quando o candidato não conseguiu confirmar pelo QR/código (ex: problema no aparelho dele).</p>
+            <select id="presCursoSelect">
+                <option value="">Carregando cursos...</option>
+            </select>
+            <select id="presInscricaoSelect" disabled>
+                <option value="">Selecione o curso primeiro...</option>
+            </select>
+            <div class="datas-atuais" id="presDatasAtuais"></div>
+            <div class="linha">
+                <input type="date" id="presDataInput">
+                <button class="btn-acao" id="btnAdicionarPresenca" disabled>Registrar</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { handleLogout } from './assets/js/auth.js';
+        import { auth, db } from './firebase-config.js';
+        import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js';
+        import {
+            collection, getDocs, doc, deleteDoc, updateDoc, query, where,
+            writeBatch, arrayUnion, arrayRemove, serverTimestamp
+        } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js';
+
+        document.getElementById('btnSair').addEventListener('click', (e) => {
+            e.preventDefault();
+            handleLogout();
+        });
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) { window.location.href = 'login.html'; return; }
+
+            const snap = await getDocs(query(collection(db, 'users'), where('uid', '==', user.uid)));
+            const userData = snap.docs[0]?.data();
+
+            if (userData?.acessoTotal !== true) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            document.getElementById('presDataInput').value = new Date().toISOString().split('T')[0];
+            await carregarCursosParaExcluir();
+            await carregarCursosParaPresenca();
+        });
+
+        function showMsg(texto, tipo) {
+            const el = document.getElementById('msgBox');
+            el.textContent = texto;
+            el.className = `msg msg-${tipo}`;
+            el.style.display = 'block';
+            setTimeout(() => el.style.display = 'none', 5000);
+        }
+
+        // ── Bloco 1: Excluir curso de teste ─────────────────────────────────
+
+        let cursosCache = [];
+        let cursoSelecionadoExcluir = null;
+
+        async function carregarCursosParaExcluir() {
+            const sel = document.getElementById('cursoExcluirSelect');
+            try {
+                const [cursosSnap, inscSnap] = await Promise.all([
+                    getDocs(collection(db, 'cursos')),
+                    getDocs(collection(db, 'inscricoes'))
+                ]);
+
+                const contagem = {};
+                inscSnap.forEach(d => {
+                    const cid = d.data().cursoId;
+                    contagem[cid] = (contagem[cid] || 0) + 1;
+                });
+
+                cursosCache = cursosSnap.docs
+                    .map(d => ({ id: d.id, titulo: d.data().titulo || '(sem título)', qtdInscricoes: contagem[d.id] || 0 }))
+                    .sort((a, b) => a.titulo.localeCompare(b.titulo, 'pt-BR'));
+
+                sel.innerHTML = '<option value="">Selecione um curso...</option>' +
+                    cursosCache.map(c => `<option value="${c.id}">${c.titulo} (${c.qtdInscricoes} inscrição(ões))</option>`).join('');
+            } catch (err) {
+                console.error(err);
+                sel.innerHTML = '<option value="">Erro ao carregar cursos</option>';
+            }
+        }
+
+        document.getElementById('cursoExcluirSelect').addEventListener('change', (e) => {
+            const info = document.getElementById('cursoExcluirInfo');
+            const confirmInput = document.getElementById('cursoExcluirConfirmInput');
+            const btn = document.getElementById('btnExcluirCurso');
+
+            cursoSelecionadoExcluir = cursosCache.find(c => c.id === e.target.value) || null;
+            confirmInput.value = '';
+            btn.disabled = true;
+
+            if (!cursoSelecionadoExcluir) {
+                info.textContent = '';
+                confirmInput.style.display = 'none';
+                return;
+            }
+            info.textContent = `${cursoSelecionadoExcluir.qtdInscricoes} inscrição(ões) serão apagadas junto.`;
+            confirmInput.placeholder = `Digite "${cursoSelecionadoExcluir.titulo}" pra confirmar`;
+            confirmInput.style.display = 'block';
+        });
+
+        document.getElementById('cursoExcluirConfirmInput').addEventListener('input', (e) => {
+            document.getElementById('btnExcluirCurso').disabled =
+                !cursoSelecionadoExcluir || e.target.value.trim() !== cursoSelecionadoExcluir.titulo;
+        });
+
+        document.getElementById('btnExcluirCurso').addEventListener('click', async () => {
+            if (!cursoSelecionadoExcluir) return;
+            if (!confirm(`Excluir definitivamente "${cursoSelecionadoExcluir.titulo}" e suas ${cursoSelecionadoExcluir.qtdInscricoes} inscrição(ões)? Isso não pode ser desfeito.`)) return;
+
+            const btn = document.getElementById('btnExcluirCurso');
+            btn.disabled = true;
+            btn.textContent = 'Excluindo...';
+
+            try {
+                const inscSnap = await getDocs(query(collection(db, 'inscricoes'), where('cursoId', '==', cursoSelecionadoExcluir.id)));
+                const docs = inscSnap.docs;
+
+                for (let i = 0; i < docs.length; i += 450) {
+                    const chunk = docs.slice(i, i + 450);
+                    const batch = writeBatch(db);
+                    chunk.forEach(d => batch.delete(d.ref));
+                    await batch.commit();
+                }
+
+                await deleteDoc(doc(db, 'cursos', cursoSelecionadoExcluir.id));
+
+                showMsg(`Curso e ${docs.length} inscrição(ões) excluídos com sucesso.`, 'success');
+                document.getElementById('cursoExcluirConfirmInput').style.display = 'none';
+                document.getElementById('cursoExcluirInfo').textContent = '';
+                document.getElementById('cursoExcluirSelect').value = '';
+                cursoSelecionadoExcluir = null;
+
+                await carregarCursosParaExcluir();
+                await carregarCursosParaPresenca();
+            } catch (err) {
+                console.error(err);
+                showMsg('Erro ao excluir: ' + err.message, 'error');
+            } finally {
+                btn.textContent = 'Excluir curso e todas as inscrições';
+            }
+        });
+
+        // ── Bloco 2: Registrar presença manual ──────────────────────────────
+
+        let inscricoesCursoPresenca = [];
+        let inscricaoSelecionadaPresenca = null;
+
+        async function carregarCursosParaPresenca() {
+            const sel = document.getElementById('presCursoSelect');
+            sel.innerHTML = '<option value="">Selecione um curso...</option>' +
+                cursosCache.map(c => `<option value="${c.id}">${c.titulo}</option>`).join('');
+        }
+
+        document.getElementById('presCursoSelect').addEventListener('change', async (e) => {
+            const cursoId = e.target.value;
+            const inscSel = document.getElementById('presInscricaoSelect');
+            inscricaoSelecionadaPresenca = null;
+            document.getElementById('presDatasAtuais').innerHTML = '';
+            document.getElementById('btnAdicionarPresenca').disabled = true;
+
+            if (!cursoId) {
+                inscSel.innerHTML = '<option value="">Selecione o curso primeiro...</option>';
+                inscSel.disabled = true;
+                return;
+            }
+
+            inscSel.innerHTML = '<option value="">Carregando...</option>';
+            inscSel.disabled = true;
+
+            try {
+                const [inscSnap, usersSnap] = await Promise.all([
+                    getDocs(query(collection(db, 'inscricoes'), where('cursoId', '==', cursoId))),
+                    getDocs(collection(db, 'users'))
+                ]);
+
+                const usersMap = {};
+                usersSnap.forEach(d => { usersMap[d.data().uid] = d.data(); });
+
+                inscricoesCursoPresenca = inscSnap.docs
+                    .map(d => {
+                        const insc = d.data();
+                        const u = usersMap[insc.candidatoId];
+                        return { id: d.id, nome: u?.fullName || 'Desconhecido', presencas: insc.presencas || [] };
+                    })
+                    .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+
+                inscSel.innerHTML = '<option value="">Selecione o candidato...</option>' +
+                    inscricoesCursoPresenca.map(i => `<option value="${i.id}">${i.nome} (${i.presencas.length} presença(s))</option>`).join('');
+                inscSel.disabled = false;
+            } catch (err) {
+                console.error(err);
+                inscSel.innerHTML = '<option value="">Erro ao carregar</option>';
+            }
+        });
+
+        document.getElementById('presInscricaoSelect').addEventListener('change', (e) => {
+            inscricaoSelecionadaPresenca = inscricoesCursoPresenca.find(i => i.id === e.target.value) || null;
+            renderDatasAtuais();
+            document.getElementById('btnAdicionarPresenca').disabled = !inscricaoSelecionadaPresenca;
+        });
+
+        function renderDatasAtuais() {
+            const box = document.getElementById('presDatasAtuais');
+            if (!inscricaoSelecionadaPresenca || inscricaoSelecionadaPresenca.presencas.length === 0) {
+                box.innerHTML = '<p class="hint" style="margin:0">Nenhuma presença registrada ainda.</p>';
+                return;
+            }
+            box.innerHTML = inscricaoSelecionadaPresenca.presencas.slice().sort().map(dISO => {
+                const [y, m, d] = dISO.split('-');
+                return `<span class="data-tag">${d}/${m}/${y}<button type="button" class="btn-remover-data" data-data="${dISO}">×</button></span>`;
+            }).join('');
+            box.querySelectorAll('.btn-remover-data').forEach(btn => {
+                btn.addEventListener('click', () => removerPresenca(btn.dataset.data));
+            });
+        }
+
+        async function removerPresenca(dataISO) {
+            if (!inscricaoSelecionadaPresenca) return;
+            if (!confirm(`Remover a presença de ${dataISO}?`)) return;
+
+            try {
+                await updateDoc(doc(db, 'inscricoes', inscricaoSelecionadaPresenca.id), {
+                    presencas: arrayRemove(dataISO),
+                    updatedAt: serverTimestamp()
+                });
+                inscricaoSelecionadaPresenca.presencas = inscricaoSelecionadaPresenca.presencas.filter(d => d !== dataISO);
+                renderDatasAtuais();
+                showMsg('Presença removida.', 'success');
+            } catch (err) {
+                console.error(err);
+                showMsg('Erro ao remover: ' + err.message, 'error');
+            }
+        }
+
+        document.getElementById('btnAdicionarPresenca').addEventListener('click', async () => {
+            if (!inscricaoSelecionadaPresenca) return;
+            const dataISO = document.getElementById('presDataInput').value || new Date().toISOString().split('T')[0];
+
+            if (inscricaoSelecionadaPresenca.presencas.includes(dataISO)) {
+                showMsg('Essa data já está registrada pra esse candidato.', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('btnAdicionarPresenca');
+            btn.disabled = true;
+
+            try {
+                await updateDoc(doc(db, 'inscricoes', inscricaoSelecionadaPresenca.id), {
+                    presencas: arrayUnion(dataISO),
+                    updatedAt: serverTimestamp()
+                });
+                inscricaoSelecionadaPresenca.presencas.push(dataISO);
+                renderDatasAtuais();
+                showMsg('Presença registrada com sucesso.', 'success');
+            } catch (err) {
+                console.error(err);
+                showMsg('Erro ao registrar: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
