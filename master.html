@@ -98,6 +98,29 @@
         }
         .btn-remover-data:hover { color: #ef4444; }
 
+        .orfa-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.6rem 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+            color: var(--text);
+        }
+        .orfa-item:last-child { border-bottom: none; }
+        .orfa-item .hint { display: block; margin: 0.15rem 0 0; }
+        .orfa-item button {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 18px;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+        .orfa-item button:hover { color: #ef4444; }
+
         .msg {
             padding: 0.75rem 1rem;
             border-radius: 8px;
@@ -143,6 +166,16 @@
                 <input type="date" id="presDataInput">
                 <button class="btn-acao" id="btnAdicionarPresenca" disabled>Registrar</button>
             </div>
+        </div>
+
+        <div class="card">
+            <h2>Inscrições Órfãs (curso já removido)</h2>
+            <p class="hint">Sobras de cursos apagados antes dessa ferramenta existir — o curso não existe mais, mas a inscrição ficou. Clique em "Verificar" pra buscar.</p>
+            <button class="btn-acao" id="btnVerificarOrfas" style="margin-bottom:1rem">Verificar inscrições órfãs</button>
+            <p class="hint" id="orfasResumo"></p>
+            <div id="orfasList"></div>
+            <input type="text" id="orfasConfirmInput" placeholder='Digite "EXCLUIR" pra liberar o botão abaixo' style="display:none">
+            <button class="btn-perigo" id="btnExcluirTodasOrfas" style="display:none" disabled>Excluir todas as órfãs</button>
         </div>
     </div>
 
@@ -393,6 +426,128 @@
                 showMsg('Erro ao registrar: ' + err.message, 'error');
             } finally {
                 btn.disabled = false;
+            }
+        });
+
+        // ── Bloco 3: Inscrições órfãs (curso já removido) ───────────────────
+
+        let inscricoesOrfas = [];
+
+        document.getElementById('btnVerificarOrfas').addEventListener('click', carregarOrfas);
+
+        async function carregarOrfas() {
+            const box = document.getElementById('orfasList');
+            const btnVerificar = document.getElementById('btnVerificarOrfas');
+            box.innerHTML = '<p class="hint">Carregando...</p>';
+            btnVerificar.disabled = true;
+
+            try {
+                const [cursosSnap, inscSnap, usersSnap] = await Promise.all([
+                    getDocs(collection(db, 'cursos')),
+                    getDocs(collection(db, 'inscricoes')),
+                    getDocs(collection(db, 'users'))
+                ]);
+
+                const cursoIds = new Set(cursosSnap.docs.map(d => d.id));
+                const usersMap = {};
+                usersSnap.forEach(d => { usersMap[d.data().uid] = d.data(); });
+
+                inscricoesOrfas = inscSnap.docs
+                    .filter(d => !cursoIds.has(d.data().cursoId))
+                    .map(d => {
+                        const insc = d.data();
+                        const u = usersMap[insc.candidatoId];
+                        return {
+                            id: d.id,
+                            nome: u?.fullName || 'Desconhecido',
+                            cursoId: insc.cursoId || '(vazio)',
+                            status: insc.status || '—',
+                            data: insc.createdAt?.toDate ? insc.createdAt.toDate().toLocaleDateString('pt-BR') : '—'
+                        };
+                    });
+
+                renderOrfas();
+            } catch (err) {
+                console.error(err);
+                box.innerHTML = '<p class="hint">Erro ao verificar.</p>';
+            } finally {
+                btnVerificar.disabled = false;
+            }
+        }
+
+        function renderOrfas() {
+            const box = document.getElementById('orfasList');
+            const confirmInput = document.getElementById('orfasConfirmInput');
+            const btnTodas = document.getElementById('btnExcluirTodasOrfas');
+
+            document.getElementById('orfasResumo').textContent =
+                `${inscricoesOrfas.length} inscrição(ões) órfã(s) encontrada(s).`;
+
+            if (inscricoesOrfas.length === 0) {
+                box.innerHTML = '<p class="hint">Nenhuma inscrição órfã encontrada.</p>';
+                confirmInput.style.display = 'none';
+                btnTodas.style.display = 'none';
+                return;
+            }
+
+            box.innerHTML = inscricoesOrfas.map(i => `
+                <div class="orfa-item">
+                    <div>
+                        <strong>${i.nome}</strong>
+                        <span class="hint">curso removido (id: ${i.cursoId}) · status: ${i.status} · ${i.data}</span>
+                    </div>
+                    <button type="button" data-id="${i.id}" title="Excluir esta inscrição">×</button>
+                </div>
+            `).join('');
+            box.querySelectorAll('button[data-id]').forEach(btn => {
+                btn.addEventListener('click', () => excluirOrfa(btn.dataset.id));
+            });
+
+            confirmInput.style.display = 'block';
+            confirmInput.value = '';
+            btnTodas.style.display = 'block';
+            btnTodas.disabled = true;
+        }
+
+        async function excluirOrfa(id) {
+            if (!confirm('Excluir esta inscrição órfã?')) return;
+            try {
+                await deleteDoc(doc(db, 'inscricoes', id));
+                inscricoesOrfas = inscricoesOrfas.filter(i => i.id !== id);
+                renderOrfas();
+                showMsg('Inscrição órfã excluída.', 'success');
+            } catch (err) {
+                console.error(err);
+                showMsg('Erro ao excluir: ' + err.message, 'error');
+            }
+        }
+
+        document.getElementById('orfasConfirmInput').addEventListener('input', (e) => {
+            document.getElementById('btnExcluirTodasOrfas').disabled = e.target.value.trim() !== 'EXCLUIR';
+        });
+
+        document.getElementById('btnExcluirTodasOrfas').addEventListener('click', async () => {
+            if (inscricoesOrfas.length === 0) return;
+            if (!confirm(`Excluir todas as ${inscricoesOrfas.length} inscrições órfãs? Isso não pode ser desfeito.`)) return;
+
+            const btn = document.getElementById('btnExcluirTodasOrfas');
+            btn.disabled = true;
+            btn.textContent = 'Excluindo...';
+
+            try {
+                for (let i = 0; i < inscricoesOrfas.length; i += 450) {
+                    const chunk = inscricoesOrfas.slice(i, i + 450);
+                    const batch = writeBatch(db);
+                    chunk.forEach(o => batch.delete(doc(db, 'inscricoes', o.id)));
+                    await batch.commit();
+                }
+                showMsg('Inscrições órfãs excluídas com sucesso.', 'success');
+                await carregarOrfas();
+            } catch (err) {
+                console.error(err);
+                showMsg('Erro ao excluir: ' + err.message, 'error');
+            } finally {
+                btn.textContent = 'Excluir todas as órfãs';
             }
         });
     </script>

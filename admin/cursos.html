@@ -164,6 +164,20 @@
         .btn-save { background: var(--amber); color: var(--bg); }
         .btn-save:hover { background: var(--amber-dark); }
 
+        .btn-delete-confirm {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            background: rgba(239,68,68,0.15);
+            color: #ef4444;
+            border: 1px solid rgba(239,68,68,0.3);
+            transition: all 0.2s ease;
+        }
+        .btn-delete-confirm:hover:not(:disabled) { background: rgba(239,68,68,0.28); }
+        .btn-delete-confirm:disabled { opacity: 0.4; cursor: not-allowed; }
+
         .success-message, .error-message {
             padding: 0.75rem 1rem;
             border-radius: 8px;
@@ -552,6 +566,27 @@
             <div class="modal-actions">
                 <button class="btn-cancel" id="btnCancelModal">Cancelar</button>
                 <button class="btn-save" id="btnSalvarCurso">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal confirmar exclusão de curso -->
+    <div class="modal" id="deleteCursoModal">
+        <div class="modal-content" style="max-width:440px">
+            <div class="modal-header">
+                <h2>Excluir Curso</h2>
+                <button class="btn-close" id="btnCloseDeleteModal">&times;</button>
+            </div>
+            <p style="color:var(--text-secondary);font-size:13px;line-height:1.5;margin:0 0 1rem">
+                Esta ação não pode ser desfeita. Pra confirmar, digite o nome do curso abaixo:
+                <strong id="deleteCursoNomeAlvo" style="display:block;color:var(--text);margin-top:0.4rem"></strong>
+            </p>
+            <div class="form-group">
+                <input type="text" id="deleteCursoConfirmInput" placeholder="Digite o nome do curso">
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" id="btnCancelDeleteModal">Cancelar</button>
+                <button class="btn-delete-confirm" id="btnConfirmarExclusaoCurso" disabled>Excluir Curso</button>
             </div>
         </div>
     </div>
@@ -1033,17 +1068,51 @@
             }
         }
 
-        async function excluirCurso(cursoId) {
-            if (!confirm('Tem certeza que deseja excluir este curso?\nEsta ação não pode ser desfeita.')) return;
+        let cursoParaExcluir = null;
+
+        function excluirCurso(cursoId) {
+            cursoParaExcluir = allCursos.find(c => c.id === cursoId);
+            if (!cursoParaExcluir) return;
+
+            document.getElementById('deleteCursoNomeAlvo').textContent = cursoParaExcluir.titulo;
+            const input = document.getElementById('deleteCursoConfirmInput');
+            input.value = '';
+            input.placeholder = `Digite "${cursoParaExcluir.titulo}"`;
+            document.getElementById('btnConfirmarExclusaoCurso').disabled = true;
+            document.getElementById('deleteCursoModal').classList.add('active');
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteCursoModal').classList.remove('active');
+            cursoParaExcluir = null;
+        }
+
+        document.getElementById('btnCloseDeleteModal').addEventListener('click', closeDeleteModal);
+        document.getElementById('btnCancelDeleteModal').addEventListener('click', closeDeleteModal);
+
+        document.getElementById('deleteCursoConfirmInput').addEventListener('input', (e) => {
+            document.getElementById('btnConfirmarExclusaoCurso').disabled =
+                !cursoParaExcluir || e.target.value.trim() !== cursoParaExcluir.titulo;
+        });
+
+        document.getElementById('btnConfirmarExclusaoCurso').addEventListener('click', async () => {
+            if (!cursoParaExcluir) return;
+            const btn = document.getElementById('btnConfirmarExclusaoCurso');
+            btn.disabled = true;
+            btn.textContent = 'Excluindo...';
 
             try {
-                await deleteDoc(doc(db, 'cursos', cursoId));
+                await deleteDoc(doc(db, 'cursos', cursoParaExcluir.id));
                 showSuccess('Curso excluído com sucesso!');
+                closeDeleteModal();
                 loadCursos();
             } catch (err) {
                 showError('Erro ao excluir curso: ' + err.message);
+                btn.disabled = false;
+            } finally {
+                btn.textContent = 'Excluir Curso';
             }
-        }
+        });
 
         function showSuccess(msg) {
             const el = document.getElementById('successMessage');
