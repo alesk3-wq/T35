@@ -259,6 +259,12 @@
                         <option value="pendente">Pendente</option>
                         <option value="rejeitada">Rejeitada</option>
                     </select>
+                    <select id="inscEquipeFiltro">
+                        <option value="">Todas as Equipes</option>
+                    </select>
+                    <select id="inscAtuacaoFiltro">
+                        <option value="">Todas as Atuações</option>
+                    </select>
                 </div>
                 <div class="export-bar">
                     <button class="btn-export-pdf" id="btnExportInscricoes">
@@ -277,12 +283,14 @@
                             <tr>
                                 <th>Candidato</th>
                                 <th>Curso</th>
+                                <th>Equipe</th>
+                                <th>Atuação</th>
                                 <th>Status</th>
                                 <th>Data</th>
                             </tr>
                         </thead>
                         <tbody id="inscricoesList">
-                            <tr><td colspan="4" style="text-align:center;color:var(--text-secondary)">Carregando...</td></tr>
+                            <tr><td colspan="6" style="text-align:center;color:var(--text-secondary)">Carregando...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -340,14 +348,18 @@
         };
 
         function getInscricoesFiltradas() {
-            const busca  = document.getElementById('inscBusca').value.toLowerCase();
-            const status = document.getElementById('inscStatusFiltro').value;
+            const busca   = document.getElementById('inscBusca').value.toLowerCase();
+            const status  = document.getElementById('inscStatusFiltro').value;
+            const equipe  = document.getElementById('inscEquipeFiltro').value;
+            const atuacao = document.getElementById('inscAtuacaoFiltro').value;
 
             return todasInscricoes.filter(i => {
-                const equipeOk = minhasEquipes.includes(i._equipe);
-                const nomeOk   = !busca  || i._nome.includes(busca) || i._curso.includes(busca);
-                const statusOk = !status || i.status === status;
-                return equipeOk && nomeOk && statusOk;
+                const equipeBaseOk = minhasEquipes.includes(i._equipe);
+                const nomeOk    = !busca   || i._nome.includes(busca) || i._curso.includes(busca);
+                const statusOk  = !status  || i.status === status;
+                const equipeOk  = !equipe  || i._equipe === equipe;
+                const atuacaoOk = !atuacao || i._atuacao === atuacao;
+                return equipeBaseOk && nomeOk && statusOk && equipeOk && atuacaoOk;
             });
         }
 
@@ -359,10 +371,35 @@
                     <tr>
                         <td>${i._nomeExib}</td>
                         <td>${i._cursoExib}</td>
+                        <td>${i._equipe}</td>
+                        <td>${i._atuacao}</td>
                         <td><span class="status-badge status-${i.status}">${labelStatus[i.status] ?? i.status}</span></td>
                         <td>${i._data}</td>
                     </tr>`).join('')
-                : '<tr><td colspan="4" style="text-align:center;color:var(--text-secondary);padding:2rem">Nenhuma inscrição encontrada</td></tr>';
+                : '<tr><td colspan="6" style="text-align:center;color:var(--text-secondary);padding:2rem">Nenhuma inscrição encontrada</td></tr>';
+        }
+
+        function popularFiltrosEquipeAtuacao() {
+            const equipeSel = document.getElementById('inscEquipeFiltro');
+            minhasEquipes.slice().sort((a, b) => a.localeCompare(b, 'pt-BR')).forEach(nome => {
+                const opt = document.createElement('option');
+                opt.value = nome; opt.textContent = nome;
+                equipeSel.appendChild(opt);
+            });
+
+            const atuacoes = [...new Set(
+                todasInscricoes
+                    .filter(i => minhasEquipes.includes(i._equipe))
+                    .map(i => i._atuacao)
+                    .filter(a => a && a !== '—')
+            )].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+            const atuacaoSel = document.getElementById('inscAtuacaoFiltro');
+            atuacoes.forEach(nome => {
+                const opt = document.createElement('option');
+                opt.value = nome; opt.textContent = nome;
+                atuacaoSel.appendChild(opt);
+            });
         }
 
         async function loadInscricoesEquipe() {
@@ -403,8 +440,12 @@
                 document.getElementById('inscPendentes').textContent  = daEquipe.filter(i => i.status === 'pendente').length;
                 document.getElementById('inscRejeitadas').textContent = daEquipe.filter(i => i.status === 'rejeitada').length;
 
+                popularFiltrosEquipeAtuacao();
+
                 document.getElementById('inscBusca').addEventListener('input', renderInscricoes);
                 document.getElementById('inscStatusFiltro').addEventListener('change', renderInscricoes);
+                document.getElementById('inscEquipeFiltro').addEventListener('change', renderInscricoes);
+                document.getElementById('inscAtuacaoFiltro').addEventListener('change', renderInscricoes);
                 renderInscricoes();
             } catch (err) {
                 console.error('Erro ao carregar inscrições:', err);
