@@ -427,6 +427,9 @@
         }
 
         function buildCertHTML(curso, numCert, dataConcl, logoB64, assinaturaB64, seloB64) {
+            const modeloConclusao = curso.certificadoModelo === 'conclusao';
+            const tituloCert = modeloConclusao ? 'Certificado de Conclusão' : 'Certificado de Participação';
+            const fraseCert  = modeloConclusao ? 'concluiu com êxito o curso' : 'participou do treinamento';
             const logoSmall = logoB64
                 ? `<img src="${logoB64}" style="width:70px;height:70px;object-fit:contain;border-radius:12px;display:block;">`
                 : '';
@@ -499,7 +502,7 @@
                         </div>
                         <div style="width:140px;height:1.5px;background:linear-gradient(90deg,transparent,#c9a227,transparent);margin:12px 0;"></div>
                         <div style="font-size:27px;font-weight:bold;color:#1a1a2e;letter-spacing:4px;text-transform:uppercase;">
-                            Certificado de Conclusão
+                            ${tituloCert}
                         </div>
                     </div>
 
@@ -512,7 +515,7 @@
                             ${_userName}
                         </div>
                         <div style="font-size:15px;color:#666;font-style:italic;margin-top:16px;margin-bottom:10px;">
-                            concluiu com êxito o curso
+                            ${fraseCert}
                         </div>
                         <div style="font-size:20px;font-weight:bold;color:#1a1a2e;text-transform:uppercase;letter-spacing:1.5px;max-width:740px;line-height:1.5;">
                             ${curso.titulo}
