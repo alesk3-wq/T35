@@ -178,6 +178,7 @@
         }
         .btn-limpar-selecao:hover { color: var(--text); }
         .bulk-bar button:disabled { opacity: 0.6; cursor: not-allowed; }
+        .bulk-hint { font-size: 12px; color: var(--text-secondary); font-style: italic; }
 
         #inscricoesList input[type="checkbox"],
         thead input[type="checkbox"] { cursor: pointer; width: 16px; height: 16px; accent-color: #22c55e; }
@@ -405,6 +406,8 @@
                 <span class="bulk-count" id="bulkCount">0 selecionada(s)</span>
                 <button class="btn-action btn-aprovar"  id="btnAprovarMassa">Aprovar selecionadas</button>
                 <button class="btn-action btn-rejeitar" id="btnRejeitarMassa">Rejeitar selecionadas</button>
+                <button class="btn-action btn-concluir" id="btnConcluirMassa">Concluir selecionadas</button>
+                <span class="bulk-hint" id="hintConcluirMassa" style="display:none">Selecione um curso específico no filtro acima pra concluir em massa</span>
                 <button class="btn-limpar-selecao" id="btnLimparSelecao">Limpar seleção</button>
             </div>
 
@@ -413,7 +416,7 @@
                 <table>
                     <thead>
                         <tr>
-                            <th style="width:36px"><input type="checkbox" id="chkTodos" title="Selecionar todos os pendentes visíveis"></th>
+                            <th style="width:36px"><input type="checkbox" id="chkTodos" title="Selecionar todos os visíveis"></th>
                             <th>Candidato</th>
                             <th>Empresa</th>
                             <th>Curso</th>
@@ -569,7 +572,8 @@
                     : '—';
 
                 const acoes = gerarBotoesAcao(i);
-                const chk = i.status === 'pendente'
+                const modalidade = i._curso?.modalidade || 'presencial';
+                const chk = (i.status === 'pendente' || (i.status === 'apto' && modalidade !== 'ead'))
                     ? `<input type="checkbox" class="chk-linha" data-id="${i.id}" ${selecionadas.has(i.id) ? 'checked' : ''}>`
                     : '';
 
@@ -635,12 +639,30 @@
 
         function atualizarBarraSelecao() {
             // Só conta o que está selecionado E visível no filtro atual — nada invisível é alterado
-            const visiveisIds = new Set(getFiltradas().filter(i => i.status === 'pendente').map(i => i.id));
-            const ativas = [...selecionadas].filter(id => visiveisIds.has(id));
+            const filtradas = getFiltradas();
+            const visPendente = new Set(filtradas.filter(i => i.status === 'pendente').map(i => i.id));
+            const ativasPendente = [...selecionadas].filter(id => visPendente.has(id));
+
+            const visApto = new Set(filtradas
+                .filter(i => i.status === 'apto' && (i._curso?.modalidade || 'presencial') !== 'ead')
+                .map(i => i.id));
+            const ativasApto = [...selecionadas].filter(id => visApto.has(id));
+
+            const totalAtivas = ativasPendente.length + ativasApto.length;
 
             const bar = document.getElementById('bulkBar');
-            bar.classList.toggle('visible', ativas.length > 0);
-            document.getElementById('bulkCount').textContent = `${ativas.length} selecionada(s)`;
+            bar.classList.toggle('visible', totalAtivas > 0);
+            document.getElementById('bulkCount').textContent = `${totalAtivas} selecionada(s)`;
+
+            document.getElementById('btnAprovarMassa').style.display  = ativasPendente.length > 0 ? '' : 'none';
+            document.getElementById('btnRejeitarMassa').style.display = ativasPendente.length > 0 ? '' : 'none';
+
+            const cursoEscolhido = document.getElementById('cursoFilter').value !== '';
+            const btnConcluir = document.getElementById('btnConcluirMassa');
+            const hint = document.getElementById('hintConcluirMassa');
+            btnConcluir.style.display = ativasApto.length > 0 ? '' : 'none';
+            btnConcluir.disabled = !cursoEscolhido;
+            hint.style.display = (ativasApto.length > 0 && !cursoEscolhido) ? 'inline' : 'none';
         }
 
         document.getElementById('btnLimparSelecao').addEventListener('click', () => {
@@ -650,6 +672,7 @@
 
         document.getElementById('btnAprovarMassa').addEventListener('click', () => executarEmMassa('apto'));
         document.getElementById('btnRejeitarMassa').addEventListener('click', () => executarEmMassa('rejeitada'));
+        document.getElementById('btnConcluirMassa').addEventListener('click', executarConcluirMassa);
 
         async function executarEmMassa(novoStatus) {
             const visiveisIds = new Set(getFiltradas().filter(i => i.status === 'pendente').map(i => i.id));
@@ -692,6 +715,53 @@
 
             btnAprovar.disabled = false;
             btnRejeitar.disabled = false;
+        }
+
+        async function executarConcluirMassa() {
+            if (!document.getElementById('cursoFilter').value) return; // trava redundante, botão já fica desabilitado
+
+            const filtradas = getFiltradas();
+            const visApto = new Set(filtradas
+                .filter(i => i.status === 'apto' && (i._curso?.modalidade || 'presencial') !== 'ead')
+                .map(i => i.id));
+            const alvo = [...selecionadas].filter(id => visApto.has(id));
+            if (alvo.length === 0) return;
+
+            if (!confirm(`Deseja concluir ${alvo.length} inscrição(ões) selecionada(s)? Quem não tiver presença registrada será pulado.`)) return;
+
+            const btn = document.getElementById('btnConcluirMassa');
+            btn.disabled = true;
+
+            let concluidas = 0, puladas = 0, falhas = 0;
+            for (const id of alvo) {
+                try {
+                    const inscDoc = await getDoc(doc(db, 'inscricoes', id));
+                    const presencas = inscDoc.data()?.presencas ?? [];
+                    if (presencas.length === 0) { puladas++; continue; }
+
+                    await updateDoc(doc(db, 'inscricoes', id), {
+                        status: 'concluido',
+                        updatedAt: serverTimestamp()
+                    });
+                    const insc = todasInscricoes.find(i => i.id === id);
+                    if (insc) insc.status = 'concluido';
+                    concluidas++;
+                } catch (err) {
+                    console.error('Erro ao concluir em massa:', id, err);
+                    falhas++;
+                }
+            }
+
+            selecionadas.clear();
+            atualizarResumo();
+            renderTabela();
+
+            let msg = `${concluidas} inscrição(ões) concluída(s).`;
+            if (puladas > 0) msg += ` ${puladas} pulada(s) por falta de presença.`;
+            if (falhas > 0) msg += ` ${falhas} falharam.`;
+            showAlert(msg, falhas > 0 ? 'error' : 'success');
+
+            btn.disabled = false;
         }
 
         function gerarBotoesAcao(i) {
