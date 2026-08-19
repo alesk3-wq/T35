@@ -37,6 +37,34 @@
         .btn-import { background: rgba(59,130,246,0.15); color: #3b82f6; border: 1px solid rgba(59,130,246,0.3); }
         .btn-import:hover { background: rgba(59,130,246,0.25); }
 
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .summary-card {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.25rem;
+            text-align: center;
+        }
+        .summary-num {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--amber);
+            line-height: 1;
+            margin-bottom: 0.35rem;
+        }
+        .summary-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
         .filters {
             display: flex;
             gap: 0.75rem;
@@ -329,6 +357,29 @@
                 </div>
             </div>
 
+            <div class="summary-grid" id="resumoCards">
+                <div class="summary-card">
+                    <div class="summary-num" id="resumoTotal">—</div>
+                    <div class="summary-label">Total</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-num" id="resumoCadastrados" style="color: #3b82f6;">—</div>
+                    <div class="summary-label">Cadastrados</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-num" id="resumoAguardando" style="color: #94a3b8;">—</div>
+                    <div class="summary-label">Aguardando</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-num" id="resumoAtivos" style="color: #22c55e;">—</div>
+                    <div class="summary-label">Ativos</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-num" id="resumoInativos" style="color: #ef4444;">—</div>
+                    <div class="summary-label">Inativos</div>
+                </div>
+            </div>
+
             <div class="filters">
                 <input type="text" id="busca" placeholder="Buscar por nome ou CPF...">
                 <select id="statusFiltro">
@@ -507,6 +558,7 @@
                 });
 
                 listaCompleta.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+                renderResumo();
 
                 document.getElementById('busca').addEventListener('input', render);
                 document.getElementById('statusFiltro').addEventListener('change', render);
@@ -517,6 +569,14 @@
                 console.error('Erro ao carregar lista:', err);
                 showError('Erro ao carregar a lista de autorizados');
             }
+        }
+
+        function renderResumo() {
+            document.getElementById('resumoTotal').textContent = listaCompleta.length;
+            document.getElementById('resumoCadastrados').textContent = listaCompleta.filter(i => i.cadastrado).length;
+            document.getElementById('resumoAguardando').textContent = listaCompleta.filter(i => !i.cadastrado).length;
+            document.getElementById('resumoAtivos').textContent = listaCompleta.filter(i => i.ativo).length;
+            document.getElementById('resumoInativos').textContent = listaCompleta.filter(i => !i.ativo).length;
         }
 
         function getFiltrados() {
