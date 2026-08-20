@@ -307,6 +307,13 @@
                                         <option value="">Carregando...</option>
                                     </select>
                                 </div>
+
+                                <div class="form-group">
+                                    <label for="postoAtuacao">Posto de Atuação</label>
+                                    <select id="postoAtuacao">
+                                        <option value="">Carregando...</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                         <div class="form-card-footer">
@@ -457,6 +464,34 @@
             }
         }
 
+        async function loadPostosAtuacao(valorAtual) {
+            const select = document.getElementById('postoAtuacao');
+            try {
+                let snap;
+                try {
+                    snap = await getDocs(query(collection(db, 'postosAtuacao'), orderBy('nome', 'asc')));
+                } catch {
+                    snap = await getDocs(collection(db, 'postosAtuacao'));
+                }
+
+                const nomes = [];
+                snap.forEach(d => { if (d.data().nome) nomes.push(d.data().nome); });
+                nomes.sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+                select.innerHTML = '<option value="">Selecione um posto</option>';
+                nomes.forEach(nome => {
+                    const opt = document.createElement('option');
+                    opt.value = nome;
+                    opt.textContent = nome;
+                    if (nome === valorAtual) opt.selected = true;
+                    select.appendChild(opt);
+                });
+            } catch (err) {
+                select.innerHTML = '<option value="">Erro ao carregar postos</option>';
+                console.error('Erro ao carregar postos de atuação:', err);
+            }
+        }
+
         checkAuth().then(async user => {
             if (!user) { window.location.href = '../login.html'; return; }
             loadPerfil(user.uid);
@@ -499,6 +534,7 @@
                 await loadEmpresas(u.empresa || '');
                 await loadEquipes(u.equipe || '');
                 await loadAtuacoes(u.atuacao || '');
+                await loadPostosAtuacao(u.postoAtuacao || '');
 
                 // Libera CPF e matrícula se ainda não foram preenchidos (ex: login via Google)
                 if (!u.cpf) {
@@ -560,6 +596,7 @@
                     empresa: document.getElementById('empresa').value,
                     equipe: document.getElementById('equipe').value,
                     atuacao: document.getElementById('atuacao').value,
+                    postoAtuacao: document.getElementById('postoAtuacao').value,
                     updatedAt: new Date()
                 };
 

@@ -499,6 +499,7 @@
                         empresa:     u?.empresa || '—',
                         equipe:      u?.equipe  || '—',
                         atuacao:     u?.atuacao || '—',
+                        posto:       u?.postoAtuacao || '—',
                         cursoId:     insc.cursoId,
                         cursoTitulo: curso?.titulo || '—',
                         presencas,
@@ -532,6 +533,7 @@
                             empresa:     u?.empresa || '—',
                             equipe:      u?.equipe  || '—',
                             atuacao:     u?.atuacao || '—',
+                            posto:       u?.postoAtuacao || '—',
                             cursoId:     insc.cursoId,
                             cursoTitulo: curso?.titulo || '—',
                             pct:         p.percentualVideo || 0,
@@ -778,12 +780,13 @@
                     `Gerado em ${new Date().toLocaleDateString('pt-BR')} · Alunos: ${filtrados.length} · Total presenças: ${filtrados.reduce((s,r)=>s+r.qtd,0)}`);
                 pdf.autoTable({
                     startY: 42,
-                    head: [['Candidato','Empresa','Equipe','Atuação','Curso','Nº Presenças','Datas','Status']],
+                    head: [['Candidato','Empresa','Equipe','Atuação','Posto','Curso','Nº Presenças','Datas','Status']],
                     body: filtrados.map(r => [
                         r.candidato,
                         r.empresa,
                         r.equipe,
                         r.atuacao,
+                        r.posto,
                         r.cursoTitulo,
                         r.qtd,
                         r.presencas.map(fmtData).join(' · ') || '—',
@@ -814,9 +817,9 @@
                 exportarExcel(
                     'relatorio-presenca-instrutor.xlsx',
                     'Presença',
-                    ['Candidato','Empresa','Equipe','Atuação','Curso','Nº Presenças','Datas','Status'],
+                    ['Candidato','Empresa','Equipe','Atuação','Posto','Curso','Nº Presenças','Datas','Status'],
                     filtrados.map(r => [
-                        r.candidato, r.empresa, r.equipe, r.atuacao, r.cursoTitulo,
+                        r.candidato, r.empresa, r.equipe, r.atuacao, r.posto, r.cursoTitulo,
                         r.qtd, r.presencas.map(fmtData).join(' · ') || '—', r.status
                     ])
                 );
@@ -844,9 +847,9 @@
                     `Gerado em ${new Date().toLocaleDateString('pt-BR')} · Total: ${filtrados.length} · Suspeitos: ${filtrados.filter(r=>r.suspeito).length}`);
                 pdf.autoTable({
                     startY: 42,
-                    head: [['Candidato','Empresa','Equipe','Atuação','Curso','% Vídeo','Tempo na Tela','Duração','Status']],
+                    head: [['Candidato','Empresa','Equipe','Atuação','Posto','Curso','% Vídeo','Tempo na Tela','Duração','Status']],
                     body: filtrados.map(r => [
-                        r.candidato, r.empresa, r.equipe, r.atuacao, r.cursoTitulo, r.pct+'%',
+                        r.candidato, r.empresa, r.equipe, r.atuacao, r.posto, r.cursoTitulo, r.pct+'%',
                         fmtTempo(r.tela), fmtTempo(r.dur),
                         r.suspeito ? '⚠ Suspeito' : r.concluido ? '✓ OK' : 'Em andamento'
                     ]),
@@ -854,7 +857,7 @@
                     headStyles: { fillColor: [245,158,11], textColor: [15,15,20], fontStyle: 'bold' },
                     alternateRowStyles: { fillColor: [22,22,30] },
                     didParseCell(data) {
-                        if (data.section === 'body' && data.column.index === 8) {
+                        if (data.section === 'body' && data.column.index === 9) {
                             if (data.cell.raw.includes('Suspeito')) data.cell.styles.textColor = [239,68,68];
                             else if (data.cell.raw.includes('OK'))  data.cell.styles.textColor = [34,197,94];
                         }
@@ -884,9 +887,9 @@
                 exportarExcel(
                     'relatorio-videos-instrutor.xlsx',
                     'Vídeos',
-                    ['Candidato','Empresa','Equipe','Atuação','Curso','% Vídeo','Tempo na Tela','Duração','Status'],
+                    ['Candidato','Empresa','Equipe','Atuação','Posto','Curso','% Vídeo','Tempo na Tela','Duração','Status'],
                     filtrados.map(r => [
-                        r.candidato, r.empresa, r.equipe, r.atuacao, r.cursoTitulo, r.pct+'%',
+                        r.candidato, r.empresa, r.equipe, r.atuacao, r.posto, r.cursoTitulo, r.pct+'%',
                         fmtTempo(r.tela), fmtTempo(r.dur),
                         r.suspeito ? 'Suspeito' : r.concluido ? 'OK' : 'Em andamento'
                     ])

@@ -417,6 +417,9 @@
                 <select id="atuacaoFiltro">
                     <option value="">Todas as Atuações</option>
                 </select>
+                <select id="postoFiltro">
+                    <option value="">Todos os Postos</option>
+                </select>
             </div>
 
             <div class="export-bar">
@@ -438,13 +441,14 @@
                             <th>CPF</th>
                             <th>Equipe</th>
                             <th>Atuação</th>
+                            <th>Posto</th>
                             <th>Cadastro</th>
                             <th>Status</th>
                             <th>Ações</th>
                         </tr>
                     </thead>
                     <tbody id="listaBody">
-                        <tr><td colspan="7" style="text-align:center;color:var(--text-secondary)">Carregando...</td></tr>
+                        <tr><td colspan="8" style="text-align:center;color:var(--text-secondary)">Carregando...</td></tr>
                     </tbody>
                 </table>
                 <div id="emptyState" class="empty-state" style="display:none">
@@ -549,7 +553,7 @@
 
         async function carregarFiltrosAuxiliares() {
             try {
-                const [equipes, atuacoes] = await Promise.all([nomesDe('equipes'), nomesDe('atuacoes')]);
+                const [equipes, atuacoes, postos] = await Promise.all([nomesDe('equipes'), nomesDe('atuacoes'), nomesDe('postosAtuacao')]);
                 const equipeSel = document.getElementById('equipeFiltro');
                 equipes.forEach(nome => {
                     const opt = document.createElement('option');
@@ -561,6 +565,12 @@
                     const opt = document.createElement('option');
                     opt.value = nome; opt.textContent = nome;
                     atuacaoSel.appendChild(opt);
+                });
+                const postoSel = document.getElementById('postoFiltro');
+                postos.forEach(nome => {
+                    const opt = document.createElement('option');
+                    opt.value = nome; opt.textContent = nome;
+                    postoSel.appendChild(opt);
                 });
             } catch (err) {
                 console.error('Erro ao carregar filtros auxiliares:', err);
@@ -592,6 +602,7 @@
                         ativo: item.ativo !== false,
                         equipe: userVinculado?.equipe || null,
                         atuacao: userVinculado?.atuacao || null,
+                        posto: userVinculado?.postoAtuacao || null,
                         cadastrado: !!userVinculado
                     });
                 });
@@ -603,6 +614,7 @@
                 document.getElementById('statusFiltro').addEventListener('change', render);
                 document.getElementById('equipeFiltro').addEventListener('change', render);
                 document.getElementById('atuacaoFiltro').addEventListener('change', render);
+                document.getElementById('postoFiltro').addEventListener('change', render);
                 render();
             } catch (err) {
                 console.error('Erro ao carregar lista:', err);
@@ -624,6 +636,7 @@
             const status = document.getElementById('statusFiltro').value;
             const equipe = document.getElementById('equipeFiltro').value;
             const atuacao = document.getElementById('atuacaoFiltro').value;
+            const posto = document.getElementById('postoFiltro').value;
 
             return listaCompleta.filter(item => {
                 const buscaOk = !busca
@@ -632,7 +645,8 @@
                 const statusOk = !status || (status === 'ativo' ? item.ativo : !item.ativo);
                 const equipeOk = !equipe || item.equipe === equipe;
                 const atuacaoOk = !atuacao || item.atuacao === atuacao;
-                return buscaOk && statusOk && equipeOk && atuacaoOk;
+                const postoOk = !posto || item.posto === posto;
+                return buscaOk && statusOk && equipeOk && atuacaoOk && postoOk;
             });
         }
 
@@ -654,6 +668,7 @@
                     <td>${formatCPF(item.cpf)}</td>
                     <td>${item.equipe || '—'}</td>
                     <td>${item.atuacao || '—'}</td>
+                    <td>${item.posto || '—'}</td>
                     <td><span class="status-badge status-${item.cadastrado ? 'cadastrado' : 'aguardando'}">${item.cadastrado ? 'Cadastrado' : 'Aguardando'}</span></td>
                     <td><span class="status-badge status-${item.ativo ? 'ativo' : 'inativo'}">${item.ativo ? 'Ativo' : 'Inativo'}</span></td>
                     <td><button type="button" class="btn-toggle ${item.ativo ? 'desativar' : 'ativar'}" data-cpf="${item.cpf}">${item.ativo ? 'Desativar' : 'Ativar'}</button></td>
@@ -902,12 +917,14 @@
                 const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
                 pdfHeader(pdf, 'Funcionários Autorizados', `${filtrados.length} registro(s)`);
                 pdfTable(pdf,
-                    ['#', 'Nome', 'CPF', 'Equipe', 'Cadastro'],
+                    ['#', 'Nome', 'CPF', 'Equipe', 'Atuação', 'Posto', 'Cadastro'],
                     filtrados.map((item, idx) => [
                         idx + 1,
                         item.nome,
                         formatCPF(item.cpf),
                         item.equipe || '—',
+                        item.atuacao || '—',
+                        item.posto || '—',
                         item.cadastrado ? 'Cadastrado' : 'Aguardando'
                     ])
                 );
@@ -925,12 +942,14 @@
                 exportarExcel(
                     `funcionarios-autorizados_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.xlsx`,
                     'Funcionários Autorizados',
-                    ['#', 'Nome', 'CPF', 'Equipe', 'Cadastro'],
+                    ['#', 'Nome', 'CPF', 'Equipe', 'Atuação', 'Posto', 'Cadastro'],
                     filtrados.map((item, idx) => [
                         idx + 1,
                         item.nome,
                         formatCPF(item.cpf),
                         item.equipe || '—',
+                        item.atuacao || '—',
+                        item.posto || '—',
                         item.cadastrado ? 'Cadastrado' : 'Aguardando'
                     ])
                 );

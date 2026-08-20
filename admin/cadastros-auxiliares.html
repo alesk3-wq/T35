@@ -302,6 +302,7 @@
                 <button class="tab-btn active" data-tab="empresas">Empresas</button>
                 <button class="tab-btn" data-tab="equipes">Equipes</button>
                 <button class="tab-btn" data-tab="atuacoes">Atuações</button>
+                <button class="tab-btn" data-tab="postosAtuacao">Postos de Atuação</button>
             </div>
 
             <!-- Aba: Empresas -->
@@ -372,6 +373,30 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Aba: Postos de Atuação -->
+            <div class="report-panel" id="panel-postosAtuacao">
+                <div class="panel-header">
+                    <button class="btn-new" data-colecao="postosAtuacao" data-label="Posto de Atuação">+ Novo Posto de Atuação</button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr><th>Posto de Atuação</th><th>Ações</th></tr>
+                        </thead>
+                        <tbody id="postosAtuacaoTableBody"></tbody>
+                    </table>
+                    <div id="emptyStatePostosAtuacao" class="empty-state" style="display:none">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 21h18"></path>
+                            <path d="M5 21V7l7-4 7 4v14"></path>
+                            <path d="M9 21v-6h6v6"></path>
+                        </svg>
+                        <h3>Nenhum posto de atuação cadastrado</h3>
+                        <p>Clique em "Novo Posto de Atuação" para criar um</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </main>
 
@@ -408,10 +433,13 @@
         document.getElementById('btnLogout').addEventListener('click', handleLogout);
 
         // Config por coleção: id do tbody, id do empty-state, rótulo singular
+        // genero: 'f'/'m' controla os artigos e concordâncias das mensagens genéricas
+        // (Nova/Novo, da/do, esta/este, criada/criado, etc.) pra cada coleção.
         const CONFIG = {
-            empresas: { tbody: 'empresasTableBody', empty: 'emptyStateEmpresas', label: 'Empresa' },
-            equipes:  { tbody: 'equipesTableBody',  empty: 'emptyStateEquipes',  label: 'Equipe' },
-            atuacoes: { tbody: 'atuacoesTableBody',  empty: 'emptyStateAtuacoes', label: 'Atuação' }
+            empresas: { tbody: 'empresasTableBody', empty: 'emptyStateEmpresas', label: 'Empresa', plural: 'empresas', genero: 'f' },
+            equipes:  { tbody: 'equipesTableBody',  empty: 'emptyStateEquipes',  label: 'Equipe', plural: 'equipes', genero: 'f' },
+            atuacoes: { tbody: 'atuacoesTableBody',  empty: 'emptyStateAtuacoes', label: 'Atuação', plural: 'atuações', genero: 'f' },
+            postosAtuacao: { tbody: 'postosAtuacaoTableBody', empty: 'emptyStatePostosAtuacao', label: 'Posto de Atuação', plural: 'postos de atuação', genero: 'm' }
         };
 
         // Tabs
@@ -450,6 +478,7 @@
             loadItems('empresas');
             loadItems('equipes');
             loadItems('atuacoes');
+            loadItems('postosAtuacao');
         });
 
         async function loadItems(colecao) {
@@ -485,7 +514,7 @@
                 });
             } catch (err) {
                 console.error(`Erro ao carregar ${colecao}:`, err);
-                showError(`Erro ao carregar ${cfg.label.toLowerCase()}s`);
+                showError(`Erro ao carregar ${cfg.plural}`);
             }
         }
 
@@ -494,9 +523,12 @@
             currentLabel   = label;
             currentItemId  = id;
 
-            document.getElementById('modalTitle').textContent = id ? `Editar ${label}` : `Nova ${label}`;
-            document.getElementById('itemNomeLabel').textContent = `Nome da ${label} *`;
-            document.getElementById('itemNome').placeholder = `Digite o nome da ${label.toLowerCase()}`;
+            const art  = CONFIG[colecao].genero === 'm' ? 'o' : 'a';
+            const novo = CONFIG[colecao].genero === 'm' ? 'Novo' : 'Nova';
+
+            document.getElementById('modalTitle').textContent = id ? `Editar ${label}` : `${novo} ${label}`;
+            document.getElementById('itemNomeLabel').textContent = `Nome d${art} ${label} *`;
+            document.getElementById('itemNome').placeholder = `Digite o nome d${art} ${label.toLowerCase()}`;
             document.getElementById('itemNome').value = nome;
             itemModal.classList.add('active');
         }
@@ -512,13 +544,17 @@
             const nome = document.getElementById('itemNome').value.trim();
             if (!nome) { showError('Digite o nome'); return; }
 
+            const genero = CONFIG[currentColecao].genero;
+            const atualizadoTxt = genero === 'm' ? 'atualizado' : 'atualizada';
+            const criadoTxt     = genero === 'm' ? 'criado' : 'criada';
+
             try {
                 if (currentItemId) {
                     await updateDoc(doc(db, currentColecao, currentItemId), { nome, updatedAt: new Date() });
-                    showSuccess(`${currentLabel} atualizada com sucesso!`);
+                    showSuccess(`${currentLabel} ${atualizadoTxt} com sucesso!`);
                 } else {
                     await addDoc(collection(db, currentColecao), { nome, createdAt: new Date(), updatedAt: new Date() });
-                    showSuccess(`${currentLabel} criada com sucesso!`);
+                    showSuccess(`${currentLabel} ${criadoTxt} com sucesso!`);
                 }
                 const colecao = currentColecao;
                 closeModal();
@@ -530,10 +566,14 @@
         }
 
         async function deleteItem(colecao, id, label) {
-            if (!confirm(`Tem certeza que deseja deletar esta ${label.toLowerCase()}?`)) return;
+            const genero = CONFIG[colecao].genero;
+            const esteEsta = genero === 'm' ? 'este' : 'esta';
+            const deletadoTxt = genero === 'm' ? 'deletado' : 'deletada';
+
+            if (!confirm(`Tem certeza que deseja deletar ${esteEsta} ${label.toLowerCase()}?`)) return;
             try {
                 await deleteDoc(doc(db, colecao, id));
-                showSuccess(`${label} deletada com sucesso!`);
+                showSuccess(`${label} ${deletadoTxt} com sucesso!`);
                 loadItems(colecao);
             } catch (err) {
                 console.error('Erro ao deletar:', err);

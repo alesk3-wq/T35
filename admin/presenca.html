@@ -724,6 +724,7 @@
                     cpf:     u?.cpf || '—',
                     equipe:  u?.equipe || '—',
                     atuacao: u?.atuacao || '—',
+                    posto:   u?.postoAtuacao || '—',
                     total:   presencas.length,
                     datas:   presencas.map(d => {
                         const [y,m,day] = d.split('-');
@@ -780,7 +781,7 @@
 
                 pdf.autoTable({
                     startY: 53,
-                    head: [['#', 'Aluno', 'E-mail', 'Presenças', 'Datas', 'Atuação', 'Equipe']],
+                    head: [['#', 'Aluno', 'E-mail', 'Presenças', 'Datas', 'Atuação', 'Posto', 'Equipe']],
                     body: alunos.map((a, i) => [
                         i + 1,
                         a.nome,
@@ -788,6 +789,7 @@
                         a.total,
                         a.datas,
                         a.atuacao,
+                        a.posto,
                         a.equipe
                     ]),
                     styles: { fontSize: 8, cellPadding: 3, textColor: [30, 41, 59] },
@@ -800,7 +802,8 @@
                         3: { cellWidth: 20, halign: 'center' },
                         4: { cellWidth: 60 },
                         5: { cellWidth: 30 },
-                        6: { cellWidth: 'auto' }
+                        6: { cellWidth: 30 },
+                        7: { cellWidth: 'auto' }
                     },
                     margin: { left: 14, right: 14 }
                 });
@@ -850,8 +853,8 @@
                 exportarExcel(
                     `presenca_${cursoSelecionado.titulo.replace(/\s+/g,'_')}_${fmt(ini)}.xlsx`,
                     'Presença',
-                    ['#', 'Aluno', 'E-mail', 'CPF', 'Presenças', 'Datas', 'Atuação', 'Equipe'],
-                    alunos.map((a, i) => [i + 1, a.nome, a.email, a.cpf, a.total, a.datas, a.atuacao, a.equipe])
+                    ['#', 'Aluno', 'E-mail', 'CPF', 'Presenças', 'Datas', 'Atuação', 'Posto', 'Equipe'],
+                    alunos.map((a, i) => [i + 1, a.nome, a.email, a.cpf, a.total, a.datas, a.atuacao, a.posto, a.equipe])
                 );
             } catch (err) {
                 console.error(err);

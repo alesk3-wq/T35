@@ -291,6 +291,13 @@
                 </select>
             </div>
 
+            <div class="form-group">
+                <label for="postoAtuacao">Posto de Atuação</label>
+                <select id="postoAtuacao">
+                    <option value="">Carregando postos...</option>
+                </select>
+            </div>
+
             <button type="submit" class="btn-register" id="btnRegister">Criar Conta</button>
         </form>
 
@@ -312,14 +319,16 @@
         const empresaSelect = document.getElementById('empresa');
         const equipeSelect = document.getElementById('equipe');
         const atuacaoSelect = document.getElementById('atuacao');
+        const postoAtuacaoSelect = document.getElementById('postoAtuacao');
         const errorMessage = document.getElementById('errorMessage');
         const successMessage = document.getElementById('successMessage');
         const btnRegister = document.getElementById('btnRegister');
 
-        // ✅ Carrega empresas, equipes e atuações ao iniciar a página
+        // ✅ Carrega empresas, equipes, atuações e postos ao iniciar a página
         loadEmpresas();
         loadEquipes();
         loadAtuacoes();
+        loadPostosAtuacao();
 
         // ✅ Máscara automática para CPF
         cpfInput.addEventListener('input', (e) => {
@@ -437,6 +446,34 @@
             }
         }
 
+        // ✅ Carrega lista de postos de atuação do Firestore (campo opcional)
+        async function loadPostosAtuacao() {
+            try {
+                let querySnapshot;
+                try {
+                    querySnapshot = await getDocs(query(collection(db, 'postosAtuacao'), orderBy('nome', 'asc')));
+                } catch (indexError) {
+                    querySnapshot = await getDocs(collection(db, 'postosAtuacao'));
+                }
+
+                postoAtuacaoSelect.innerHTML = '<option value="">Selecione um posto</option>';
+                if (querySnapshot.empty) return;
+
+                const opcoes = [];
+                querySnapshot.forEach((doc) => { if (doc.data().nome) opcoes.push(doc.data().nome); });
+                opcoes.sort((a, b) => a.localeCompare(b, 'pt-BR'));
+                opcoes.forEach((nome) => {
+                    const option = document.createElement('option');
+                    option.value = nome;
+                    option.textContent = nome;
+                    postoAtuacaoSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Erro ao carregar postos de atuação:', error.code, error.message);
+                postoAtuacaoSelect.innerHTML = '<option value="">Selecione um posto</option>';
+            }
+        }
+
         // ✅ Validação e envio do formulário
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -451,6 +488,7 @@
             const empresa = document.getElementById('empresa').value;
             const equipe = document.getElementById('equipe').value;
             const atuacao = document.getElementById('atuacao').value;
+            const postoAtuacao = document.getElementById('postoAtuacao').value;
 
             // Limpar mensagens
             errorMessage.style.display = 'none';
@@ -488,7 +526,7 @@
                 return;
             }
 
-            // Equipe e Atuação são opcionais no cadastro — quem já tem conta completa depois no perfil.
+            // Equipe, Atuação e Posto de Atuação são opcionais no cadastro — quem já tem conta completa depois no perfil.
 
             btnRegister.classList.add('loading');
             btnRegister.textContent = 'Criando conta...';
@@ -503,7 +541,8 @@
                     matricula: matricula || null,
                     empresa,
                     equipe: equipe || null,
-                    atuacao: atuacao || null
+                    atuacao: atuacao || null,
+                    postoAtuacao: postoAtuacao || null
                 });
 
                 showSuccess('Conta criada com sucesso! Redirecionando...');

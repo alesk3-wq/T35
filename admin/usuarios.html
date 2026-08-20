@@ -450,6 +450,12 @@
                         <option value="">Carregando...</option>
                     </select>
                 </div>
+                <div class="form-group">
+                    <label>Posto de Atuação</label>
+                    <select id="editPostoAtuacao">
+                        <option value="">Carregando...</option>
+                    </select>
+                </div>
                 <div class="form-group" id="assinaturaSection" style="display:none">
                     <label>Assinatura do Instrutor (PNG)</label>
                     <p style="font-size:12px;color:var(--text-secondary);margin:0.3rem 0 0.6rem">
@@ -608,6 +614,7 @@
             document.getElementById('editEmpresa').value = user.empresa || '';
             carregarSelectAuxiliar('equipes', 'editEquipe', user.equipe || '');
             carregarSelectAuxiliar('atuacoes', 'editAtuacao', user.atuacao || '');
+            carregarSelectAuxiliar('postosAtuacao', 'editPostoAtuacao', user.postoAtuacao || '');
             const perfisAtivos = user.perfis || [user.role || 'candidato'];
             document.querySelectorAll('.chk-perfil').forEach(chk => {
                 chk.checked = perfisAtivos.includes(chk.value);
@@ -784,6 +791,7 @@
                     empresa: document.getElementById('editEmpresa').value,
                     equipe: document.getElementById('editEquipe').value,
                     atuacao: document.getElementById('editAtuacao').value,
+                    postoAtuacao: document.getElementById('editPostoAtuacao').value,
                     gestorEquipes,
                     updatedAt: serverTimestamp()
                 });

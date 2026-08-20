@@ -30,7 +30,7 @@ const googleProvider = new GoogleAuthProvider();
  * @param {object} userData - Dados do usuário
  */
 export async function handleRegister(userData) {
-    const { email, password, fullName, cpf, phone, matricula, empresa, equipe, atuacao } = userData;
+    const { email, password, fullName, cpf, phone, matricula, empresa, equipe, atuacao, postoAtuacao } = userData;
 
     let userCredential;
     try {
@@ -50,6 +50,7 @@ export async function handleRegister(userData) {
             empresa,
             equipe: equipe || null,
             atuacao: atuacao || null,
+            postoAtuacao: postoAtuacao || null,
             role: 'candidato', // Role padrão
             createdAt: new Date(),
             updatedAt: new Date(),
@@ -186,6 +187,7 @@ export async function handleGoogleLogin() {
                 empresa: null,
                 equipe: null,
                 atuacao: null,
+                postoAtuacao: null,
                 role: 'candidato',
                 createdAt: new Date(),
                 updatedAt: new Date(),

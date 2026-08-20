@@ -265,6 +265,9 @@
                     <select id="inscAtuacaoFiltro">
                         <option value="">Todas as Atuações</option>
                     </select>
+                    <select id="inscPostoFiltro">
+                        <option value="">Todos os Postos</option>
+                    </select>
                 </div>
                 <div class="export-bar">
                     <button class="btn-export-pdf" id="btnExportInscricoes">
@@ -285,12 +288,13 @@
                                 <th>Curso</th>
                                 <th>Equipe</th>
                                 <th>Atuação</th>
+                                <th>Posto</th>
                                 <th>Status</th>
                                 <th>Data</th>
                             </tr>
                         </thead>
                         <tbody id="inscricoesList">
-                            <tr><td colspan="6" style="text-align:center;color:var(--text-secondary)">Carregando...</td></tr>
+                            <tr><td colspan="7" style="text-align:center;color:var(--text-secondary)">Carregando...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -352,6 +356,7 @@
             const status  = document.getElementById('inscStatusFiltro').value;
             const equipe  = document.getElementById('inscEquipeFiltro').value;
             const atuacao = document.getElementById('inscAtuacaoFiltro').value;
+            const posto   = document.getElementById('inscPostoFiltro').value;
 
             return todasInscricoes.filter(i => {
                 const equipeBaseOk = minhasEquipes.includes(i._equipe);
@@ -359,7 +364,8 @@
                 const statusOk  = !status  || i.status === status;
                 const equipeOk  = !equipe  || i._equipe === equipe;
                 const atuacaoOk = !atuacao || i._atuacao === atuacao;
-                return equipeBaseOk && nomeOk && statusOk && equipeOk && atuacaoOk;
+                const postoOk   = !posto   || i._posto === posto;
+                return equipeBaseOk && nomeOk && statusOk && equipeOk && atuacaoOk && postoOk;
             });
         }
 
@@ -373,10 +379,11 @@
                         <td>${i._cursoExib}</td>
                         <td>${i._equipe}</td>
                         <td>${i._atuacao}</td>
+                        <td>${i._posto}</td>
                         <td><span class="status-badge status-${i.status}">${labelStatus[i.status] ?? i.status}</span></td>
                         <td>${i._data}</td>
                     </tr>`).join('')
-                : '<tr><td colspan="6" style="text-align:center;color:var(--text-secondary);padding:2rem">Nenhuma inscrição encontrada</td></tr>';
+                : '<tr><td colspan="7" style="text-align:center;color:var(--text-secondary);padding:2rem">Nenhuma inscrição encontrada</td></tr>';
         }
 
         function popularFiltrosEquipeAtuacao() {
@@ -399,6 +406,20 @@
                 const opt = document.createElement('option');
                 opt.value = nome; opt.textContent = nome;
                 atuacaoSel.appendChild(opt);
+            });
+
+            const postos = [...new Set(
+                todasInscricoes
+                    .filter(i => minhasEquipes.includes(i._equipe))
+                    .map(i => i._posto)
+                    .filter(p => p && p !== '—')
+            )].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+            const postoSel = document.getElementById('inscPostoFiltro');
+            postos.forEach(nome => {
+                const opt = document.createElement('option');
+                opt.value = nome; opt.textContent = nome;
+                postoSel.appendChild(opt);
             });
         }
 
@@ -429,6 +450,7 @@
                         _empresa: usersMap[insc.candidatoId]?.empresa || '—',
                         _equipe:  usersMap[insc.candidatoId]?.equipe  || '—',
                         _atuacao: usersMap[insc.candidatoId]?.atuacao || '—',
+                        _posto:   usersMap[insc.candidatoId]?.postoAtuacao || '—',
                     });
                 });
 
@@ -446,6 +468,7 @@
                 document.getElementById('inscStatusFiltro').addEventListener('change', renderInscricoes);
                 document.getElementById('inscEquipeFiltro').addEventListener('change', renderInscricoes);
                 document.getElementById('inscAtuacaoFiltro').addEventListener('change', renderInscricoes);
+                document.getElementById('inscPostoFiltro').addEventListener('change', renderInscricoes);
                 renderInscricoes();
             } catch (err) {
                 console.error('Erro ao carregar inscrições:', err);
@@ -522,8 +545,8 @@
                 const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
                 pdfHeader(pdf, 'Relatório da Equipe', sub);
                 pdfTable(pdf,
-                    ['#', 'Candidato', 'Curso', 'Empresa', 'Equipe', 'Atuação', 'Status', 'Data'],
-                    filtradas.map((i, idx) => [idx + 1, i._nomeExib, i._cursoExib, i._empresa, i._equipe, i._atuacao, labelStatus[i.status] ?? i.status, i._data])
+                    ['#', 'Candidato', 'Curso', 'Empresa', 'Equipe', 'Atuação', 'Posto', 'Status', 'Data'],
+                    filtradas.map((i, idx) => [idx + 1, i._nomeExib, i._cursoExib, i._empresa, i._equipe, i._atuacao, i._posto, labelStatus[i.status] ?? i.status, i._data])
                 );
                 pdfFooter(pdf);
                 pdf.save(`relatorio_equipe_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.pdf`);
@@ -539,8 +562,8 @@
                 exportarExcel(
                     `relatorio_equipe_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.xlsx`,
                     'Relatório da Equipe',
-                    ['#', 'Candidato', 'Curso', 'Empresa', 'Equipe', 'Atuação', 'Status', 'Data'],
-                    filtradas.map((i, idx) => [idx + 1, i._nomeExib, i._cursoExib, i._empresa, i._equipe, i._atuacao, labelStatus[i.status] ?? i.status, i._data])
+                    ['#', 'Candidato', 'Curso', 'Empresa', 'Equipe', 'Atuação', 'Posto', 'Status', 'Data'],
+                    filtradas.map((i, idx) => [idx + 1, i._nomeExib, i._cursoExib, i._empresa, i._equipe, i._atuacao, i._posto, labelStatus[i.status] ?? i.status, i._data])
                 );
             } catch (e) { console.error(e); }
             finally { btnLoadingXlsx(btn, false); }

@@ -167,12 +167,13 @@
                                 <th>CPF</th>
                                 <th>Equipe</th>
                                 <th>Atuação</th>
+                                <th>Posto</th>
                                 <th>Cadastro</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
                         <tbody id="listaBody">
-                            <tr><td colspan="6" style="text-align:center;color:var(--text-secondary)">Carregando...</td></tr>
+                            <tr><td colspan="7" style="text-align:center;color:var(--text-secondary)">Carregando...</td></tr>
                         </tbody>
                     </table>
                     <div id="emptyState" class="empty-state" style="display:none">
@@ -252,6 +253,7 @@
                         ativo: item.ativo !== false,
                         equipe,
                         atuacao: userVinculado?.atuacao || null,
+                        posto: userVinculado?.postoAtuacao || null,
                         cadastrado: true
                     });
                 });
@@ -298,6 +300,7 @@
                     <td>${formatCPF(item.cpf)}</td>
                     <td>${item.equipe || '—'}</td>
                     <td>${item.atuacao || '—'}</td>
+                    <td>${item.posto || '—'}</td>
                     <td><span class="status-badge status-cadastrado">Cadastrado</span></td>
                     <td><span class="status-badge status-${item.ativo ? 'ativo' : 'inativo'}">${item.ativo ? 'Ativo' : 'Inativo'}</span></td>
                 </tr>

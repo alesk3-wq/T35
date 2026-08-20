@@ -378,6 +378,9 @@
                     <select id="inscAtuacaoFiltro">
                         <option value="">Todas as Atuações</option>
                     </select>
+                    <select id="inscPostoFiltro">
+                        <option value="">Todos os Postos</option>
+                    </select>
                 </div>
                 <div class="export-bar">
                     <button class="btn-export-pdf" id="btnExportInscricoes">
@@ -486,10 +489,11 @@
                                 <th>Datas</th>
                                 <th>Atuação</th>
                                 <th>Equipe</th>
+                                <th>Posto</th>
                             </tr>
                         </thead>
                         <tbody id="presencaList">
-                            <tr><td colspan="6" style="text-align:center;color:var(--text-secondary)">Selecione um curso</td></tr>
+                            <tr><td colspan="7" style="text-align:center;color:var(--text-secondary)">Selecione um curso</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -531,6 +535,9 @@
                     </select>
                     <select id="userAtuacaoFiltro">
                         <option value="">Todas as Atuações</option>
+                    </select>
+                    <select id="userPostoFiltro">
+                        <option value="">Todos os Postos</option>
                     </select>
                 </div>
 
@@ -793,14 +800,16 @@
             }
 
             try {
-                const [empresas, equipes, atuacoes] = await Promise.all([
+                const [empresas, equipes, atuacoes, postos] = await Promise.all([
                     nomesDe('empresas'),
                     nomesDe('equipes'),
-                    nomesDe('atuacoes')
+                    nomesDe('atuacoes'),
+                    nomesDe('postosAtuacao')
                 ]);
                 popular(['inscEmpresaFiltro', 'userEmpresaFiltro'], empresas);
                 popular(['inscEquipeFiltro',  'userEquipeFiltro'],  equipes);
                 popular(['inscAtuacaoFiltro', 'userAtuacaoFiltro'], atuacoes);
+                popular(['inscPostoFiltro',   'userPostoFiltro'],   postos);
             } catch (err) {
                 console.error('Erro ao carregar filtros auxiliares:', err);
             }
@@ -948,6 +957,7 @@
             const empresa = document.getElementById('inscEmpresaFiltro').value;
             const equipe  = document.getElementById('inscEquipeFiltro').value;
             const atuacao = document.getElementById('inscAtuacaoFiltro').value;
+            const posto   = document.getElementById('inscPostoFiltro').value;
 
             return todasInscricoes.filter(i => {
                 const nomeOk    = !busca   || i._nome.includes(busca) || i._curso.includes(busca);
@@ -955,7 +965,8 @@
                 const empresaOk = !empresa || i._empresa === empresa;
                 const equipeOk  = !equipe  || i._equipe === equipe;
                 const atuacaoOk = !atuacao || i._atuacao === atuacao;
-                return nomeOk && statusOk && empresaOk && equipeOk && atuacaoOk;
+                const postoOk   = !posto   || i._posto === posto;
+                return nomeOk && statusOk && empresaOk && equipeOk && atuacaoOk && postoOk;
             });
         }
 
@@ -1011,6 +1022,7 @@
                         _empresa: usersMap[insc.candidatoId]?.empresa || '—',
                         _equipe:  usersMap[insc.candidatoId]?.equipe  || '—',
                         _atuacao: usersMap[insc.candidatoId]?.atuacao || '—',
+                        _posto:   usersMap[insc.candidatoId]?.postoAtuacao || '—',
                         // usados só na aba Presença
                         _email: usersMap[insc.candidatoId]?.email || '—',
                         _cpf:   usersMap[insc.candidatoId]?.cpf   || '—',
@@ -1030,6 +1042,7 @@
                 document.getElementById('inscEmpresaFiltro').addEventListener('change', renderInscricoes);
                 document.getElementById('inscEquipeFiltro').addEventListener('change', renderInscricoes);
                 document.getElementById('inscAtuacaoFiltro').addEventListener('change', renderInscricoes);
+                document.getElementById('inscPostoFiltro').addEventListener('change', renderInscricoes);
                 renderInscricoes();
             } catch (err) {
                 console.error('Erro inscrições:', err);
@@ -1185,8 +1198,8 @@
                 const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
                 pdfHeader(pdf, 'Relatório de Inscrições', sub);
                 pdfTable(pdf,
-                    ['#', 'Candidato', 'Curso', 'Empresa', 'Equipe', 'Atuação', 'Status', 'Data'],
-                    filtradas.map((i, idx) => [idx + 1, i._nomeExib, i._cursoExib, i._empresa, i._equipe, i._atuacao, statusLabel2[i.status] ?? i.status, i._data])
+                    ['#', 'Candidato', 'Curso', 'Empresa', 'Equipe', 'Atuação', 'Posto', 'Status', 'Data'],
+                    filtradas.map((i, idx) => [idx + 1, i._nomeExib, i._cursoExib, i._empresa, i._equipe, i._atuacao, i._posto, statusLabel2[i.status] ?? i.status, i._data])
                 );
                 pdfFooter(pdf);
                 pdf.save(`inscricoes_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.pdf`);
@@ -1203,8 +1216,8 @@
                 exportarExcel(
                     `inscricoes_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.xlsx`,
                     'Inscrições',
-                    ['#', 'Candidato', 'Curso', 'Empresa', 'Equipe', 'Atuação', 'Status', 'Data'],
-                    filtradas.map((i, idx) => [idx + 1, i._nomeExib, i._cursoExib, i._empresa, i._equipe, i._atuacao, statusLabel2[i.status] ?? i.status, i._data])
+                    ['#', 'Candidato', 'Curso', 'Empresa', 'Equipe', 'Atuação', 'Posto', 'Status', 'Data'],
+                    filtradas.map((i, idx) => [idx + 1, i._nomeExib, i._cursoExib, i._empresa, i._equipe, i._atuacao, i._posto, statusLabel2[i.status] ?? i.status, i._data])
                 );
             } catch (e) { console.error(e); }
             finally { btnLoadingXlsx(btn, false); }
@@ -1297,6 +1310,7 @@
                         cpf:     i._cpf,
                         equipe:  i._equipe,
                         atuacao: i._atuacao,
+                        posto:   i._posto,
                         total:   presencas.length,
                         datas:   presencas.map(d => {
                             const [y, m, day] = d.split('-');
@@ -1311,7 +1325,7 @@
             const tbody = document.getElementById('presencaList');
 
             if (!cursoId) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-secondary)">Selecione um curso</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-secondary)">Selecione um curso</td></tr>';
                 return;
             }
 
@@ -1325,8 +1339,9 @@
                         <td>${l.datas}</td>
                         <td>${l.atuacao}</td>
                         <td>${l.equipe}</td>
+                        <td>${l.posto}</td>
                     </tr>`).join('')
-                : '<tr><td colspan="6" style="text-align:center;color:var(--text-secondary);padding:2rem">Nenhuma inscrição encontrada</td></tr>';
+                : '<tr><td colspan="7" style="text-align:center;color:var(--text-secondary);padding:2rem">Nenhuma inscrição encontrada</td></tr>';
         }
 
         document.getElementById('btnExportPresenca').addEventListener('click', () => {
@@ -1341,8 +1356,8 @@
                 const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
                 pdfHeader(pdf, 'Relatório de Presença', cursoNome);
                 pdfTable(pdf,
-                    ['#', 'Aluno', 'E-mail', 'Presenças', 'Datas', 'Atuação', 'Equipe'],
-                    linhas.map((l, idx) => [idx + 1, l.nome, l.email, l.total, l.datas, l.atuacao, l.equipe])
+                    ['#', 'Aluno', 'E-mail', 'Presenças', 'Datas', 'Atuação', 'Equipe', 'Posto'],
+                    linhas.map((l, idx) => [idx + 1, l.nome, l.email, l.total, l.datas, l.atuacao, l.equipe, l.posto])
                 );
                 pdfFooter(pdf);
                 pdf.save(`presenca_${cursoNome.replace(/\s+/g,'_')}.pdf`);
@@ -1361,8 +1376,8 @@
                 exportarExcel(
                     `presenca_${cursoNome.replace(/\s+/g,'_')}.xlsx`,
                     'Presença',
-                    ['#', 'Aluno', 'E-mail', 'CPF', 'Presenças', 'Datas', 'Atuação', 'Equipe'],
-                    linhas.map((l, idx) => [idx + 1, l.nome, l.email, l.cpf, l.total, l.datas, l.atuacao, l.equipe])
+                    ['#', 'Aluno', 'E-mail', 'CPF', 'Presenças', 'Datas', 'Atuação', 'Equipe', 'Posto'],
+                    linhas.map((l, idx) => [idx + 1, l.nome, l.email, l.cpf, l.total, l.datas, l.atuacao, l.equipe, l.posto])
                 );
             } catch (e) { console.error(e); }
             finally { btnLoadingXlsx(btn, false); }
@@ -1383,12 +1398,13 @@
                 u.empresa || '—',
                 u.equipe || '—',
                 u.atuacao || '—',
+                u.postoAtuacao || '—',
                 u.role || '—',
                 u.status || '—',
                 u._data
             ];
         }
-        const COLUNAS_USUARIOS = ['#', 'Nome', 'Email', 'CPF', 'Telefone', 'Matrícula', 'Empresa', 'Equipe', 'Atuação', 'Perfil', 'Status', 'Cadastro'];
+        const COLUNAS_USUARIOS = ['#', 'Nome', 'Email', 'CPF', 'Telefone', 'Matrícula', 'Empresa', 'Equipe', 'Atuação', 'Posto', 'Perfil', 'Status', 'Cadastro'];
 
         document.getElementById('btnExportUsuarios').addEventListener('click', () => {
             const btn = document.getElementById('btnExportUsuarios');
@@ -1459,6 +1475,7 @@
                         empresa: userData?.empresa || '—',
                         equipe:  userData?.equipe  || '—',
                         atuacao: userData?.atuacao || '—',
+                        posto:   userData?.postoAtuacao || '—',
                         pct:   p.percentualVideo || 0,
                         tela:  p.tempoTela || 0,
                         dur:   p.videoDuracao || 0,
@@ -1499,8 +1516,8 @@
                 const { jsPDF } = window.jspdf;
                 const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
                 pdfHeader(pdf, 'Relatório de Engajamento de Vídeo', `Total: ${todosVideoReport.length} | Concluídos: ${todosVideoReport.filter(r=>r.concluido).length} | Suspeitos: ${todosVideoReport.filter(r=>r.suspeito).length}`);
-                pdfTable(pdf, ['Candidato','Curso','Empresa','Equipe','Atuação','% Vídeo','Tempo na Tela','Duração','Status'],
-                    todosVideoReport.map(r => [r.nome, r.curso, r.empresa, r.equipe, r.atuacao, r.pct+'%', fmtTempo(r.tela), fmtTempo(r.dur), r.suspeito ? '⚠ Suspeito' : r.concluido ? '✓ OK' : 'Em andamento'])
+                pdfTable(pdf, ['Candidato','Curso','Empresa','Equipe','Atuação','Posto','% Vídeo','Tempo na Tela','Duração','Status'],
+                    todosVideoReport.map(r => [r.nome, r.curso, r.empresa, r.equipe, r.atuacao, r.posto, r.pct+'%', fmtTempo(r.tela), fmtTempo(r.dur), r.suspeito ? '⚠ Suspeito' : r.concluido ? '✓ OK' : 'Em andamento'])
                 );
                 pdfFooter(pdf);
                 pdf.save('relatorio-videos.pdf');
@@ -1516,8 +1533,8 @@
                 exportarExcel(
                     'relatorio-videos.xlsx',
                     'Vídeos',
-                    ['Candidato','Curso','Empresa','Equipe','Atuação','% Vídeo','Tempo na Tela','Duração','Status'],
-                    todosVideoReport.map(r => [r.nome, r.curso, r.empresa, r.equipe, r.atuacao, r.pct+'%', fmtTempo(r.tela), fmtTempo(r.dur), r.suspeito ? 'Suspeito' : r.concluido ? 'OK' : 'Em andamento'])
+                    ['Candidato','Curso','Empresa','Equipe','Atuação','Posto','% Vídeo','Tempo na Tela','Duração','Status'],
+                    todosVideoReport.map(r => [r.nome, r.curso, r.empresa, r.equipe, r.atuacao, r.posto, r.pct+'%', fmtTempo(r.tela), fmtTempo(r.dur), r.suspeito ? 'Suspeito' : r.concluido ? 'OK' : 'Em andamento'])
                 );
             } catch (e) { console.error(e); }
             finally { btnLoadingXlsx(btn, false); }
@@ -1735,12 +1752,14 @@
             const empresa = document.getElementById('userEmpresaFiltro').value;
             const equipe  = document.getElementById('userEquipeFiltro').value;
             const atuacao = document.getElementById('userAtuacaoFiltro').value;
+            const posto   = document.getElementById('userPostoFiltro').value;
 
             return todosUsuariosReport.filter(u => {
                 const empresaOk = !empresa || u.empresa === empresa;
                 const equipeOk  = !equipe  || u.equipe === equipe;
                 const atuacaoOk = !atuacao || u.atuacao === atuacao;
-                return empresaOk && equipeOk && atuacaoOk;
+                const postoOk   = !posto   || u.postoAtuacao === posto;
+                return empresaOk && equipeOk && atuacaoOk && postoOk;
             });
         }
 
@@ -1783,6 +1802,7 @@
                 document.getElementById('userEmpresaFiltro').addEventListener('change', renderUsuarios);
                 document.getElementById('userEquipeFiltro').addEventListener('change', renderUsuarios);
                 document.getElementById('userAtuacaoFiltro').addEventListener('change', renderUsuarios);
+                document.getElementById('userPostoFiltro').addEventListener('change', renderUsuarios);
                 renderUsuarios();
             } catch (err) {
                 console.error('Erro usuários report:', err);
