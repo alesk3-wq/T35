@@ -970,8 +970,26 @@
             });
         }
 
+        function renderResumoInscricoes(lista) {
+            let aprovadas = 0, concluidas = 0, faltas = 0, pendentes = 0, rejeitadas = 0;
+            lista.forEach(insc => {
+                if (insc.status === 'apto')            aprovadas++;
+                else if (insc.status === 'concluido')  concluidas++;
+                else if (insc.status === 'falta')      faltas++;
+                else if (insc.status === 'pendente')   pendentes++;
+                else if (insc.status === 'rejeitada')  rejeitadas++;
+            });
+            document.getElementById('inscTotal').textContent      = lista.length;
+            document.getElementById('inscAptas').textContent      = aprovadas;
+            document.getElementById('inscConcluidas').textContent = concluidas;
+            document.getElementById('inscFaltas').textContent     = faltas;
+            document.getElementById('inscPendentes').textContent  = pendentes;
+            document.getElementById('inscRejeitadas').textContent = rejeitadas;
+        }
+
         function renderInscricoes() {
             const filtradas = getInscricoesFiltradas();
+            renderResumoInscricoes(filtradas);
             const tbody = document.getElementById('inscricoesList');
             tbody.innerHTML = filtradas.length > 0
                 ? filtradas.map(i => `
@@ -998,17 +1016,9 @@
                 const cursosMap = {};
                 cursosSnap.forEach(d => { cursosMap[d.id] = d.data(); });
 
-                let total = 0, aprovadas = 0, concluidas = 0, faltas = 0, pendentes = 0, rejeitadas = 0;
-
                 todasInscricoes = [];
                 inscSnap.forEach(d => {
                     const insc = d.data();
-                    total++;
-                    if (insc.status === 'apto')       aprovadas++;
-                    else if (insc.status === 'concluido') concluidas++;
-                    else if (insc.status === 'falta')     faltas++;
-                    else if (insc.status === 'pendente')  pendentes++;
-                    else if (insc.status === 'rejeitada') rejeitadas++;
 
                     todasInscricoes.push({
                         ...insc,
@@ -1028,13 +1038,6 @@
                         _cpf:   usersMap[insc.candidatoId]?.cpf   || '—',
                     });
                 });
-
-                document.getElementById('inscTotal').textContent      = total;
-                document.getElementById('inscAptas').textContent  = aprovadas;
-                document.getElementById('inscConcluidas').textContent = concluidas;
-                document.getElementById('inscFaltas').textContent     = faltas;
-                document.getElementById('inscPendentes').textContent  = pendentes;
-                document.getElementById('inscRejeitadas').textContent = rejeitadas;
 
                 // Registra os filtros e renderiza
                 document.getElementById('inscBusca').addEventListener('input', renderInscricoes);
@@ -1763,8 +1766,21 @@
             });
         }
 
+        function renderResumoUsuarios(lista) {
+            let candidatos = 0, instrutores = 0, admins = 0;
+            lista.forEach(u => {
+                if (u.role === 'candidato') candidatos++;
+                else if (u.role === 'instrutor') instrutores++;
+                else if (u.role === 'admin') admins++;
+            });
+            document.getElementById('userCandidatos').textContent = candidatos;
+            document.getElementById('userInstrutores').textContent = instrutores;
+            document.getElementById('userAdmins').textContent = admins;
+        }
+
         function renderUsuarios() {
             const filtrados = getUsuariosFiltrados();
+            renderResumoUsuarios(filtrados);
             const tbody = document.getElementById('usuariosList');
             tbody.innerHTML = filtrados.length > 0
                 ? filtrados.map(u => `
@@ -1782,22 +1798,13 @@
             try {
                 const snap = await getDocs(query(collection(db, 'users'), orderBy('fullName', 'asc')));
 
-                let candidatos = 0, instrutores = 0, admins = 0;
                 todosUsuariosReport = [];
 
                 snap.forEach(d => {
                     const u = d.data();
-                    if (u.role === 'candidato') candidatos++;
-                    else if (u.role === 'instrutor') instrutores++;
-                    else if (u.role === 'admin') admins++;
-
                     const data = u.createdAt?.toDate ? u.createdAt.toDate().toLocaleDateString('pt-BR') : '—';
                     todosUsuariosReport.push({ ...u, _data: data });
                 });
-
-                document.getElementById('userCandidatos').textContent = candidatos;
-                document.getElementById('userInstrutores').textContent = instrutores;
-                document.getElementById('userAdmins').textContent = admins;
 
                 document.getElementById('userEmpresaFiltro').addEventListener('change', renderUsuarios);
                 document.getElementById('userEquipeFiltro').addEventListener('change', renderUsuarios);

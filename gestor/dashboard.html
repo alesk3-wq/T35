@@ -369,8 +369,18 @@
             });
         }
 
+        function renderResumoInscricoes(lista) {
+            document.getElementById('inscTotal').textContent      = lista.length;
+            document.getElementById('inscAptas').textContent      = lista.filter(i => i.status === 'apto').length;
+            document.getElementById('inscConcluidas').textContent = lista.filter(i => i.status === 'concluido').length;
+            document.getElementById('inscFaltas').textContent     = lista.filter(i => i.status === 'falta').length;
+            document.getElementById('inscPendentes').textContent  = lista.filter(i => i.status === 'pendente').length;
+            document.getElementById('inscRejeitadas').textContent = lista.filter(i => i.status === 'rejeitada').length;
+        }
+
         function renderInscricoes() {
             const filtradas = getInscricoesFiltradas();
+            renderResumoInscricoes(filtradas);
             const tbody = document.getElementById('inscricoesList');
             tbody.innerHTML = filtradas.length > 0
                 ? filtradas.map(i => `
@@ -453,14 +463,6 @@
                         _posto:   usersMap[insc.candidatoId]?.postoAtuacao || '—',
                     });
                 });
-
-                const daEquipe = todasInscricoes.filter(i => minhasEquipes.includes(i._equipe));
-                document.getElementById('inscTotal').textContent      = daEquipe.length;
-                document.getElementById('inscAptas').textContent      = daEquipe.filter(i => i.status === 'apto').length;
-                document.getElementById('inscConcluidas').textContent = daEquipe.filter(i => i.status === 'concluido').length;
-                document.getElementById('inscFaltas').textContent     = daEquipe.filter(i => i.status === 'falta').length;
-                document.getElementById('inscPendentes').textContent  = daEquipe.filter(i => i.status === 'pendente').length;
-                document.getElementById('inscRejeitadas').textContent = daEquipe.filter(i => i.status === 'rejeitada').length;
 
                 popularFiltrosEquipeAtuacao();
 

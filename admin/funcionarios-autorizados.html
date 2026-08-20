@@ -608,7 +608,6 @@
                 });
 
                 listaCompleta.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
-                renderResumo();
 
                 document.getElementById('busca').addEventListener('input', render);
                 document.getElementById('statusFiltro').addEventListener('change', render);
@@ -622,12 +621,12 @@
             }
         }
 
-        function renderResumo() {
-            document.getElementById('resumoTotal').textContent = listaCompleta.length;
-            document.getElementById('resumoCadastrados').textContent = listaCompleta.filter(i => i.cadastrado).length;
-            document.getElementById('resumoAguardando').textContent = listaCompleta.filter(i => !i.cadastrado).length;
-            document.getElementById('resumoAtivos').textContent = listaCompleta.filter(i => i.ativo).length;
-            document.getElementById('resumoInativos').textContent = listaCompleta.filter(i => !i.ativo).length;
+        function renderResumo(lista) {
+            document.getElementById('resumoTotal').textContent = lista.length;
+            document.getElementById('resumoCadastrados').textContent = lista.filter(i => i.cadastrado).length;
+            document.getElementById('resumoAguardando').textContent = lista.filter(i => !i.cadastrado).length;
+            document.getElementById('resumoAtivos').textContent = lista.filter(i => i.ativo).length;
+            document.getElementById('resumoInativos').textContent = lista.filter(i => !i.ativo).length;
         }
 
         function getFiltrados() {
@@ -652,6 +651,7 @@
 
         function render() {
             const filtrados = getFiltrados();
+            renderResumo(filtrados);
             const tbody = document.getElementById('listaBody');
             const empty = document.getElementById('emptyState');
 
