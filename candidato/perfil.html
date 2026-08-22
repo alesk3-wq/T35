@@ -289,30 +289,26 @@
 
                                 <div class="form-group">
                                     <label for="empresa">Empresa</label>
-                                    <select id="empresa">
-                                        <option value="">Carregando...</option>
-                                    </select>
+                                    <input type="text" id="empresa" disabled>
+                                    <span class="hint">Contate seu gestor pra alterar</span>
                                 </div>
 
                                 <div class="form-group">
                                     <label for="equipe">Equipe</label>
-                                    <select id="equipe">
-                                        <option value="">Carregando...</option>
-                                    </select>
+                                    <input type="text" id="equipe" disabled>
+                                    <span class="hint">Contate seu gestor pra alterar</span>
                                 </div>
 
                                 <div class="form-group">
                                     <label for="atuacao">Atuação</label>
-                                    <select id="atuacao">
-                                        <option value="">Carregando...</option>
-                                    </select>
+                                    <input type="text" id="atuacao" disabled>
+                                    <span class="hint">Contate seu gestor pra alterar</span>
                                 </div>
 
                                 <div class="form-group">
                                     <label for="postoAtuacao">Posto de Atuação</label>
-                                    <select id="postoAtuacao">
-                                        <option value="">Carregando...</option>
-                                    </select>
+                                    <input type="text" id="postoAtuacao" disabled>
+                                    <span class="hint">Contate seu gestor pra alterar</span>
                                 </div>
                             </div>
                         </div>
@@ -367,7 +363,7 @@
             EmailAuthProvider, reauthenticateWithCredential, updatePassword
         } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js';
         import {
-            collection, getDocs, query, where, orderBy, doc, updateDoc
+            collection, getDocs, query, where, doc, updateDoc
         } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js';
 
         document.getElementById('btnMenu').addEventListener('click', toggleSidebar);
@@ -379,118 +375,6 @@
         });
 
         let userDocId = null;
-
-        async function loadEmpresas(valorAtual) {
-            const select = document.getElementById('empresa');
-            try {
-                let snap;
-                try {
-                    snap = await getDocs(query(collection(db, 'empresas'), orderBy('nome', 'asc')));
-                } catch {
-                    snap = await getDocs(collection(db, 'empresas'));
-                }
-
-                const nomes = [];
-                snap.forEach(d => { if (d.data().nome) nomes.push(d.data().nome); });
-                nomes.sort((a, b) => a.localeCompare(b, 'pt-BR'));
-
-                select.innerHTML = '<option value="">Selecione uma empresa</option>';
-                nomes.forEach(nome => {
-                    const opt = document.createElement('option');
-                    opt.value = nome;
-                    opt.textContent = nome;
-                    if (nome === valorAtual) opt.selected = true;
-                    select.appendChild(opt);
-                });
-            } catch (err) {
-                select.innerHTML = '<option value="">Erro ao carregar empresas</option>';
-                console.error('Erro ao carregar empresas:', err);
-            }
-        }
-
-        async function loadEquipes(valorAtual) {
-            const select = document.getElementById('equipe');
-            try {
-                let snap;
-                try {
-                    snap = await getDocs(query(collection(db, 'equipes'), orderBy('nome', 'asc')));
-                } catch {
-                    snap = await getDocs(collection(db, 'equipes'));
-                }
-
-                const nomes = [];
-                snap.forEach(d => { if (d.data().nome) nomes.push(d.data().nome); });
-                nomes.sort((a, b) => a.localeCompare(b, 'pt-BR'));
-
-                select.innerHTML = '<option value="">Selecione uma equipe</option>';
-                nomes.forEach(nome => {
-                    const opt = document.createElement('option');
-                    opt.value = nome;
-                    opt.textContent = nome;
-                    if (nome === valorAtual) opt.selected = true;
-                    select.appendChild(opt);
-                });
-            } catch (err) {
-                select.innerHTML = '<option value="">Erro ao carregar equipes</option>';
-                console.error('Erro ao carregar equipes:', err);
-            }
-        }
-
-        async function loadAtuacoes(valorAtual) {
-            const select = document.getElementById('atuacao');
-            try {
-                let snap;
-                try {
-                    snap = await getDocs(query(collection(db, 'atuacoes'), orderBy('nome', 'asc')));
-                } catch {
-                    snap = await getDocs(collection(db, 'atuacoes'));
-                }
-
-                const nomes = [];
-                snap.forEach(d => { if (d.data().nome) nomes.push(d.data().nome); });
-                nomes.sort((a, b) => a.localeCompare(b, 'pt-BR'));
-
-                select.innerHTML = '<option value="">Selecione uma atuação</option>';
-                nomes.forEach(nome => {
-                    const opt = document.createElement('option');
-                    opt.value = nome;
-                    opt.textContent = nome;
-                    if (nome === valorAtual) opt.selected = true;
-                    select.appendChild(opt);
-                });
-            } catch (err) {
-                select.innerHTML = '<option value="">Erro ao carregar atuações</option>';
-                console.error('Erro ao carregar atuações:', err);
-            }
-        }
-
-        async function loadPostosAtuacao(valorAtual) {
-            const select = document.getElementById('postoAtuacao');
-            try {
-                let snap;
-                try {
-                    snap = await getDocs(query(collection(db, 'postosAtuacao'), orderBy('nome', 'asc')));
-                } catch {
-                    snap = await getDocs(collection(db, 'postosAtuacao'));
-                }
-
-                const nomes = [];
-                snap.forEach(d => { if (d.data().nome) nomes.push(d.data().nome); });
-                nomes.sort((a, b) => a.localeCompare(b, 'pt-BR'));
-
-                select.innerHTML = '<option value="">Selecione um posto</option>';
-                nomes.forEach(nome => {
-                    const opt = document.createElement('option');
-                    opt.value = nome;
-                    opt.textContent = nome;
-                    if (nome === valorAtual) opt.selected = true;
-                    select.appendChild(opt);
-                });
-            } catch (err) {
-                select.innerHTML = '<option value="">Erro ao carregar postos</option>';
-                console.error('Erro ao carregar postos de atuação:', err);
-            }
-        }
 
         checkAuth().then(async user => {
             if (!user) { window.location.href = '../login.html'; return; }
@@ -531,10 +415,10 @@
                 document.getElementById('cpf').value = u.cpf ? formatCPF(u.cpf) : '';
                 document.getElementById('matricula').value = u.matricula || '';
 
-                await loadEmpresas(u.empresa || '');
-                await loadEquipes(u.equipe || '');
-                await loadAtuacoes(u.atuacao || '');
-                await loadPostosAtuacao(u.postoAtuacao || '');
+                document.getElementById('empresa').value = u.empresa || '—';
+                document.getElementById('equipe').value = u.equipe || '—';
+                document.getElementById('atuacao').value = u.atuacao || '—';
+                document.getElementById('postoAtuacao').value = u.postoAtuacao || '—';
 
                 // Libera CPF e matrícula se ainda não foram preenchidos (ex: login via Google)
                 if (!u.cpf) {
@@ -593,10 +477,6 @@
                 const updates = {
                     fullName,
                     phone: rawPhone,
-                    empresa: document.getElementById('empresa').value,
-                    equipe: document.getElementById('equipe').value,
-                    atuacao: document.getElementById('atuacao').value,
-                    postoAtuacao: document.getElementById('postoAtuacao').value,
                     updatedAt: new Date()
                 };
 

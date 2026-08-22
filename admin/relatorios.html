@@ -20,6 +20,76 @@
 
         .page-header h1 { color: var(--text); font-size: 28px; margin: 0; }
 
+        .btn-dash-pdf {
+            display: flex; align-items: center; gap: 0.5rem;
+            padding: 0.65rem 1.25rem;
+            background: var(--amber); color: #0f172a;
+            border: none; border-radius: 8px;
+            font-size: 14px; font-weight: 700; cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-dash-pdf:hover { background: var(--amber-dark); }
+        .btn-dash-pdf:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: var(--bg2);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .modal-header {
+            padding: 1.5rem 2rem 0;
+            flex-shrink: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .modal-body {
+            padding: 0.5rem 2rem 1rem;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .modal-actions {
+            padding: 0.75rem 2rem 1.5rem;
+            flex-shrink: 0;
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            border-top: 1px solid var(--border);
+        }
+        .btn-cancel, .btn-save {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-cancel { background: var(--border); color: var(--text); }
+        .btn-cancel:hover { background: rgba(255,255,255,0.1); }
+        .btn-save { background: var(--amber); color: var(--bg); }
+        .btn-save:hover { background: var(--amber-dark); }
+        .btn-close {
+            background: none; border: none; font-size: 24px;
+            color: var(--text-secondary); cursor: pointer; line-height: 1;
+        }
+        .btn-close:hover { color: var(--text); }
+
         .report-tabs {
             display: flex;
             gap: 0.5rem;
@@ -317,6 +387,10 @@
         <div class="content">
             <div class="page-header">
                 <h1>Relatórios</h1>
+                <button class="btn-dash-pdf" id="btnDashPdf">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+                    Gerar Dash PDF
+                </button>
             </div>
 
             <div class="report-tabs">
@@ -717,6 +791,27 @@
         </div>
     </main>
 
+    <div class="modal" id="dashPdfModal">
+        <div class="modal-content" style="max-width:420px">
+            <div class="modal-header">
+                <h2>Gerar Dash PDF</h2>
+                <button class="btn-close" id="btnCloseDashPdf">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Curso</label>
+                    <select id="dashPdfCursoSelect">
+                        <option value="">Selecione um curso...</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" id="btnCancelDashPdf">Cancelar</button>
+                <button class="btn-save" id="btnConfirmDashPdf">Gerar PDF</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -771,6 +866,209 @@
                 carregarFiltrosAuxiliares()
             ]);
             popularCursoFiltroPresenca();
+            popularDashPdfSelect();
+        }
+
+        // ── Dash PDF: dashboard resumido de um curso, pra mandar pro gerente ──
+
+        function popularDashPdfSelect() {
+            const sel = document.getElementById('dashPdfCursoSelect');
+            todosCursosReport
+                .slice()
+                .sort((a, b) => (a.titulo || '').localeCompare(b.titulo || '', 'pt-BR'))
+                .forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.id;
+                    opt.textContent = c.titulo;
+                    sel.appendChild(opt);
+                });
+        }
+
+        document.getElementById('btnDashPdf').addEventListener('click', () => {
+            document.getElementById('dashPdfModal').classList.add('active');
+        });
+        document.getElementById('btnCloseDashPdf').addEventListener('click', () => {
+            document.getElementById('dashPdfModal').classList.remove('active');
+        });
+        document.getElementById('btnCancelDashPdf').addEventListener('click', () => {
+            document.getElementById('dashPdfModal').classList.remove('active');
+        });
+        document.getElementById('btnConfirmDashPdf').addEventListener('click', async () => {
+            const cursoId = document.getElementById('dashPdfCursoSelect').value;
+            if (!cursoId) { alert('Selecione um curso.'); return; }
+            const btn = document.getElementById('btnConfirmDashPdf');
+            btn.disabled = true;
+            btn.textContent = 'Gerando...';
+            try {
+                await gerarDashPdfCurso(cursoId);
+                document.getElementById('dashPdfModal').classList.remove('active');
+            } catch (err) {
+                console.error(err);
+                alert('Erro ao gerar o PDF.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Gerar PDF';
+            }
+        });
+
+        function imgToBase64(url) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    const c = document.createElement('canvas');
+                    c.width = img.width; c.height = img.height;
+                    c.getContext('2d').drawImage(img, 0, 0);
+                    resolve(c.toDataURL('image/png'));
+                };
+                img.onerror = reject;
+                img.src = url;
+            });
+        }
+
+        function getAtuacaoBreakdown(cursoId) {
+            const porAtuacao = {};
+            todasInscricoes
+                .filter(i => i.cursoId === cursoId)
+                .forEach(i => {
+                    const at = i._atuacao || '—';
+                    if (!porAtuacao[at]) porAtuacao[at] = { total: 0, concluidos: 0, faltas: 0 };
+                    if (i.status !== 'rejeitada') porAtuacao[at].total++;
+                    if (i.status === 'concluido') porAtuacao[at].concluidos++;
+                    if (i.status === 'falta') porAtuacao[at].faltas++;
+                });
+            return Object.entries(porAtuacao)
+                .map(([atuacao, d]) => ({
+                    atuacao, ...d,
+                    pct: d.total > 0 ? Math.round((d.concluidos / d.total) * 100) : 0
+                }))
+                .sort((a, b) => a.atuacao.localeCompare(b.atuacao, 'pt-BR'));
+        }
+
+        function getStatusBreakdown(cursoId) {
+            const cnt = { apto: 0, concluido: 0, falta: 0, pendente: 0 };
+            todasInscricoes
+                .filter(i => i.cursoId === cursoId)
+                .forEach(i => { if (cnt[i.status] !== undefined) cnt[i.status]++; });
+            return cnt;
+        }
+
+        async function gerarDashPdfCurso(cursoId) {
+            const curso = todosCursosReport.find(c => c.id === cursoId);
+            if (!curso) return;
+
+            const totalAcademy = todosUsuariosReport.filter(u => u.role === 'candidato').length;
+            const concluidos = curso._dados.concluidos;
+            const faltas = curso._dados.faltas;
+            const breakdown = getAtuacaoBreakdown(cursoId);
+
+            const fmt = d => d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const ini = curso.dataInicio?.toDate ? curso.dataInicio.toDate() : (curso.dataInicio ? new Date(curso.dataInicio) : null);
+            const fim = curso.dataFim?.toDate ? curso.dataFim.toDate() : (curso.dataFim ? new Date(curso.dataFim) : null);
+            const periodo = (ini && fim) ? `${fmt(ini)} – ${fmt(fim)}` : '—';
+
+            let logoB64 = '';
+            try { logoB64 = await imgToBase64('../assets/img/t35logo.png'); } catch (_) {}
+
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+            pdfHeader(pdf, 'Dashboard do Curso', `${curso.titulo}   ·   Instrutor: ${curso.instrutor || '—'}   ·   Período: ${periodo}`, false);
+            if (logoB64) pdf.addImage(logoB64, 'PNG', 263, 4, 20, 20);
+
+            const cards = [
+                { label: 'Total de Alunos no Academy', value: totalAcademy, color: [245, 158, 11] },
+                { label: 'Concluídos',                 value: concluidos,   color: [59, 130, 246]  },
+                { label: 'Faltas',                      value: faltas,       color: [168, 85, 247]  },
+            ];
+
+            const marginX = 14, gap = 7, cols = 3;
+            const cardW = (297 - marginX * 2 - gap * (cols - 1)) / cols;
+            const cardH = 40;
+            const startY = 38;
+
+            cards.forEach((card, i) => {
+                const x = marginX + i * (cardW + gap);
+
+                pdf.setFillColor(248, 250, 252);
+                pdf.setDrawColor(226, 232, 240);
+                pdf.roundedRect(x, startY, cardW, cardH, 3, 3, 'FD');
+
+                pdf.setTextColor(card.color[0], card.color[1], card.color[2]);
+                pdf.setFont('helvetica', 'bold');
+                pdf.setFontSize(26);
+                pdf.text(String(card.value), x + cardW / 2, startY + cardH / 2, { align: 'center' });
+
+                pdf.setTextColor(100, 116, 139);
+                pdf.setFont('helvetica', 'normal');
+                pdf.setFontSize(10);
+                pdf.text(card.label, x + cardW / 2, startY + cardH - 8, { align: 'center' });
+            });
+
+            pdf.setTextColor(30, 41, 59);
+            pdf.setFont('helvetica', 'bold');
+            pdf.setFontSize(12);
+            pdf.text('Por Atuação', marginX, startY + cardH + 12);
+
+            pdf.autoTable({
+                startY: startY + cardH + 16,
+                head: [['Atuação', 'Total', 'Concluídos', 'Faltas', '% Conclusão']],
+                body: breakdown.map(b => [b.atuacao, b.total, b.concluidos, b.faltas, b.pct + '%']),
+                styles: { fontSize: 9, cellPadding: 4, textColor: [30, 41, 59] },
+                headStyles: { fillColor: [15, 23, 42], textColor: [245, 158, 11], fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: [248, 250, 252] },
+                columnStyles: {
+                    0: { cellWidth: 'auto' },
+                    1: { cellWidth: 40, halign: 'center' },
+                    2: { cellWidth: 40, halign: 'center' },
+                    3: { cellWidth: 40, halign: 'center' },
+                    4: { cellWidth: 40, halign: 'center' }
+                },
+                margin: { left: 14, right: 14 }
+            });
+
+            const statusCnt = getStatusBreakdown(cursoId);
+            const statusBars = [
+                { label: 'Concluídos', value: statusCnt.concluido, color: [59, 130, 246]  },
+                { label: 'Faltas',     value: statusCnt.falta,     color: [168, 85, 247]  },
+                { label: 'Pendentes',  value: statusCnt.pendente,  color: [245, 158, 11]  },
+                { label: 'Aptos',      value: statusCnt.apto,      color: [34, 197, 94]   },
+            ];
+            const maxVal = Math.max(1, ...statusBars.map(b => b.value));
+
+            let by = pdf.lastAutoTable.finalY + 12;
+            pdf.setTextColor(30, 41, 59);
+            pdf.setFont('helvetica', 'bold');
+            pdf.setFontSize(12);
+            pdf.text('Distribuição por Status', marginX, by);
+
+            by += 8;
+            const labelW = 28, barH = 6, barGap = 4;
+            const barAreaX = marginX + labelW;
+            const barAreaW = 297 - marginX - labelW - 18;
+
+            statusBars.forEach(b => {
+                pdf.setTextColor(71, 85, 105);
+                pdf.setFont('helvetica', 'normal');
+                pdf.setFontSize(9);
+                pdf.text(b.label, marginX, by + barH / 2 + 1);
+
+                pdf.setFillColor(226, 232, 240);
+                pdf.roundedRect(barAreaX, by, barAreaW, barH, 1.5, 1.5, 'F');
+
+                const w = Math.max(2, (b.value / maxVal) * barAreaW);
+                pdf.setFillColor(b.color[0], b.color[1], b.color[2]);
+                pdf.roundedRect(barAreaX, by, w, barH, 1.5, 1.5, 'F');
+
+                pdf.setTextColor(30, 41, 59);
+                pdf.setFont('helvetica', 'bold');
+                pdf.setFontSize(9);
+                pdf.text(String(b.value), barAreaX + barAreaW + 5, by + barH / 2 + 1);
+
+                by += barH + barGap;
+            });
+
+            pdfFooter(pdf);
+            pdf.save(`dashboard_${curso.titulo.replace(/\s+/g, '_')}_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`);
         }
 
         // ── Filtros de cadastro auxiliar (Empresa/Equipe/Atuação) ──────────
@@ -1130,7 +1428,7 @@
 
         // ── Helpers PDF ───────────────────────────────────────────────────
 
-        function pdfHeader(pdf, titulo, subtitulo) {
+        function pdfHeader(pdf, titulo, subtitulo, mostrarData = true) {
             pdf.setFillColor(15, 23, 42);
             pdf.rect(0, 0, 297, 28, 'F');
             pdf.setTextColor(245, 158, 11);
@@ -1140,7 +1438,8 @@
             pdf.setFontSize(9);
             pdf.setTextColor(148, 163, 184);
             pdf.setFont('helvetica', 'normal');
-            pdf.text(`${subtitulo}   ·   Gerado em ${new Date().toLocaleDateString('pt-BR')}`, 14, 21);
+            const texto = mostrarData ? `${subtitulo}   ·   Gerado em ${new Date().toLocaleDateString('pt-BR')}` : subtitulo;
+            pdf.text(texto, 14, 21);
         }
 
         function pdfFooter(pdf) {

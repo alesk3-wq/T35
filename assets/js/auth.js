@@ -30,7 +30,23 @@ const googleProvider = new GoogleAuthProvider();
  * @param {object} userData - Dados do usuário
  */
 export async function handleRegister(userData) {
-    const { email, password, fullName, cpf, phone, matricula, empresa, equipe, atuacao, postoAtuacao } = userData;
+    const { email, password, fullName, cpf, phone, matricula } = userData;
+
+    // Empresa/Equipe/Atuação/Posto de Atuação não vêm mais do formulário de cadastro — são
+    // preenchidos pelo gestor/admin em Funcionários Autorizados, e copiados de lá pro perfil
+    // assim que o CPF bate com um registro da whitelist (mesmo se ainda não tiverem sido
+    // preenchidos, ficam null e o gestor completa depois).
+    let empresa = null, equipe = null, atuacao = null, postoAtuacao = null;
+    try {
+        const autDoc = await getDoc(doc(db, 'funcionariosAutorizados', cpf));
+        if (autDoc.exists()) {
+            const d = autDoc.data();
+            empresa = d.empresa || null;
+            equipe = d.equipe || null;
+            atuacao = d.atuacao || null;
+            postoAtuacao = d.postoAtuacao || null;
+        }
+    } catch (_) {}
 
     let userCredential;
     try {

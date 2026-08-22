@@ -434,28 +434,6 @@
                     <label>Telefone</label>
                     <input type="tel" id="editPhone">
                 </div>
-                <div class="form-group">
-                    <label>Empresa</label>
-                    <input type="text" id="editEmpresa">
-                </div>
-                <div class="form-group">
-                    <label>Equipe</label>
-                    <select id="editEquipe">
-                        <option value="">Carregando...</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Atuação</label>
-                    <select id="editAtuacao">
-                        <option value="">Carregando...</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Posto de Atuação</label>
-                    <select id="editPostoAtuacao">
-                        <option value="">Carregando...</option>
-                    </select>
-                </div>
                 <div class="form-group" id="assinaturaSection" style="display:none">
                     <label>Assinatura do Instrutor (PNG)</label>
                     <p style="font-size:12px;color:var(--text-secondary);margin:0.3rem 0 0.6rem">
@@ -574,34 +552,6 @@
             renderUsers(filtered);
         }
 
-        async function carregarSelectAuxiliar(colecao, selectId, valorAtual) {
-            const select = document.getElementById(selectId);
-            try {
-                let snap;
-                try {
-                    snap = await getDocs(query(collection(db, colecao), orderBy('nome', 'asc')));
-                } catch {
-                    snap = await getDocs(collection(db, colecao));
-                }
-
-                const nomes = [];
-                snap.forEach(d => { if (d.data().nome) nomes.push(d.data().nome); });
-                nomes.sort((a, b) => a.localeCompare(b, 'pt-BR'));
-
-                select.innerHTML = '<option value="">—</option>';
-                nomes.forEach(nome => {
-                    const opt = document.createElement('option');
-                    opt.value = nome;
-                    opt.textContent = nome;
-                    if (nome === valorAtual) opt.selected = true;
-                    select.appendChild(opt);
-                });
-            } catch (err) {
-                select.innerHTML = '<option value="">Erro ao carregar</option>';
-                console.error(`Erro ao carregar ${colecao}:`, err);
-            }
-        }
-
         function openModal(userId) {
             const user = allUsers.find(u => u.id === userId);
             if (!user) return;
@@ -611,10 +561,6 @@
             document.getElementById('editRole').value = user.role || 'candidato';
             document.getElementById('editCpf').value = user.cpf || '';
             document.getElementById('editPhone').value = user.phone || '';
-            document.getElementById('editEmpresa').value = user.empresa || '';
-            carregarSelectAuxiliar('equipes', 'editEquipe', user.equipe || '');
-            carregarSelectAuxiliar('atuacoes', 'editAtuacao', user.atuacao || '');
-            carregarSelectAuxiliar('postosAtuacao', 'editPostoAtuacao', user.postoAtuacao || '');
             const perfisAtivos = user.perfis || [user.role || 'candidato'];
             document.querySelectorAll('.chk-perfil').forEach(chk => {
                 chk.checked = perfisAtivos.includes(chk.value);
@@ -788,10 +734,6 @@
                     perfis: perfis.length > 0 ? perfis : [newRole],
                     cpf: document.getElementById('editCpf').value,
                     phone: document.getElementById('editPhone').value,
-                    empresa: document.getElementById('editEmpresa').value,
-                    equipe: document.getElementById('editEquipe').value,
-                    atuacao: document.getElementById('editAtuacao').value,
-                    postoAtuacao: document.getElementById('editPostoAtuacao').value,
                     gestorEquipes,
                     updatedAt: serverTimestamp()
                 });

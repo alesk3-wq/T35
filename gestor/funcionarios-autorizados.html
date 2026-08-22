@@ -19,6 +19,59 @@
         }
         .page-header h1 { color: var(--text); font-size: 28px; margin: 0; }
 
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: var(--bg2);
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 520px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-header { margin-bottom: 1.5rem; }
+        .modal-header h2 { color: var(--text); font-size: 20px; margin: 0; }
+        .btn-close {
+            background: none; border: none; font-size: 24px;
+            color: var(--text-secondary); cursor: pointer; line-height: 1;
+        }
+        .btn-close:hover { color: var(--text); }
+        .modal-actions { display: flex; gap: 1rem; justify-content: flex-end; margin-top: 0.5rem; }
+        .btn-cancel, .btn-save {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-cancel { background: var(--border); color: var(--text); }
+        .btn-cancel:hover { background: rgba(255,255,255,0.1); }
+        .btn-save { background: var(--amber); color: var(--bg); }
+        .btn-save:hover { background: var(--amber-dark); }
+        .btn-edit {
+            padding: 0.35rem 0.8rem;
+            border: 1px solid rgba(59,130,246,0.3);
+            background: rgba(59,130,246,0.1);
+            border-radius: 6px;
+            font-size: 12px; font-weight: 600;
+            color: #3B82F6;
+            cursor: pointer;
+            margin-right: 0.4rem;
+        }
+        .btn-edit:hover { background: rgba(59,130,246,0.2); }
+
         .filters {
             display: flex;
             gap: 0.75rem;
@@ -165,15 +218,17 @@
                             <tr>
                                 <th>Nome</th>
                                 <th>CPF</th>
+                                <th>Empresa</th>
                                 <th>Equipe</th>
                                 <th>Atuação</th>
                                 <th>Posto</th>
                                 <th>Cadastro</th>
                                 <th>Status</th>
+                                <th>Ações</th>
                             </tr>
                         </thead>
                         <tbody id="listaBody">
-                            <tr><td colspan="7" style="text-align:center;color:var(--text-secondary)">Carregando...</td></tr>
+                            <tr><td colspan="9" style="text-align:center;color:var(--text-secondary)">Carregando...</td></tr>
                         </tbody>
                     </table>
                     <div id="emptyState" class="empty-state" style="display:none">
@@ -184,13 +239,51 @@
         </div>
     </main>
 
+    <!-- Modal: editar Empresa/Equipe/Atuação/Posto -->
+    <div class="modal" id="editarModal">
+        <div class="modal-content">
+            <div class="modal-header" style="display:flex;justify-content:space-between;align-items:center">
+                <h2 id="editarModalTitulo">Editar Funcionário</h2>
+                <button type="button" class="btn-close" id="btnCloseEditar">&times;</button>
+            </div>
+            <div class="form-group">
+                <label for="editarEmpresa">Empresa</label>
+                <select id="editarEmpresa">
+                    <option value="">Carregando...</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="editarEquipe">Equipe</label>
+                <select id="editarEquipe">
+                    <option value="">Carregando...</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="editarAtuacao">Atuação</label>
+                <select id="editarAtuacao">
+                    <option value="">Carregando...</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="editarPosto">Posto de Atuação</label>
+                <select id="editarPosto">
+                    <option value="">Carregando...</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" id="btnCancelEditar">Cancelar</button>
+                <button type="button" class="btn-save" id="btnSalvarEditar">Salvar</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { handleLogout } from '../assets/js/auth.js';
         import { toggleSidebar } from '../assets/js/ui-shell.js';
         import { auth, db } from '../firebase-config.js';
         import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js';
         import {
-            collection, getDocs, query, where
+            collection, getDocs, query, where, orderBy, doc, updateDoc, serverTimestamp
         } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js';
         import { formatCPF } from '../assets/js/utils.js';
 
@@ -234,27 +327,30 @@
                 const usersByCpf = new Map();
                 usersSnap.forEach(d => {
                     const u = d.data();
-                    if (u.cpf) usersByCpf.set(u.cpf, u);
+                    if (u.cpf) usersByCpf.set(u.cpf, { ...u, _docId: d.id });
                 });
 
                 listaCompleta = [];
                 autSnap.forEach(d => {
                     const item = d.data();
                     const userVinculado = usersByCpf.get(d.id);
-                    const equipe = userVinculado?.equipe || null;
-                    // Só entra na lista do gestor quem já se cadastrou E cuja equipe bate
-                    // com alguma das equipes atribuídas a ele — quem ainda não se cadastrou
-                    // não tem equipe definida e não há como atribuir ainda.
-                    if (!equipe || !minhasEquipes.includes(equipe)) return;
+                    const equipe = userVinculado?.equipe ?? item.equipe ?? null;
+                    // Entra na lista do gestor quem ainda não tem equipe nenhuma (pra ele poder
+                    // atribuir à própria equipe) ou quem já é de uma das equipes dele — inclusive
+                    // quem ainda não se cadastrou (funciona como "reserva" pro dia que cadastrar).
+                    const visivel = !equipe || minhasEquipes.includes(equipe);
+                    if (!visivel) return;
 
                     listaCompleta.push({
                         cpf: d.id,
                         nome: item.nome || '—',
                         ativo: item.ativo !== false,
+                        empresa: userVinculado?.empresa ?? item.empresa ?? null,
                         equipe,
-                        atuacao: userVinculado?.atuacao || null,
-                        posto: userVinculado?.postoAtuacao || null,
-                        cadastrado: true
+                        atuacao: userVinculado?.atuacao ?? item.atuacao ?? null,
+                        posto: userVinculado?.postoAtuacao ?? item.postoAtuacao ?? null,
+                        cadastrado: !!userVinculado,
+                        userDocId: userVinculado?._docId || null
                     });
                 });
 
@@ -298,14 +394,94 @@
                 <tr>
                     <td>${item.nome}</td>
                     <td>${formatCPF(item.cpf)}</td>
+                    <td>${item.empresa || '—'}</td>
                     <td>${item.equipe || '—'}</td>
                     <td>${item.atuacao || '—'}</td>
                     <td>${item.posto || '—'}</td>
-                    <td><span class="status-badge status-cadastrado">Cadastrado</span></td>
+                    <td><span class="status-badge status-${item.cadastrado ? 'cadastrado' : 'aguardando'}">${item.cadastrado ? 'Cadastrado' : 'Aguardando'}</span></td>
                     <td><span class="status-badge status-${item.ativo ? 'ativo' : 'inativo'}">${item.ativo ? 'Ativo' : 'Inativo'}</span></td>
+                    <td><button type="button" class="btn-edit" data-cpf="${item.cpf}">Editar</button></td>
                 </tr>
             `).join('');
+
+            tbody.querySelectorAll('.btn-edit').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const item = listaCompleta.find(i => i.cpf === btn.dataset.cpf);
+                    if (item) abrirEditarModal(item);
+                });
+            });
         }
+
+        // ── Modal: editar Empresa/Equipe/Atuação/Posto ──────────────────────
+
+        async function carregarSelectAuxiliar(colecao, selectId, valorAtual) {
+            const select = document.getElementById(selectId);
+            try {
+                let snap;
+                try {
+                    snap = await getDocs(query(collection(db, colecao), orderBy('nome', 'asc')));
+                } catch {
+                    snap = await getDocs(collection(db, colecao));
+                }
+
+                const nomes = [];
+                snap.forEach(d => { if (d.data().nome) nomes.push(d.data().nome); });
+                nomes.sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+                select.innerHTML = '<option value="">—</option>';
+                nomes.forEach(nome => {
+                    const opt = document.createElement('option');
+                    opt.value = nome;
+                    opt.textContent = nome;
+                    if (nome === valorAtual) opt.selected = true;
+                    select.appendChild(opt);
+                });
+            } catch (err) {
+                select.innerHTML = '<option value="">Erro ao carregar</option>';
+                console.error(`Erro ao carregar ${colecao}:`, err);
+            }
+        }
+
+        const editarModal = document.getElementById('editarModal');
+        let itemEmEdicao = null;
+
+        function abrirEditarModal(item) {
+            itemEmEdicao = item;
+            document.getElementById('editarModalTitulo').textContent = `Editar ${item.nome}`;
+            carregarSelectAuxiliar('empresas', 'editarEmpresa', item.empresa || '');
+            carregarSelectAuxiliar('equipes', 'editarEquipe', item.equipe || '');
+            carregarSelectAuxiliar('atuacoes', 'editarAtuacao', item.atuacao || '');
+            carregarSelectAuxiliar('postosAtuacao', 'editarPosto', item.posto || '');
+            editarModal.classList.add('active');
+        }
+        document.getElementById('btnCloseEditar').addEventListener('click', () => editarModal.classList.remove('active'));
+        document.getElementById('btnCancelEditar').addEventListener('click', () => editarModal.classList.remove('active'));
+        editarModal.addEventListener('click', (e) => { if (e.target === editarModal) editarModal.classList.remove('active'); });
+
+        document.getElementById('btnSalvarEditar').addEventListener('click', async () => {
+            if (!itemEmEdicao) return;
+            const btn = document.getElementById('btnSalvarEditar');
+            btn.disabled = true;
+            try {
+                const dados = {
+                    empresa: document.getElementById('editarEmpresa').value || null,
+                    equipe: document.getElementById('editarEquipe').value || null,
+                    atuacao: document.getElementById('editarAtuacao').value || null,
+                    postoAtuacao: document.getElementById('editarPosto').value || null,
+                    updatedAt: serverTimestamp()
+                };
+                await updateDoc(doc(db, 'funcionariosAutorizados', itemEmEdicao.cpf), dados);
+                if (itemEmEdicao.userDocId) {
+                    await updateDoc(doc(db, 'users', itemEmEdicao.userDocId), dados);
+                }
+                editarModal.classList.remove('active');
+                await loadData();
+            } catch (err) {
+                alert('Erro ao salvar: ' + err.message);
+            } finally {
+                btn.disabled = false;
+            }
+        });
 
         console.log('✅ Funcionários Autorizados (Gestor) carregado!');
     </script>

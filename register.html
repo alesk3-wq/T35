@@ -270,34 +270,6 @@
                 <input type="text" id="matricula" placeholder="Sua matrícula (opcional)">
             </div>
 
-            <div class="form-group">
-                <label for="empresa">Empresa *</label>
-                <select id="empresa" required>
-                    <option value="">Carregando empresas...</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="equipe">Equipe</label>
-                <select id="equipe">
-                    <option value="">Carregando equipes...</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="atuacao">Atuação</label>
-                <select id="atuacao">
-                    <option value="">Carregando atuações...</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="postoAtuacao">Posto de Atuação</label>
-                <select id="postoAtuacao">
-                    <option value="">Carregando postos...</option>
-                </select>
-            </div>
-
             <button type="submit" class="btn-register" id="btnRegister">Criar Conta</button>
         </form>
 
@@ -310,25 +282,13 @@
     <script type="module">
         import { handleRegister } from './assets/js/auth.js';
         import { formatCPF, formatPhone, validateCPF, removePhoneFormat, removeCPFFormat, applyMask } from './assets/js/utils.js';
-        import { db } from './firebase-config.js';
-        import { collection, getDocs, query, orderBy } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js';
 
         const registerForm = document.getElementById('registerForm');
         const cpfInput = document.getElementById('cpf');
         const phoneInput = document.getElementById('phone');
-        const empresaSelect = document.getElementById('empresa');
-        const equipeSelect = document.getElementById('equipe');
-        const atuacaoSelect = document.getElementById('atuacao');
-        const postoAtuacaoSelect = document.getElementById('postoAtuacao');
         const errorMessage = document.getElementById('errorMessage');
         const successMessage = document.getElementById('successMessage');
         const btnRegister = document.getElementById('btnRegister');
-
-        // ✅ Carrega empresas, equipes, atuações e postos ao iniciar a página
-        loadEmpresas();
-        loadEquipes();
-        loadAtuacoes();
-        loadPostosAtuacao();
 
         // ✅ Máscara automática para CPF
         cpfInput.addEventListener('input', (e) => {
@@ -339,140 +299,6 @@
         phoneInput.addEventListener('input', (e) => {
             applyMask(e.target, formatPhone);
         });
-
-        // ✅ Carrega lista de empresas do Firestore
-        async function loadEmpresas() {
-            try {
-                let querySnapshot;
-                try {
-                    // Tenta com orderBy (requer índice no Firestore)
-                    const q = query(collection(db, 'empresas'), orderBy('nome', 'asc'));
-                    querySnapshot = await getDocs(q);
-                } catch (indexError) {
-                    // Fallback sem ordenação caso o índice não exista
-                    console.warn('Índice não encontrado, carregando sem ordenação:', indexError.message);
-                    querySnapshot = await getDocs(collection(db, 'empresas'));
-                }
-
-                empresaSelect.innerHTML = '<option value="">Selecione uma empresa</option>';
-
-                if (querySnapshot.empty) {
-                    empresaSelect.innerHTML = '<option value="">Nenhuma empresa cadastrada</option>';
-                    return;
-                }
-
-                const opcoes = [];
-                querySnapshot.forEach((doc) => {
-                    const empresa = doc.data();
-                    if (empresa.nome) opcoes.push(empresa.nome);
-                });
-
-                // Ordena no cliente caso o fallback tenha sido usado
-                opcoes.sort((a, b) => a.localeCompare(b, 'pt-BR'));
-
-                opcoes.forEach((nome) => {
-                    const option = document.createElement('option');
-                    option.value = nome;
-                    option.textContent = nome;
-                    empresaSelect.appendChild(option);
-                });
-
-            } catch (error) {
-                console.error('Erro ao carregar empresas:', error.code, error.message);
-
-                if (error.code === 'permission-denied') {
-                    empresaSelect.innerHTML = '<option value="">Sem permissão para carregar empresas</option>';
-                    showError('Erro de permissão ao carregar empresas. Contate o administrador.');
-                } else {
-                    empresaSelect.innerHTML = '<option value="">Erro ao carregar empresas</option>';
-                    showError('Não foi possível carregar a lista de empresas. Tente recarregar a página.');
-                }
-            }
-        }
-
-        // ✅ Carrega lista de equipes do Firestore (campo opcional)
-        async function loadEquipes() {
-            try {
-                let querySnapshot;
-                try {
-                    querySnapshot = await getDocs(query(collection(db, 'equipes'), orderBy('nome', 'asc')));
-                } catch (indexError) {
-                    querySnapshot = await getDocs(collection(db, 'equipes'));
-                }
-
-                equipeSelect.innerHTML = '<option value="">Selecione uma equipe</option>';
-                if (querySnapshot.empty) return;
-
-                const opcoes = [];
-                querySnapshot.forEach((doc) => { if (doc.data().nome) opcoes.push(doc.data().nome); });
-                opcoes.sort((a, b) => a.localeCompare(b, 'pt-BR'));
-                opcoes.forEach((nome) => {
-                    const option = document.createElement('option');
-                    option.value = nome;
-                    option.textContent = nome;
-                    equipeSelect.appendChild(option);
-                });
-            } catch (error) {
-                console.error('Erro ao carregar equipes:', error.code, error.message);
-                equipeSelect.innerHTML = '<option value="">Selecione uma equipe</option>';
-            }
-        }
-
-        // ✅ Carrega lista de atuações do Firestore (campo opcional)
-        async function loadAtuacoes() {
-            try {
-                let querySnapshot;
-                try {
-                    querySnapshot = await getDocs(query(collection(db, 'atuacoes'), orderBy('nome', 'asc')));
-                } catch (indexError) {
-                    querySnapshot = await getDocs(collection(db, 'atuacoes'));
-                }
-
-                atuacaoSelect.innerHTML = '<option value="">Selecione uma atuação</option>';
-                if (querySnapshot.empty) return;
-
-                const opcoes = [];
-                querySnapshot.forEach((doc) => { if (doc.data().nome) opcoes.push(doc.data().nome); });
-                opcoes.sort((a, b) => a.localeCompare(b, 'pt-BR'));
-                opcoes.forEach((nome) => {
-                    const option = document.createElement('option');
-                    option.value = nome;
-                    option.textContent = nome;
-                    atuacaoSelect.appendChild(option);
-                });
-            } catch (error) {
-                console.error('Erro ao carregar atuações:', error.code, error.message);
-                atuacaoSelect.innerHTML = '<option value="">Selecione uma atuação</option>';
-            }
-        }
-
-        // ✅ Carrega lista de postos de atuação do Firestore (campo opcional)
-        async function loadPostosAtuacao() {
-            try {
-                let querySnapshot;
-                try {
-                    querySnapshot = await getDocs(query(collection(db, 'postosAtuacao'), orderBy('nome', 'asc')));
-                } catch (indexError) {
-                    querySnapshot = await getDocs(collection(db, 'postosAtuacao'));
-                }
-
-                postoAtuacaoSelect.innerHTML = '<option value="">Selecione um posto</option>';
-                if (querySnapshot.empty) return;
-
-                const opcoes = [];
-                querySnapshot.forEach((doc) => { if (doc.data().nome) opcoes.push(doc.data().nome); });
-                opcoes.sort((a, b) => a.localeCompare(b, 'pt-BR'));
-                opcoes.forEach((nome) => {
-                    const option = document.createElement('option');
-                    option.value = nome;
-                    option.textContent = nome;
-                    postoAtuacaoSelect.appendChild(option);
-                });
-            } catch (error) {
-                console.error('Erro ao carregar postos de atuação:', error.code, error.message);
-                postoAtuacaoSelect.innerHTML = '<option value="">Selecione um posto</option>';
-            }
-        }
 
         // ✅ Validação e envio do formulário
         registerForm.addEventListener('submit', async (e) => {
@@ -485,10 +311,6 @@
             const cpf = document.getElementById('cpf').value;
             const phone = document.getElementById('phone').value;
             const matricula = document.getElementById('matricula').value.trim();
-            const empresa = document.getElementById('empresa').value;
-            const equipe = document.getElementById('equipe').value;
-            const atuacao = document.getElementById('atuacao').value;
-            const postoAtuacao = document.getElementById('postoAtuacao').value;
 
             // Limpar mensagens
             errorMessage.style.display = 'none';
@@ -521,12 +343,8 @@
                 return;
             }
 
-            if (!empresa) {
-                showError('Selecione uma empresa');
-                return;
-            }
-
-            // Equipe, Atuação e Posto de Atuação são opcionais no cadastro — quem já tem conta completa depois no perfil.
+            // Empresa, Equipe, Atuação e Posto de Atuação não são mais pedidos aqui — o
+            // gestor/admin preenche em Funcionários Autorizados, e o cadastro copia de lá.
 
             btnRegister.classList.add('loading');
             btnRegister.textContent = 'Criando conta...';
@@ -538,11 +356,7 @@
                     password,
                     cpf: removeCPFFormat(cpf),
                     phone: cleanPhone,
-                    matricula: matricula || null,
-                    empresa,
-                    equipe: equipe || null,
-                    atuacao: atuacao || null,
-                    postoAtuacao: postoAtuacao || null
+                    matricula: matricula || null
                 });
 
                 showSuccess('Conta criada com sucesso! Redirecionando...');
