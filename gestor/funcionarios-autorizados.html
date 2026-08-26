@@ -210,6 +210,9 @@
                         <option value="ativo">Ativo</option>
                         <option value="inativo">Inativo</option>
                     </select>
+                    <select id="postoFiltro">
+                        <option value="">Todos os Postos</option>
+                    </select>
                 </div>
 
                 <div class="table-container">
@@ -356,11 +359,36 @@
 
                 listaCompleta.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
 
+                popularFiltroPosto();
+
                 document.getElementById('busca').addEventListener('input', render);
                 document.getElementById('statusFiltro').addEventListener('change', render);
+                document.getElementById('postoFiltro').addEventListener('change', render);
                 render();
             } catch (err) {
                 console.error('Erro ao carregar lista:', err);
+            }
+        }
+
+        async function popularFiltroPosto() {
+            const sel = document.getElementById('postoFiltro');
+            try {
+                let snap;
+                try {
+                    snap = await getDocs(query(collection(db, 'postosAtuacao'), orderBy('nome', 'asc')));
+                } catch {
+                    snap = await getDocs(collection(db, 'postosAtuacao'));
+                }
+                const nomes = [];
+                snap.forEach(d => { if (d.data().nome) nomes.push(d.data().nome); });
+                nomes.sort((a, b) => a.localeCompare(b, 'pt-BR'));
+                nomes.forEach(nome => {
+                    const opt = document.createElement('option');
+                    opt.value = nome; opt.textContent = nome;
+                    sel.appendChild(opt);
+                });
+            } catch (err) {
+                console.error('Erro ao carregar postos:', err);
             }
         }
 
@@ -368,13 +396,15 @@
             const busca = document.getElementById('busca').value.toLowerCase();
             const buscaDigitos = busca.replace(/\D/g, '');
             const status = document.getElementById('statusFiltro').value;
+            const posto = document.getElementById('postoFiltro').value;
 
             return listaCompleta.filter(item => {
                 const buscaOk = !busca
                     || item.nome.toLowerCase().includes(busca)
                     || (buscaDigitos && item.cpf.includes(buscaDigitos));
                 const statusOk = !status || (status === 'ativo' ? item.ativo : !item.ativo);
-                return buscaOk && statusOk;
+                const postoOk = !posto || item.posto === posto;
+                return buscaOk && statusOk && postoOk;
             });
         }
 

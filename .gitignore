@@ -71,5 +71,7 @@ node_modules/
 # Firebase deploy copy — edit source files in root, not here
 public/
 
-# Ferramenta local de importação pontual — tem CPF/nomes reais hardcoded, nunca comitar
+# Ferramentas locais pontuais (importação/backup) — nunca comitar nem fazer deploy:
+# import-temp.html tem CPF/nomes reais hardcoded; backup-temp.html baixa o banco inteiro.
 import-temp.html
+backup-temp.html
