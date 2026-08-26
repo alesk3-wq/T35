@@ -217,8 +217,8 @@
             </div>
 
             <div id="semEquipeAviso" class="aviso-sem-equipe" style="display:none">
-                Você ainda não tem nenhuma equipe vinculada ao seu perfil de Gestor.
-                Fale com o administrador para vincular a(s) equipe(s) que você deve acompanhar.
+                Sua Atuação ainda não está configurada no seu perfil.
+                Fale com o administrador ou ajuste em Funcionários Autorizados para começar a ver os candidatos da sua área.
             </div>
 
             <div id="conteudoRelatorio">
@@ -261,9 +261,6 @@
                     </select>
                     <select id="inscEquipeFiltro">
                         <option value="">Todas as Equipes</option>
-                    </select>
-                    <select id="inscAtuacaoFiltro">
-                        <option value="">Todas as Atuações</option>
                     </select>
                     <select id="inscPostoFiltro">
                         <option value="">Todos os Postos</option>
@@ -318,7 +315,7 @@
         document.getElementById('btnMenu').addEventListener('click', toggleSidebar);
         document.getElementById('btnLogout').addEventListener('click', handleLogout);
 
-        let minhasEquipes = [];
+        let minhaAtuacao = null;
         let todasInscricoes = [];
 
         onAuthStateChanged(auth, async (user) => {
@@ -335,8 +332,8 @@
                 return;
             }
 
-            minhasEquipes = userData.gestorEquipes || [];
-            if (minhasEquipes.length === 0) {
+            minhaAtuacao = userData.atuacao || null;
+            if (!minhaAtuacao) {
                 document.getElementById('semEquipeAviso').style.display = 'block';
                 document.getElementById('conteudoRelatorio').style.display = 'none';
                 return;
@@ -355,17 +352,15 @@
             const busca   = document.getElementById('inscBusca').value.toLowerCase();
             const status  = document.getElementById('inscStatusFiltro').value;
             const equipe  = document.getElementById('inscEquipeFiltro').value;
-            const atuacao = document.getElementById('inscAtuacaoFiltro').value;
             const posto   = document.getElementById('inscPostoFiltro').value;
 
             return todasInscricoes.filter(i => {
-                const equipeBaseOk = minhasEquipes.includes(i._equipe);
+                const atuacaoBaseOk = i._atuacao === minhaAtuacao;
                 const nomeOk    = !busca   || i._nome.includes(busca) || i._curso.includes(busca);
                 const statusOk  = !status  || i.status === status;
                 const equipeOk  = !equipe  || i._equipe === equipe;
-                const atuacaoOk = !atuacao || i._atuacao === atuacao;
                 const postoOk   = !posto   || i._posto === posto;
-                return equipeBaseOk && nomeOk && statusOk && equipeOk && atuacaoOk && postoOk;
+                return atuacaoBaseOk && nomeOk && statusOk && equipeOk && postoOk;
             });
         }
 
@@ -396,31 +391,24 @@
                 : '<tr><td colspan="7" style="text-align:center;color:var(--text-secondary);padding:2rem">Nenhuma inscrição encontrada</td></tr>';
         }
 
-        function popularFiltrosEquipeAtuacao() {
+        function popularFiltrosEquipePosto() {
+            const equipes = [...new Set(
+                todasInscricoes
+                    .filter(i => i._atuacao === minhaAtuacao)
+                    .map(i => i._equipe)
+                    .filter(e => e && e !== '—')
+            )].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
             const equipeSel = document.getElementById('inscEquipeFiltro');
-            minhasEquipes.slice().sort((a, b) => a.localeCompare(b, 'pt-BR')).forEach(nome => {
+            equipes.forEach(nome => {
                 const opt = document.createElement('option');
                 opt.value = nome; opt.textContent = nome;
                 equipeSel.appendChild(opt);
             });
 
-            const atuacoes = [...new Set(
-                todasInscricoes
-                    .filter(i => minhasEquipes.includes(i._equipe))
-                    .map(i => i._atuacao)
-                    .filter(a => a && a !== '—')
-            )].sort((a, b) => a.localeCompare(b, 'pt-BR'));
-
-            const atuacaoSel = document.getElementById('inscAtuacaoFiltro');
-            atuacoes.forEach(nome => {
-                const opt = document.createElement('option');
-                opt.value = nome; opt.textContent = nome;
-                atuacaoSel.appendChild(opt);
-            });
-
             const postos = [...new Set(
                 todasInscricoes
-                    .filter(i => minhasEquipes.includes(i._equipe))
+                    .filter(i => i._atuacao === minhaAtuacao)
                     .map(i => i._posto)
                     .filter(p => p && p !== '—')
             )].sort((a, b) => a.localeCompare(b, 'pt-BR'));
@@ -464,12 +452,11 @@
                     });
                 });
 
-                popularFiltrosEquipeAtuacao();
+                popularFiltrosEquipePosto();
 
                 document.getElementById('inscBusca').addEventListener('input', renderInscricoes);
                 document.getElementById('inscStatusFiltro').addEventListener('change', renderInscricoes);
                 document.getElementById('inscEquipeFiltro').addEventListener('change', renderInscricoes);
-                document.getElementById('inscAtuacaoFiltro').addEventListener('change', renderInscricoes);
                 document.getElementById('inscPostoFiltro').addEventListener('change', renderInscricoes);
                 renderInscricoes();
             } catch (err) {

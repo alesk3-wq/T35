@@ -198,8 +198,8 @@
             </div>
 
             <div id="semEquipeAviso" class="aviso-sem-equipe" style="display:none">
-                Você ainda não tem nenhuma equipe vinculada ao seu perfil de Gestor.
-                Fale com o administrador para vincular a(s) equipe(s) que você deve acompanhar.
+                Sua Atuação ainda não está configurada no seu perfil.
+                Fale com o administrador ou ajuste em Funcionários Autorizados para começar a ver os candidatos da sua área.
             </div>
 
             <div id="conteudoLista">
@@ -209,6 +209,9 @@
                         <option value="">Todos os status</option>
                         <option value="ativo">Ativo</option>
                         <option value="inativo">Inativo</option>
+                    </select>
+                    <select id="equipeFiltro">
+                        <option value="">Todas as Equipes</option>
                     </select>
                     <select id="postoFiltro">
                         <option value="">Todos os Postos</option>
@@ -293,7 +296,7 @@
         document.getElementById('btnMenu').addEventListener('click', toggleSidebar);
         document.getElementById('btnLogout').addEventListener('click', handleLogout);
 
-        let minhasEquipes = [];
+        let minhaAtuacao = null;
         let listaCompleta = [];
 
         onAuthStateChanged(auth, async (user) => {
@@ -310,8 +313,8 @@
                 return;
             }
 
-            minhasEquipes = userData.gestorEquipes || [];
-            if (minhasEquipes.length === 0) {
+            minhaAtuacao = userData.atuacao || null;
+            if (!minhaAtuacao) {
                 document.getElementById('semEquipeAviso').style.display = 'block';
                 document.getElementById('conteudoLista').style.display = 'none';
                 return;
@@ -337,11 +340,11 @@
                 autSnap.forEach(d => {
                     const item = d.data();
                     const userVinculado = usersByCpf.get(d.id);
-                    const equipe = userVinculado?.equipe ?? item.equipe ?? null;
-                    // Entra na lista do gestor quem ainda não tem equipe nenhuma (pra ele poder
-                    // atribuir à própria equipe) ou quem já é de uma das equipes dele — inclusive
+                    const atuacao = userVinculado?.atuacao ?? item.atuacao ?? null;
+                    // Entra na lista do gestor quem ainda não tem Atuação nenhuma (pra ele poder
+                    // atribuir à própria Atuação) ou quem já é da Atuação dele — inclusive
                     // quem ainda não se cadastrou (funciona como "reserva" pro dia que cadastrar).
-                    const visivel = !equipe || minhasEquipes.includes(equipe);
+                    const visivel = !atuacao || atuacao === minhaAtuacao;
                     if (!visivel) return;
 
                     listaCompleta.push({
@@ -349,8 +352,8 @@
                         nome: item.nome || '—',
                         ativo: item.ativo !== false,
                         empresa: userVinculado?.empresa ?? item.empresa ?? null,
-                        equipe,
-                        atuacao: userVinculado?.atuacao ?? item.atuacao ?? null,
+                        equipe: userVinculado?.equipe ?? item.equipe ?? null,
+                        atuacao,
                         posto: userVinculado?.postoAtuacao ?? item.postoAtuacao ?? null,
                         cadastrado: !!userVinculado,
                         userDocId: userVinculado?._docId || null
@@ -359,15 +362,28 @@
 
                 listaCompleta.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
 
+                popularFiltroEquipe();
                 popularFiltroPosto();
 
                 document.getElementById('busca').addEventListener('input', render);
                 document.getElementById('statusFiltro').addEventListener('change', render);
+                document.getElementById('equipeFiltro').addEventListener('change', render);
                 document.getElementById('postoFiltro').addEventListener('change', render);
                 render();
             } catch (err) {
                 console.error('Erro ao carregar lista:', err);
             }
+        }
+
+        function popularFiltroEquipe() {
+            const sel = document.getElementById('equipeFiltro');
+            const equipes = [...new Set(listaCompleta.map(i => i.equipe).filter(Boolean))]
+                .sort((a, b) => a.localeCompare(b, 'pt-BR'));
+            equipes.forEach(nome => {
+                const opt = document.createElement('option');
+                opt.value = nome; opt.textContent = nome;
+                sel.appendChild(opt);
+            });
         }
 
         async function popularFiltroPosto() {
@@ -396,6 +412,7 @@
             const busca = document.getElementById('busca').value.toLowerCase();
             const buscaDigitos = busca.replace(/\D/g, '');
             const status = document.getElementById('statusFiltro').value;
+            const equipe = document.getElementById('equipeFiltro').value;
             const posto = document.getElementById('postoFiltro').value;
 
             return listaCompleta.filter(item => {
@@ -403,8 +420,9 @@
                     || item.nome.toLowerCase().includes(busca)
                     || (buscaDigitos && item.cpf.includes(buscaDigitos));
                 const statusOk = !status || (status === 'ativo' ? item.ativo : !item.ativo);
+                const equipeOk = !equipe || item.equipe === equipe;
                 const postoOk = !posto || item.posto === posto;
-                return buscaOk && statusOk && postoOk;
+                return buscaOk && statusOk && equipeOk && postoOk;
             });
         }
 

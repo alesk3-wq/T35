@@ -270,6 +270,13 @@
                 <input type="text" id="matricula" placeholder="Sua matrícula (opcional)">
             </div>
 
+            <div class="form-group">
+                <label for="atuacao">Atuação *</label>
+                <select id="atuacao" required>
+                    <option value="">Carregando atuações...</option>
+                </select>
+            </div>
+
             <button type="submit" class="btn-register" id="btnRegister">Criar Conta</button>
         </form>
 
@@ -282,13 +289,50 @@
     <script type="module">
         import { handleRegister } from './assets/js/auth.js';
         import { formatCPF, formatPhone, validateCPF, removePhoneFormat, removeCPFFormat, applyMask } from './assets/js/utils.js';
+        import { db } from './firebase-config.js';
+        import { collection, getDocs, query, orderBy } from 'https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js';
 
         const registerForm = document.getElementById('registerForm');
         const cpfInput = document.getElementById('cpf');
         const phoneInput = document.getElementById('phone');
+        const atuacaoSelect = document.getElementById('atuacao');
         const errorMessage = document.getElementById('errorMessage');
         const successMessage = document.getElementById('successMessage');
         const btnRegister = document.getElementById('btnRegister');
+
+        // ✅ Carrega lista de atuações ao iniciar a página
+        loadAtuacoes();
+
+        // ✅ Carrega lista de atuações do Firestore
+        async function loadAtuacoes() {
+            try {
+                let querySnapshot;
+                try {
+                    querySnapshot = await getDocs(query(collection(db, 'atuacoes'), orderBy('nome', 'asc')));
+                } catch (indexError) {
+                    querySnapshot = await getDocs(collection(db, 'atuacoes'));
+                }
+
+                atuacaoSelect.innerHTML = '<option value="">Selecione uma atuação</option>';
+                if (querySnapshot.empty) {
+                    atuacaoSelect.innerHTML = '<option value="">Nenhuma atuação cadastrada</option>';
+                    return;
+                }
+
+                const opcoes = [];
+                querySnapshot.forEach((doc) => { if (doc.data().nome) opcoes.push(doc.data().nome); });
+                opcoes.sort((a, b) => a.localeCompare(b, 'pt-BR'));
+                opcoes.forEach((nome) => {
+                    const option = document.createElement('option');
+                    option.value = nome;
+                    option.textContent = nome;
+                    atuacaoSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Erro ao carregar atuações:', error.code, error.message);
+                atuacaoSelect.innerHTML = '<option value="">Erro ao carregar atuações</option>';
+            }
+        }
 
         // ✅ Máscara automática para CPF
         cpfInput.addEventListener('input', (e) => {
@@ -311,6 +355,7 @@
             const cpf = document.getElementById('cpf').value;
             const phone = document.getElementById('phone').value;
             const matricula = document.getElementById('matricula').value.trim();
+            const atuacao = document.getElementById('atuacao').value;
 
             // Limpar mensagens
             errorMessage.style.display = 'none';
@@ -343,8 +388,15 @@
                 return;
             }
 
-            // Empresa, Equipe, Atuação e Posto de Atuação não são mais pedidos aqui — o
-            // gestor/admin preenche em Funcionários Autorizados, e o cadastro copia de lá.
+            if (!atuacao) {
+                showError('Selecione sua atuação');
+                return;
+            }
+
+            // Empresa, Equipe e Posto de Atuação não são pedidos aqui — o gestor/admin
+            // preenche em Funcionários Autorizados, e o cadastro copia de lá. Atuação
+            // continua sendo escolhida pelo candidato: é ela que decide qual gestor vai
+            // enxergá-lo depois.
 
             btnRegister.classList.add('loading');
             btnRegister.textContent = 'Criando conta...';
@@ -356,7 +408,8 @@
                     password,
                     cpf: removeCPFFormat(cpf),
                     phone: cleanPhone,
-                    matricula: matricula || null
+                    matricula: matricula || null,
+                    atuacao
                 });
 
                 showSuccess('Conta criada com sucesso! Redirecionando...');

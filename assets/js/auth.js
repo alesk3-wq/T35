@@ -30,20 +30,20 @@ const googleProvider = new GoogleAuthProvider();
  * @param {object} userData - Dados do usuário
  */
 export async function handleRegister(userData) {
-    const { email, password, fullName, cpf, phone, matricula } = userData;
+    const { email, password, fullName, cpf, phone, matricula, atuacao } = userData;
 
-    // Empresa/Equipe/Atuação/Posto de Atuação não vêm mais do formulário de cadastro — são
-    // preenchidos pelo gestor/admin em Funcionários Autorizados, e copiados de lá pro perfil
-    // assim que o CPF bate com um registro da whitelist (mesmo se ainda não tiverem sido
-    // preenchidos, ficam null e o gestor completa depois).
-    let empresa = null, equipe = null, atuacao = null, postoAtuacao = null;
+    // Empresa/Equipe/Posto de Atuação não vêm do formulário de cadastro — são preenchidos
+    // pelo gestor/admin em Funcionários Autorizados, e copiados de lá pro perfil assim que o
+    // CPF bate com um registro da whitelist (ficam null se ainda não tiverem sido
+    // preenchidos, e o gestor completa depois). Atuação é diferente: o próprio candidato
+    // escolhe no formulário, porque é ela que decide qual gestor vai enxergá-lo.
+    let empresa = null, equipe = null, postoAtuacao = null;
     try {
         const autDoc = await getDoc(doc(db, 'funcionariosAutorizados', cpf));
         if (autDoc.exists()) {
             const d = autDoc.data();
             empresa = d.empresa || null;
             equipe = d.equipe || null;
-            atuacao = d.atuacao || null;
             postoAtuacao = d.postoAtuacao || null;
         }
     } catch (_) {}
