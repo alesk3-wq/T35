@@ -518,7 +518,6 @@
                     _curso:     cursosMap[d.data().cursoId]     ?? null
                 }));
 
-                atualizarResumo();
                 renderTabela();
                 await processarEnceramentosEad();
             } catch (err) {
@@ -528,9 +527,10 @@
         }
 
         function atualizarResumo() {
+            const lista = getFiltradas();
             const cnt = { pendente: 0, apto: 0, aprovada: 0, concluido: 0, rejeitada: 0 };
-            todasInscricoes.forEach(i => { if (cnt[i.status] !== undefined) cnt[i.status]++; });
-            document.getElementById('cntTotal').textContent    = todasInscricoes.length;
+            lista.forEach(i => { if (cnt[i.status] !== undefined) cnt[i.status]++; });
+            document.getElementById('cntTotal').textContent    = lista.length;
             document.getElementById('cntPendente').textContent = cnt.pendente;
             document.getElementById('cntApto').textContent = cnt.apto;
             document.getElementById('cntConcluido').textContent = cnt.concluido;
@@ -554,6 +554,7 @@
 
         function renderTabela() {
             const filtradas = getFiltradas();
+            atualizarResumo();
             const tbody = document.getElementById('inscricoesList');
 
             // Seleção nunca inclui id que sumiu da lista (excluído, etc.)
@@ -704,7 +705,6 @@
             }
 
             selecionadas.clear();
-            atualizarResumo();
             renderTabela();
 
             const acaoTexto = novoStatus === 'apto' ? 'aprovada(s)' : 'rejeitada(s)';
@@ -753,7 +753,6 @@
             }
 
             selecionadas.clear();
-            atualizarResumo();
             renderTabela();
 
             let msg = `${concluidas} inscrição(ões) concluída(s).`;
@@ -860,7 +859,6 @@
                 const insc = todasInscricoes.find(i => i.id === inscricaoId);
                 if (insc) insc.status = statusFinal;
 
-                atualizarResumo();
                 renderTabela();
 
                 const msgs = {
@@ -904,7 +902,6 @@
             }
 
             if (processadas > 0) {
-                atualizarResumo();
                 renderTabela();
                 showAlert(`${processadas} inscrição(ões) EAD encerrada(s) automaticamente.`, 'success');
             }
