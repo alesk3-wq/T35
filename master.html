@@ -166,6 +166,9 @@
                 <input type="date" id="presDataInput">
                 <button class="btn-acao" id="btnAdicionarPresenca" disabled>Registrar</button>
             </div>
+            <button class="btn-acao" id="btnCorrigirFalta" style="display:none;background:#22c55e;margin-top:0.6rem">
+                Corrigir status para Concluído
+            </button>
         </div>
 
         <div class="card">
@@ -356,12 +359,12 @@
                     .map(d => {
                         const insc = d.data();
                         const u = usersMap[insc.candidatoId];
-                        return { id: d.id, nome: u?.fullName || 'Desconhecido', presencas: insc.presencas || [] };
+                        return { id: d.id, nome: u?.fullName || 'Desconhecido', presencas: insc.presencas || [], status: insc.status || '—' };
                     })
                     .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
 
                 inscSel.innerHTML = '<option value="">Selecione o candidato...</option>' +
-                    inscricoesCursoPresenca.map(i => `<option value="${i.id}">${i.nome} (${i.presencas.length} presença(s))</option>`).join('');
+                    inscricoesCursoPresenca.map(i => `<option value="${i.id}">${labelOpcaoInscricao(i)}</option>`).join('');
                 inscSel.disabled = false;
             } catch (err) {
                 console.error(err);
@@ -369,10 +372,21 @@
             }
         });
 
+        function labelOpcaoInscricao(i) {
+            const labelStatus = { pendente: 'Pendente', apto: 'Apto', concluido: 'Concluído', falta: 'FALTA', rejeitada: 'Rejeitada' };
+            return `${i.nome} (${i.presencas.length} presença(s) — ${labelStatus[i.status] ?? i.status})`;
+        }
+
         document.getElementById('presInscricaoSelect').addEventListener('change', (e) => {
             inscricaoSelecionadaPresenca = inscricoesCursoPresenca.find(i => i.id === e.target.value) || null;
             renderDatasAtuais();
             document.getElementById('btnAdicionarPresenca').disabled = !inscricaoSelecionadaPresenca;
+
+            // Falta com presença já registrada (por qualquer motivo) não dá pra corrigir só
+            // adicionando data nova — mostra o botão de corrigir status direto, sem precisar de data.
+            const precisaCorrigir = inscricaoSelecionadaPresenca?.status === 'falta'
+                && inscricaoSelecionadaPresenca?.presencas.length > 0;
+            document.getElementById('btnCorrigirFalta').style.display = precisaCorrigir ? 'inline-block' : 'none';
         });
 
         function renderDatasAtuais() {
@@ -417,20 +431,64 @@
                 return;
             }
 
+            // Se a inscrição está marcada como Falta, registrar presença corrige o status pra
+            // Concluído junto — é a mesma regra que o resto do sistema já usa (presença > 0 vira
+            // concluído). Confirma antes pra não corrigir sem querer.
+            const corrigeFalta = inscricaoSelecionadaPresenca.status === 'falta';
+            if (corrigeFalta) {
+                const ok = confirm(`${inscricaoSelecionadaPresenca.nome} está marcado como Falta. Registrar essa presença também vai corrigir o status pra Concluído. Confirma?`);
+                if (!ok) return;
+            }
+
             const btn = document.getElementById('btnAdicionarPresenca');
             btn.disabled = true;
 
             try {
-                await updateDoc(doc(db, 'inscricoes', inscricaoSelecionadaPresenca.id), {
-                    presencas: arrayUnion(dataISO),
-                    updatedAt: serverTimestamp()
-                });
+                const dados = { presencas: arrayUnion(dataISO), updatedAt: serverTimestamp() };
+                if (corrigeFalta) dados.status = 'concluido';
+
+                await updateDoc(doc(db, 'inscricoes', inscricaoSelecionadaPresenca.id), dados);
                 inscricaoSelecionadaPresenca.presencas.push(dataISO);
+                if (corrigeFalta) {
+                    inscricaoSelecionadaPresenca.status = 'concluido';
+                    document.getElementById('btnCorrigirFalta').style.display = 'none';
+                }
                 renderDatasAtuais();
-                showMsg('Presença registrada com sucesso.', 'success');
+
+                const opcaoAtual = document.querySelector(`#presInscricaoSelect option[value="${inscricaoSelecionadaPresenca.id}"]`);
+                if (opcaoAtual) opcaoAtual.textContent = labelOpcaoInscricao(inscricaoSelecionadaPresenca);
+                showMsg(corrigeFalta
+                    ? 'Presença registrada e status corrigido para Concluído.'
+                    : 'Presença registrada com sucesso.', 'success');
             } catch (err) {
                 console.error(err);
                 showMsg('Erro ao registrar: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
+        document.getElementById('btnCorrigirFalta').addEventListener('click', async () => {
+            if (!inscricaoSelecionadaPresenca) return;
+            const ok = confirm(`${inscricaoSelecionadaPresenca.nome} já tem presença registrada mas continua como Falta. Corrigir o status para Concluído?`);
+            if (!ok) return;
+
+            const btn = document.getElementById('btnCorrigirFalta');
+            btn.disabled = true;
+            try {
+                await updateDoc(doc(db, 'inscricoes', inscricaoSelecionadaPresenca.id), {
+                    status: 'concluido',
+                    updatedAt: serverTimestamp()
+                });
+                inscricaoSelecionadaPresenca.status = 'concluido';
+                btn.style.display = 'none';
+
+                const opcaoAtual = document.querySelector(`#presInscricaoSelect option[value="${inscricaoSelecionadaPresenca.id}"]`);
+                if (opcaoAtual) opcaoAtual.textContent = labelOpcaoInscricao(inscricaoSelecionadaPresenca);
+                showMsg('Status corrigido para Concluído.', 'success');
+            } catch (err) {
+                console.error(err);
+                showMsg('Erro ao corrigir: ' + err.message, 'error');
             } finally {
                 btn.disabled = false;
             }
