@@ -434,6 +434,9 @@
                 </div>
 
                 <div class="insc-filters">
+                    <select id="inscCursoFiltro">
+                        <option value="">Selecione um curso...</option>
+                    </select>
                     <input type="text" id="inscBusca" placeholder="Buscar por candidato ou curso...">
                     <select id="inscStatusFiltro">
                         <option value="">Todos os status</option>
@@ -866,7 +869,26 @@
                 carregarFiltrosAuxiliares()
             ]);
             popularCursoFiltroPresenca();
+            popularCursoFiltroInscricoes();
             popularDashPdfSelect();
+        }
+
+        function iconStatusCurso(status) {
+            return { ativo: '🟢', inativo: '🔴', cancelado: '🔴', concluido: '⚪' }[status] || '⚪';
+        }
+
+        function popularCursoFiltroInscricoes() {
+            const sel = document.getElementById('inscCursoFiltro');
+            todosCursosReport
+                .slice()
+                .sort((a, b) => (a.titulo || '').localeCompare(b.titulo || '', 'pt-BR'))
+                .forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.id;
+                    opt.textContent = `${iconStatusCurso(c.status)} ${c.titulo}`;
+                    sel.appendChild(opt);
+                });
+            document.getElementById('inscCursoFiltro').addEventListener('change', renderInscricoes);
         }
 
         // ── Dash PDF: dashboard resumido de um curso, pra mandar pro gerente ──
@@ -1250,6 +1272,9 @@
         let todasInscricoes = [];
 
         function getInscricoesFiltradas() {
+            const cursoId = document.getElementById('inscCursoFiltro').value;
+            if (!cursoId) return [];
+
             const busca   = document.getElementById('inscBusca').value.toLowerCase();
             const status  = document.getElementById('inscStatusFiltro').value;
             const empresa = document.getElementById('inscEmpresaFiltro').value;
@@ -1258,13 +1283,14 @@
             const posto   = document.getElementById('inscPostoFiltro').value;
 
             return todasInscricoes.filter(i => {
+                const cursoOk   = i.cursoId === cursoId;
                 const nomeOk    = !busca   || i._nome.includes(busca) || i._curso.includes(busca);
                 const statusOk  = !status  || i.status === status;
                 const empresaOk = !empresa || i._empresa === empresa;
                 const equipeOk  = !equipe  || i._equipe === equipe;
                 const atuacaoOk = !atuacao || i._atuacao === atuacao;
                 const postoOk   = !posto   || i._posto === posto;
-                return nomeOk && statusOk && empresaOk && equipeOk && atuacaoOk && postoOk;
+                return cursoOk && nomeOk && statusOk && empresaOk && equipeOk && atuacaoOk && postoOk;
             });
         }
 
@@ -1286,6 +1312,14 @@
         }
 
         function renderInscricoes() {
+            const cursoId = document.getElementById('inscCursoFiltro').value;
+            if (!cursoId) {
+                renderResumoInscricoes([]);
+                document.getElementById('inscricoesList').innerHTML =
+                    '<tr><td colspan="4" style="text-align:center;color:var(--text-secondary)">Selecione um curso</td></tr>';
+                return;
+            }
+
             const filtradas = getInscricoesFiltradas();
             renderResumoInscricoes(filtradas);
             const tbody = document.getElementById('inscricoesList');
@@ -1489,6 +1523,7 @@
 
         document.getElementById('btnExportInscricoes').addEventListener('click', () => {
             const btn = document.getElementById('btnExportInscricoes');
+            if (!document.getElementById('inscCursoFiltro').value) return;
             btnLoading(btn, true);
             try {
                 const status = document.getElementById('inscStatusFiltro').value;
@@ -1511,6 +1546,7 @@
 
         document.getElementById('btnExportInscricoesExcel').addEventListener('click', () => {
             const btn = document.getElementById('btnExportInscricoesExcel');
+            if (!document.getElementById('inscCursoFiltro').value) return;
             btnLoadingXlsx(btn, true);
             try {
                 const filtradas = getInscricoesFiltradas();

@@ -397,7 +397,7 @@
                     <option value="rejeitada">Rejeitadas</option>
                 </select>
                 <select id="cursoFilter">
-                    <option value="">Todos os cursos</option>
+                    <option value="">Selecione um curso...</option>
                 </select>
             </div>
 
@@ -502,14 +502,17 @@
                 const cursosMap = {};
                 cursosSnap.forEach(d => { cursosMap[d.id] = d.data(); });
 
-                // Popula select de cursos
+                // Popula select de cursos (ícone de cor pela frente, pra facilitar achar o ativo)
                 const cursoSelect = document.getElementById('cursoFilter');
-                cursosSnap.forEach(d => {
-                    const opt = document.createElement('option');
-                    opt.value = d.id;
-                    opt.textContent = d.data().titulo;
-                    cursoSelect.appendChild(opt);
-                });
+                cursosSnap.docs
+                    .slice()
+                    .sort((a, b) => (a.data().titulo || '').localeCompare(b.data().titulo || '', 'pt-BR'))
+                    .forEach(d => {
+                        const opt = document.createElement('option');
+                        opt.value = d.id;
+                        opt.textContent = `${iconStatusCurso(d.data().status)} ${d.data().titulo}`;
+                        cursoSelect.appendChild(opt);
+                    });
 
                 todasInscricoes = inscSnap.docs.map(d => ({
                     id: d.id,
@@ -537,25 +540,39 @@
             document.getElementById('cntRejeitada').textContent = cnt.rejeitada;
         }
 
+        function iconStatusCurso(status) {
+            return { ativo: '🟢', inativo: '🔴', cancelado: '🔴', concluido: '⚪' }[status] || '⚪';
+        }
+
         function getFiltradas() {
+            const cursoFiltro = document.getElementById('cursoFilter').value;
+            if (!cursoFiltro) return [];
+
             const busca       = document.getElementById('searchInput').value.toLowerCase();
             const statusFiltro = document.getElementById('statusFilter').value;
-            const cursoFiltro  = document.getElementById('cursoFilter').value;
 
             return todasInscricoes.filter(i => {
                 const nomeCandidato = i._candidato?.fullName?.toLowerCase() ?? '';
                 const nomeCurso     = i._curso?.titulo?.toLowerCase() ?? '';
                 const buscaOk  = !busca  || nomeCandidato.includes(busca) || nomeCurso.includes(busca);
                 const statusOk = !statusFiltro || i.status === statusFiltro;
-                const cursoOk  = !cursoFiltro  || i.cursoId === cursoFiltro;
+                const cursoOk  = i.cursoId === cursoFiltro;
                 return buscaOk && statusOk && cursoOk;
             });
         }
 
         function renderTabela() {
-            const filtradas = getFiltradas();
+            const cursoFiltro = document.getElementById('cursoFilter').value;
             atualizarResumo();
             const tbody = document.getElementById('inscricoesList');
+
+            if (!cursoFiltro) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-secondary);padding:2rem">Selecione um curso</td></tr>';
+                atualizarBarraSelecao();
+                return;
+            }
+
+            const filtradas = getFiltradas();
 
             // Seleção nunca inclui id que sumiu da lista (excluído, etc.)
             const idsAtuais = new Set(todasInscricoes.map(i => i.id));
