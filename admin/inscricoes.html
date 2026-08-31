@@ -783,6 +783,9 @@
             if (i.status === 'rejeitada') return `
                 <button class="btn-action btn-reativar" data-id="${i.id}" data-acao="pendente">Reativar</button>`;
 
+            if (i.status === 'falta') return `
+                <button class="btn-action btn-reativar" data-id="${i.id}" data-acao="apto">Reativar</button>`;
+
             return '<span style="color:var(--text-secondary);font-size:12px">—</span>';
         }
 
@@ -811,6 +814,14 @@
 
                 if (isEad) {
                     showAlert('Cursos EAD são encerrados automaticamente ao atingir a data fim.', 'error');
+                    return;
+                }
+
+                // Sem código de presença gerado pelo instrutor, o curso provavelmente ainda nem
+                // ocorreu — bloqueia Concluir de vez (nem chega a perguntar se é Falta).
+                const cursoDoc = await getDoc(doc(db, 'cursos', insc.cursoId));
+                if (!cursoDoc.data()?.codigoPresenca) {
+                    showAlert('Não é possível concluir: o instrutor ainda não gerou um código de presença para este curso. O curso provavelmente ainda não ocorreu.', 'error');
                     return;
                 }
 

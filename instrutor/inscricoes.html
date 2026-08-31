@@ -726,6 +726,14 @@
                     return;
                 }
 
+                // Sem código de presença gerado pelo instrutor, o curso provavelmente ainda nem
+                // ocorreu — bloqueia Concluir de vez (nem chega a perguntar se é Falta).
+                const cursoDoc = await getDoc(doc(db, 'cursos', insc.cursoId));
+                if (!cursoDoc.data()?.codigoPresenca) {
+                    showAlert('Não é possível concluir: você ainda não gerou um código de presença para este curso. O curso provavelmente ainda não ocorreu.', 'error');
+                    return;
+                }
+
                 // Presencial/Online: verifica presença fresca do Firestore
                 const inscDoc = await getDoc(doc(db, 'inscricoes', inscricaoId));
                 const presencas = inscDoc.data()?.presencas ?? [];
